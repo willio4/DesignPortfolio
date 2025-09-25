@@ -6,7 +6,7 @@
 # toDO:
     # add more user inputs that we could use for stage 1 of our product
     # these will be what users see when we do our testing
-    # add then ass parameters to this function, if needed make lists for the parametrs to reduce the # of params
+    # add then add parameters to this function, if needed make lists for the parametrs to reduce the # of params
     # 
 class MealPlanPrefs:
 
@@ -29,14 +29,14 @@ class MealPlan:
 
 # toDO:
 # set constructor , see UML diagram for more
-# for toString mehtod just return the a string the format '<nOfIngridient> <ingridientName> (s)'
-class Ingridient:
+# for toString mehtod just return the a string the format '<nOfIngredient> <IngredientName> (s)'
+class Ingredient:
     def __init__():
         pass
 # toDO:
 # set constructor , see UML diagram for more
-# main focus is display recipe method, ensure each ingridient is print line by line using the toString method
-# from the ingridient class
+# main focus is display recipe method, ensure each Ingredient is print line by line using the toString method
+# from the Ingredient class
 # besure to print the meal name as well
 
 # use the get nutriotional info method to return the calroies of the meal as an integer and any other health realted info if we have it
@@ -52,7 +52,7 @@ class Meal:
 
 # toDO:
 # set constructor and methods, see UML diagram for more
-# for the generate meal list method: return the ingridient names with their quantities 
+# for the generate meal list method: return the Ingredient names with their quantities 
 # for the display method, clall the generate meal list,
 #  and print the result out to the console in a readable manner
 class GroceryList:
@@ -71,8 +71,8 @@ class GroceryList:
 # then you will need to create instances of the following objects in order to return a meal plan object
 # you need to detrmine a way to figure out where each recipe returned from the model begins and ends
 
-#  parse each ingridient of the each recipe,one recipe at a time, create the ingridient class with the correct number of ingridients
-# after getting the ingridients for each recipe create a new meal object with the ingrideints, and the recipe, ensure the recipe is cleaned
+#  parse each Ingredient of the each recipe,one recipe at a time, create the Ingredient class with the correct number of Ingredients
+# after getting the Ingredients for each recipe create a new meal object with the ingrideints, and the recipe, ensure the recipe is cleaned
 # as needed
 # after all meal objects are created add them to a new mealPlan object and return it from the function
 
