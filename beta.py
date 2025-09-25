@@ -1,6 +1,6 @@
 
 
-#class to take structure meal plan preferences from user inputs
+#class to structure meal plan preferences from user inputs
 # this will be populated from the main loop for now but in production will be populated from the ui
 
 # toDO:
