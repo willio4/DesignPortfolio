@@ -6,7 +6,8 @@
 # toDO:
     # add more user inputs that we could use for stage 1 of our product
     # these will be what users see when we do our testing
-    # add then add parameters to this function, if needed make lists for the parametrs to reduce the # of params
+    # add then add those new parameters to this class constructor,
+# if needed make lists for the parametrs to reduce the # of params in contructor
     # 
 class MealPlanPrefs:
 
@@ -21,7 +22,7 @@ class MealPlanPrefs:
 # toDO:
 # set constructor , see UML diagram for more
 # no need to implment methods yet from UML
-# jsut implement a get mealplan method which retunrns all the meals set in constructor
+# just implement a get mealplan method which returns all the meals set in constructor
 class MealPlan:
     def __init__():
         pass
@@ -29,19 +30,18 @@ class MealPlan:
 
 # toDO:
 # set constructor , see UML diagram for more
-# for toString mehtod just return the a string the format '<nOfIngredient> <IngredientName> (s)'
+# for toString method just return a string the format '<nOfIngredient> <IngredientName> (s)'
 class Ingredient:
     def __init__():
         pass
+
 # toDO:
 # set constructor , see UML diagram for more
-# main focus is display recipe method, ensure each Ingredient is print line by line using the toString method
+# main focus is display recipe method, ensure each Ingredient is printed line by line using the toString method
 # from the Ingredient class
 # besure to print the meal name as well
 
 # use the get nutriotional info method to return the calroies of the meal as an integer and any other health realted info if we have it
-
-
 class Meal:
     def __init__():
         pass
@@ -53,7 +53,7 @@ class Meal:
 # toDO:
 # set constructor and methods, see UML diagram for more
 # for the generate meal list method: return the Ingredient names with their quantities 
-# for the display method, clall the generate meal list,
+# for the display method, call the generate meal list method,
 #  and print the result out to the console in a readable manner
 class GroceryList:
     def __init__():
@@ -65,29 +65,25 @@ class GroceryList:
 
 #toDO:
 # parse the model results so that they are structued
-# this will intake the raw model text
-# return a mealplan
+# this will intake the raw text returned from the model
+# return a mealplan object
 # you must first understand the way the model outputs its data
 # then you will need to create instances of the following objects in order to return a meal plan object
-# you need to detrmine a way to figure out where each recipe returned from the model begins and ends
+# you need to detrmine a way to figure out where each recipe in the text returned from the model begins and ends
 
-#  parse each Ingredient of the each recipe,one recipe at a time, create the Ingredient class with the correct number of Ingredients
-# after getting the Ingredients for each recipe create a new meal object with the ingrideints, and the recipe, ensure the recipe is cleaned
+#  parse each Ingredient of each recipe,one recipe at a time, create the Ingredient class with the correct quantity of each Ingredient
+# after getting the Ingredients for each recipe create a new meal object with the ingredeints and the recipe, ensure the recipe is cleaned
 # as needed
 # after all meal objects are created add them to a new mealPlan object and return it from the function
-
-# 
 def parseModelResults(recipes):
     pass
 
 
 #toDo:
 #   find an LLM 
-# call the LLm from this function by intaking the prompt and passing it to the model
-# return the models results from the function
+# call the LLm from this function by intaking the prompt param and passing it to the model
+# return the models results from this function
 def callModel(prompt):
-
-
 
     recipesFromModel= #call model here pass to the parse function below
     modelResults=parseModelResults(recipesFromModel)
@@ -97,21 +93,23 @@ def callModel(prompt):
 
 
 # toDO:
+# return a string that is the prompt we are passing to the AI model
+# tells the model what kind of recipes we want for this user
 # once an LLm is decided upon and some basic preferences are decided upon for the first demo
 # experient with different prompts for the LLM to see what generates the best results for our product
 # then create a parameterized string that will extract each value from the prefs in the parameter
-# the paramer withh be a dict from the user prefs class
+# the paramer will be a dict from the user prefs class
 
-# pass the prefs to the string, 
+# add the prefs to the prompt string, 
 # # note not every pref will be used by our testers and in production
 # # for example: someone may not insert any value for calories in their meals they want
 # in that case we need the model to not take into account calories
 # but we still want the model to return calories
 # because it is a requirement for our class fields
 # and its good just to show that to the user even if they aren trying to set a goal with cals
-# # so we must adjust the strin accordinly
-# # work out logic to parse the parameters and
-# # ultimately return a prompy we can pass directly to a CHAT GPT like LLM 
+# # so we must adjust the prompt string accordingly
+# # work out logic to parse the preference param and
+# # ultimately return a prompt we can pass directly to a CHAT GPT like LLM 
 def generatePrompt(prefs):
     pass
 
@@ -130,17 +128,17 @@ def generateRecipes(prefs):
 
 # main function 
 # use for testing
-# adjust user prerences here
-# if you add new ones in the above classes
+# adjust user prefrences here
+# if you add new preferences in the above classes
 # be sure to add them here too
 
 
 if __name__ == "__main__":
 
-    testPrefs= MealPlanPrefs(3,2,4)
-    AIrecipes=generateRecipes(testPrefs.getPrefs())
+    testPrefs= MealPlanPrefs(3,2,4) # creating new meal plan preferences, 3 breakfast meals, 2 lunch, and 4 dinners
+    AIrecipes=generateRecipes(testPrefs.getPrefs()) # passing the prefs to our process
     mealCtr=0
-    for meal in AIrecipes.meals:
+    for meal in AIrecipes.meals: # displaying the recipe for each meal returned by our process
         print(f"MEAL #{mealCtr}: ")
         meal.printRecipe()
         mealCtr+=1
