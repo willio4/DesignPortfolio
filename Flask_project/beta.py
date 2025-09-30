@@ -9,6 +9,8 @@
     # add then add those new parameters to this class constructor,
 # if needed make lists for the parametrs to reduce the # of params in contructor
     # 
+
+# Omar
 class MealPlanPrefs:
 
     def __init__(self,bFast=None,lnch=None,dnr=None):
