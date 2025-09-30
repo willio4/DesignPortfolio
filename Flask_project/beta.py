@@ -35,6 +35,7 @@ class Ingredient:
     def __init__():
         pass
 
+# Kenny
 # toDO:
 # set constructor , see UML diagram for more
 # main focus is display recipe method, ensure each Ingredient is printed line by line using the toString method
@@ -50,6 +51,7 @@ class Meal:
 
     
 
+# Kenny
 # toDO:
 # set constructor and methods, see UML diagram for more
 # for the generate meal list method: return the Ingredient names with their quantities 
