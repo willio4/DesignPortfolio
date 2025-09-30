@@ -18,7 +18,7 @@ class MealPlanPrefs:
     def getPrefs(self):
         return self.prefs
     
-
+# Pat
 # toDO:
 # set constructor , see UML diagram for more
 # no need to implment methods yet from UML
@@ -27,7 +27,7 @@ class MealPlan:
     def __init__():
         pass
 
-
+# Pat
 # toDO:
 # set constructor , see UML diagram for more
 # for toString method just return a string the format '<nOfIngredient> <IngredientName> (s)'
