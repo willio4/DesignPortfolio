@@ -94,7 +94,7 @@ def callModel(prompt):
 
 
 
-# toDO:
+# toDO:------------------------ Tess -------------------------------
 # return a string that is the prompt we are passing to the AI model
 # tells the model what kind of recipes we want for this user
 # once an LLm is decided upon and some basic preferences are decided upon for the first demo
