@@ -66,7 +66,7 @@ class GroceryList:
 
 
 
-
+# ---------------------------Omar W------------------------------------
 #toDO:
 # parse the model results so that they are structued
 # this will intake the raw text returned from the model
@@ -82,7 +82,7 @@ class GroceryList:
 def parseModelResults(recipes):
     pass
 
-
+# ---------------------------Omar W------------------------------------
 #toDo:
 #   find an LLM 
 # call the LLm from this function by intaking the prompt param and passing it to the model
