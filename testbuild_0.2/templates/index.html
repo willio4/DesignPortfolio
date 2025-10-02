@@ -1,13 +1,18 @@
-<!-- template for user input --> 
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Homepage</title>
-    </head>
+<head>
+    <title>Flask Multi-Input Example</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-    <body>
-        <h1>This is the MealPlanner Homepage.</h1>
-        <a href="{{ url_for('startMealPlan') }}">Click here to begin</a>
-    </body>
+    <!-- Centered container -->
 
+        <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">
+            Welcome to Prepify
+        </h1>
+        <button>Get Started</button>
+
+</body>
 </html>

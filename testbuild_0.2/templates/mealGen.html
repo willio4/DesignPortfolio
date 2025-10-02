@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Multi-Input Example</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <!-- Centered container -->
+    <div class="bg-white rounded-3xl shadow-xl shadow-indigo-300/50 p-8 w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">
+            Generate New Meals
+        </h1>
+
+        <!-- Form -->
+        <form method="POST" class="space-y-4">
+            <div>
+                <label for="num1" class="block text-sm font-medium text-gray-700"># of Breakfasts</label>
+                <input type="number" name="num1" required
+                       class="mt-1 w-full rounded-lg border-black-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label for="num2" class="block text-sm font-medium text-gray-700"># of Lunchs</label>
+                <input type="number" name="num2" required
+                       class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label for="num3" class="block text-sm font-medium text-gray-700"># of Dinners</label>
+                <input type="number" name="num3" required
+                       class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <button type="submit"
+                    class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">
+                Submit
+            </button>
+        </form>
+
+        <!-- Results -->
+        {% if result %}
+            {% if result.error %}
+                <p class="mt-4 text-red-500 text-center">{{ result.error }}</p>
+            {% else %}
+                <div class="mt-6 bg-indigo-50 rounded-lg p-4 text-center">
+                    <h2 class="text-lg font-semibold text-gray-800">Processed Results</h2>
+                    <p>Sum: {{ result.sum }}</p>
+                    <p>Product: {{ result.product }}</p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+</body>
+</html>
