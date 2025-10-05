@@ -1,18 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flask Multi-Input Example</title>
+    <title>Prepify Home</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 flex flex-col  justify-center items-center justify-start min-h-screen space-y-8 p-8">
 
-    <!-- Centered container -->
+    <!-- ✅ Log In Button (Top Right Corner) -->
+  <div class="absolute top-6 right-8">
+    <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
+      Log In
+    </button>
+  </div>
+  <!-- Section 1 the Get started button -->
+  <div class="w-[800px] h-[250px] bg-white shadow-lg rounded-3xl text-center p-6 flex flex-col">
+    <h2 class="text-xl font-semibold">Prepify AI Meal Planning</h2>
+    <div class="flex flex-1 items-center justify-center">
+      <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-green-600 transition">
+        Get Started
+      </button>
+    </div>
+  </div>
 
-        <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">
-            Welcome to Prepify
-        </h1>
-        <button>Get Started</button>
+  <!-- section 2 the about us section-->
+  <div class="w-[90%] bg-white shadow-lg rounded-3xl text-center p-8">
+    <h2 class="text-2xl font-semibold mb-4">Who We Are</h2>
+    <p class="text-gray-600 leading-relaxed max-w-3xl mx-auto">
+        The Prepify Team is dedicated to creating the ideal meal for everyone.
+        Our AI recipe system is designed simplify the meal planning process
+        while helping people find new flavors and meet their dietary goals. Explore recipes shared 
+        from around the world with our recipe feeds!
+    </p>
+  </div>
+
+
+  <!-- Section 3, overview of features -->
+  <div class="w-[90%] flex flex-col md:flex-row justify-between gap-6">
+    
+    <!-- Meal Planning features-->
+    <div class="flex-1 bg-white shadow-[0_8px_20px_rgba(173,216,230,0.9)] rounded-3xl text-center p-6">
+      <h3 class="text-xl font-semibold mb-3">Smart Meal Planning</h3>
+      <ul class="text-gray-600 text-left max-w-xs mx-auto list-disc list-inside space-y-1">
+        <li>Generate personalized recipes</li>
+        <li>Input dietary goals and preferrences</li>
+        <li>export grocery lists for easy shopping</li>
+      </ul>
+    </div>
+
+    <!-- Social Meal and meal organisation  box-->
+    <div class="flex-1 bg-white  shadow-[0_8px_20px_rgba(173,116,230,0.4)]  rounded-3xl text-center p-6">
+      <h3 class="text-xl font-semibold mb-3">Save and Share</h3>
+      <ul class="text-gray-600 text-left max-w-xs mx-auto list-disc list-inside space-y-1">
+        <li>Store and organize recipes for easy meal planning</li>
+        <li>Share your favorite recipes on your profile for others to enjoy!</li>
+        <li>Search for other reicpes users have enjoyed</li>
+      </ul>
+    </div>
+
+    <!-- Sell your recipes to make money box -->
+    <div class="flex-1 bg-white shadow-[0_8px_20px_rgba(34,139,34,0.4)]  rounded-3xl text-center p-6">
+      <h3 class="text-xl font-semibold mb-3">Get Money With Your Recipes</h3>
+      <ul class="text-gray-600 text-left max-w-xs mx-auto list-disc list-inside space-y-1">
+        <li>Put your favorite recipes for sale</li>
+        <li>Share youre recipes on your profile with the option for others to buy the recipe</li>
+        <li>Set your own prices and regulations for recipe usage</li>
+      </ul>
+    </div>
+
+  </div>
 
 </body>
 </html>
