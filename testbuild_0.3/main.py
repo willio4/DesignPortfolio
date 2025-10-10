@@ -1,12 +1,26 @@
-from flask import Flask, request, render_template
-app = Flask(__name__)
-
+from flask import Flask, request, render_template, abort
 from Classes.User import User
 from Classes.Meal import Meal
 from Classes.Ingredient import Ingredient
 from Classes.MealPlan import MealPlan
 from Classes.GroceryList import GroceryList
 from Utility.recipeGen import generateRecipes
+from dotenv import load_dotenv
+from openai import OpenAI
+import os
+
+# load the environment variable from the .env file
+# applied here after load_dotenv() to ensure API key is available first
+load_dotenv()
+app = Flask(__name__)
+client = OpenAI()
+
+#importing the test api route
+# To test the openai connection and api key then run the server and navigate to
+# http://127.0.0.1:5000/test_openai
+from test_api_route import test_api
+app.register_blueprint(test_api)
+
 
 # Route to the homepage
 # Returns the index template
