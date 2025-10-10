@@ -8,6 +8,10 @@ class Ingredient:
         self.name = name
         self.quantity = quantity
         self.unit = unit
+        
+    # Added __str__ method to Ingredient for easy display of name, quantity, and unit without extra formatting in Meal.displayMeal
+    def __str__(self):
+        return f"{self.name} {self.quantity} {self.unit}"
     
     def toString(self):
         return f"{self.ingredientID} {self.name}/s"

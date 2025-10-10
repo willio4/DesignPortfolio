@@ -26,7 +26,6 @@ def startMealPlan():
 
     elif request.method == "POST":
         """
-        # create dummy users after user constructor has been implemented to test different variations for testing
         testPrefs = User.MealPlanPrefs(3,2,4) # creating new meal plan preferences, 3 breakfast meals, 2 lunch, and 4 dinners
         AIrecipes = generateRecipes(testPrefs.getPrefs()) # passing the prefs to our process
         mealCtr  = 0
