@@ -32,7 +32,7 @@ def bulletPointLine(label: str, value, suffix: str = "") -> str:
 # build a custom prompt based on user preferences
 # The output will be plain text that can be passed directly to the LLM
 def generatePrompt(prefs):
-    #pass
+    pass
 
 # ======= Meal Counter =======
 # convert value to int
