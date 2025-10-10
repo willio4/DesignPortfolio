@@ -11,5 +11,17 @@
 # after getting the Ingredients for each recipe create a new meal object with the ingredeints and the recipe, ensure the recipe is cleaned
 # as needed
 # after all meal objects are created add them to a new mealPlan object and return it from the function
-def parseModelResults(recipes):
-    pass
+from Classes import Meal
+from Classes import MealPlan
+from Classes import Ingredient
+from Classes import User
+import re
+
+def parseModelResults(user: User, response: str):
+    meals = re.split(r"(?=## )", response) # each meal gets assigned to a chunk
+    for meal_text in meals:
+        if meal_text.strip():
+            print("Meal chunk:")
+            print(meal_text)
+        
+    
