@@ -10,7 +10,8 @@
 from Classes import Ingredient
 
 class Meal:
-    def __init__(self, name: str, ingredients: Ingredient, calories: int, instructions: str, carbs: int, fat: int, protein: int):
+    def __init__(self, mealType: str, name: str, ingredients: Ingredient, calories: int, instructions: str, carbs: int, fat: int, protein: int):
+        self.mealType = mealType            # added: breakfast, lunch, dinner
         self.name = name                    # name of meal
         self.ingredients = ingredients      # list of ingredients
         self.calories = calories            # calories per meal

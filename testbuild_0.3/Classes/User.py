@@ -1,4 +1,3 @@
-class User:
     # class to structure meal plan preferences from user inputs
     # this will be populated from the main loop for now but in production will be populated from the ui
 
@@ -20,7 +19,7 @@ class User:
 #            return self.prefs
         
 
- class User:
+class User:
 
 
     def __init__(self, name="", weight_lbs=0.0, height_ft=0, height_in=0,
@@ -33,6 +32,7 @@ class User:
         self._age = int(age)
         self._sex = sex.upper()
         self._goal = goal.lower()
+        self._currentMealPlan = [] # added storing of user meal plan
 
     def _to_kg(self):
         return self._weight_lbs * 0.45359237
