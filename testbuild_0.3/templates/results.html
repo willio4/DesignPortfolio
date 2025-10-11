@@ -1,13 +1,41 @@
 <!-- Template that dynamically returns responses -->
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>Meal Plan Results</title>
-    </head>
+  <head>
+    <meta charset="utf-8" />
+    <title>Meal Plan Results</title>
+    <style>
+      body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}
+      pre{background:#111;color:#eee;padding:12px;border-radius:8px;overflow:auto}
+      hr{margin:20px 0}
+    </style>
+  </head>
+  <body>
+    <h1>Meal Plan Results</h1>
 
-    <body>
-        <h1>This is the MealPlanner Results Page.</h1>
-        <a href="{{ url_for('startMealPlan') }}">Click here to try again!</a>
-    </body>
+    {% if data and data.meals %}
+      {% for r in data.meals %}
+        <h2>{{ r.name }} ({{ r.mealType }})</h2>
+        <p>Calories: {{ r.calories }} |
+           C {{ r.carbs }}g • F {{ r.fats }}g • P {{ r.protein }}g</p>
 
+        <h3>Ingredients</h3>
+        <ul>
+          {% for ing in r.ingredients %}
+            <li>{{ ing }}</li>
+          {% endfor %}
+        </ul>
+
+        <h3>Instructions</h3>
+        <pre>{{ r.instructions }}</pre>
+        <hr />
+      {% endfor %}
+    {% else %}
+      <!-- Fallback: show whatever the backend sent -->
+      <pre>{{ data | tojson(indent=2) if data else "No data passed." }}</pre>
+    {% endif %}
+
+    <p><a href="{{ url_for('startMealPlan') }}">Try again</a></p>
+  </body>
 </html>

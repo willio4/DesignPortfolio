@@ -1,24 +1,16 @@
 # toDO:------------------------ Tess -------------------------------
 # return a string that is the prompt we are passing to the AI model
 # tells the model what kind of recipes we want for this user
-# once an LLm is decided upon and some basic preferences are decided upon for the first demo
-# experient with different prompts for the LLM to see what generates the best results for our product
 # then create a parameterized string that will extract each value from the prefs in the parameter
-# the paramer will be a dict from the user prefs class
 
 # add the prefs to the prompt string, 
 # # note not every pref will be used by our testers and in production
 # # for example: someone may not insert any value for calories in their meals they want
 # in that case we need the model to not take into account calories
 # but we still want the model to return calories
-# because it is a requirement for our class fields
-# and its good just to show that to the user even if they aren trying to set a goal with cals
-# # so we must adjust the prompt string accordingly
 # # work out logic to parse the preference param and
-# # ultimately return a prompt we can pass directly to a CHAT GPT like LLM 
 
-# remove extra indents from prompt string
-from textwrap import dedent
+"""from textwrap import dedent
 
 # helper function that will return a bullet point line, aside for sections
 # that are left blank - in these circumestances we will just leave the line blank
@@ -59,22 +51,21 @@ def generatePrompt(prefs):
         nBreakfast = 1
         nLunch = 1
         nDinner = 1
+"""
 
-    # Build lines only for the meal typs that are requested
-    mealLines = ""
-    mealLines += bulletPointLine("Breakfasts", nBreakfast)
-    mealLines += bulletPointLine("Lunches", nLunch)
-    mealLines += bulletPointLine("Dinners", nDinner)        
+# Creating a default prompt to test that data is being
+# passed correctly to the model before jumping into unnecessary complexity
 
-    # if no meal types were specified, default to 1 of each
-    if mealLines == "":
-        mealLines = "• Breakfasts: 1\n• Lunches: 1\n• Dinners: 1\n"
-        
+DEFAULT_PROMPT = """ 
+You are a recipe generator that focuses on healthy meal creation.
+Return ONLY a valid JSON following this format:
+{"meals":[{"mealType":"dinner","name":"string","ingredients":["string"],
+"calories":0,"instructions":"string","carbs":0,"fats":0,"protein":0}]}
+Constraints: generate 1 dinner (~600 kcal), <=14 ingredients, <=6 steps.
+No prose; JSON only.
+""".strip()
 
-    # ======= Dietary Preferences =======
-    # making a condenced list for now. the current goal is to have a few options
-    # for the demo and then expand on them later
-    raw_diet = (prefs.get("diet") or "").strip().lower()
-    diet_normalized = raw_diet.replace("-", " ")
-    allowed_diets = {"keto", "paleo", "gluten free", "vegan", "vegetarian", "none"}
-    diet_value = diet_normalized if diet_normalized in allowed_diets else ""
+def generate_prompt(preferences: dict | None = None) -> str:
+    # For now, we are just returning the default prompt
+    # In the future, a custom prompt will be implemented based on user preferences
+    return DEFAULT_PROMPT
