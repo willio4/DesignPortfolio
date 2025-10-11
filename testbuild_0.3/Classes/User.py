@@ -21,6 +21,19 @@
 
 class User:
 
+    DIETARY_RESTRICTIONS = [
+        "Kosher",
+        "Halal",
+        "Carnivore",
+        "Keto",
+        "Pescatarian",
+        "Gluten-Free",
+        "Lactose-Free",
+        "Paleo",
+        "Vegetarian",
+        "Vegan"
+    ]
+
 
     def __init__(self, name="", weight_lbs=0.0, height_ft=0, height_in=0,
                  age=0, sex="M", goal="maintain"):
@@ -33,6 +46,7 @@ class User:
         self._sex = sex.upper()
         self._goal = goal.lower()
         self._currentMealPlan = [] # added storing of user meal plan
+
 
     def _to_kg(self):
         return self._weight_lbs * 0.45359237
@@ -59,5 +73,45 @@ class User:
 
     def getGoal(self):
         return self._goal
+
+    def setName(self, name): self._name = name
+    def setWeightLbs(self, weight_lbs): self._weight_lbs = float(weight_lbs)
+    def setHeight(self, feet, inches=0):
+        self._height_ft = int(feet)
+        self._height_in = int(inches)
+    def setAge(self, age): self._age = int(age)
+    def setSex(self, sex): self._sex = sex.upper()
+    def setGoal(self, goal): self._goal = goal.lower()
+
+
+    def calculateBMR(self):
+        """Basal Metabolic Rate using Mifflin–St Jeor Equation"""
+        w = self._to_kg()
+        h = self._to_cm()
+        a = self._age
+        if self._sex == "M":
+            return 88.362 + (13.397 * w) + (4.799 * h) - (5.677 * a)
+        elif self._sex == "F":
+            return 447.593 + (9.247 * w) + (3.098 * h) - (4.330 * a)
+        else:
+            raise ValueError("Sex must be 'M' or 'F'")
+
+    def calculateBMI(self):
+        """BMI = weight(kg) / height(m)^2"""
+        h_m = self._to_cm() / 100.0
+        w_kg = self._to_kg()
+        return w_kg / (h_m ** 2)
+
+    def bmiCategory(self):
+        """Return BMI classification string"""
+        bmi = self.calculateBMI()
+        if bmi < 18.5:
+            return "underweight"
+        elif bmi < 25:
+            return "normal"
+        elif bmi < 30:
+            return "overweight"
+        else:
+            return "obese"
 
     
