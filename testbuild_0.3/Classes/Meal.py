@@ -32,7 +32,7 @@ class Meal:
         
     # neatly displays the macros of each meal object
     def displayMacros(self):
-        print(f"  Calories: \t{self.calories}g")
+        print(f"  Calories: \t{self.calories}")
         print(f"  Total Carbs: \t{self.carbs}g")
         print(f"  Total Fat: \t{self.fats}g")
         print(f"  Protein: \t{self.protein}g")
