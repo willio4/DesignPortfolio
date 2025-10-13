@@ -45,7 +45,7 @@ class User:
         self._age = int(age)
         self._sex = sex.upper()
         self._goal = goal.lower()
-        self._currentMealPlan = [] # added storing of user meal plan
+        self._currentMealPlan = [] # added storing of user meal plan as list of meal objects
 
 
     def _to_kg(self):
