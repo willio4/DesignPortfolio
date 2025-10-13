@@ -1,38 +1,39 @@
 # ------------------------ Tess -------------------------------
+# AI/callModel.py
 import json
 from openai import OpenAI
-
 client = OpenAI()
 
-SYSTEM= "You are a recipe generator that focuses on healthy meal creation. Respond with ONLY " \
-"a valid JSON. No prose."
+SYSTEM = (
+    "You are a recipe generator. Respond with ONLY valid JSON; no prose, no comments, no trailing commas."
+)
 
-def call_model(prompt: str) -> dict:
-    # send the prompt to the model and return with a python dict (parsed JSON)
+def call_model(prompt: str, max_tokens: int = 900) -> dict:
     r = client.responses.create(
         model="gpt-4.1-nano",
         input=[
             {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt},
         ],
-            temperature=0.3,
-            max_output_tokens=700
-        )
-    
-    # parse text as JSON
-
-    text_response = r.output_text or ""
+        temperature=0,          # stricter
+        top_p=0,
+        max_output_tokens=max_tokens,
+    )
+    text = r.output_text or ""
     try:
-        return json.loads(text_response)
+        return json.loads(text)
     except json.JSONDecodeError:
-
+        # one repair pass
         fix = client.responses.create(
             model="gpt-4.1-nano",
-            input=f"Convert to valid JSON only (no comentary):\n{text_response}",
+            input=f"Fix to strictly valid JSON only (no commentary):\n{text}",
             temperature=0,
-            max_output_tokens=700
+            top_p=0,
+            max_output_tokens=max_tokens,
         )
         return json.loads(fix.output_text or "{}")
+
+        
 
 
 
