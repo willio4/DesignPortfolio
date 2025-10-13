@@ -1,21 +1,29 @@
+# load environment variables first
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, request, render_template, abort
+
+# Classes
 from Classes.User import User
 from Classes.Meal import Meal
 from Classes.Ingredient import Ingredient
 from Classes.MealPlan import MealPlan
 from Classes.GroceryList import GroceryList
 from Utility.recipeGen import generateRecipes
-from dotenv import load_dotenv
-from openai import OpenAI
-import os
 
-# load the environment variable from the .env file
-# applied here after load_dotenv() to ensure API key is available first
-load_dotenv()
+# AI imports
+from AI.promptGen import generate_prompt
+from AI.callModel import call_model
+
+import logging
+
 app = Flask(__name__)
-client = OpenAI()
 
-#importing the test api route
+logging.basicConfig(level=logging.DEBUG)
+
+
 # To test the openai connection and api key then run the server and navigate to
 # http://127.0.0.1:5000/test_openai
 from test_api_route import test_api
@@ -38,20 +46,22 @@ def startMealPlan():
     if request.method == 'GET':
         return render_template("mealGen.html")
 
-    elif request.method == "POST":
-        """
-        testPrefs = User.MealPlanPrefs(3,2,4) # creating new meal plan preferences, 3 breakfast meals, 2 lunch, and 4 dinners
-        AIrecipes = generateRecipes(testPrefs.getPrefs()) # passing the prefs to our process
-        mealCtr  = 0
-        for meal in AIrecipes.meals: # displaying the recipe for each meal returned by our process
-            print(f"MEAL #{mealCtr}: ")
-            meal.printRecipe()
-            mealCtr+=1
-        """
-        return render_template("results.html")
+    # Log the received form data
+    prefs = dict(request.form)
+    logging.debug(f"Received form data: {prefs}")
+
+    # Generate the prompt and log it
+    prompt = generate_prompt(prefs)
+    logging.debug(f"Generated prompt: {prompt}")
+
+    # Call the model and log the response
+    data = call_model(prompt)
+    logging.debug(f"Model response: {data}")
+
+    return render_template("results.html", data=data)
 
 if __name__ == "__main__":
     app.run(debug=True)
-    
+
 
 

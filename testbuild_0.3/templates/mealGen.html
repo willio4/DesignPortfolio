@@ -49,18 +49,18 @@
                     <!-- first row-->
                     <div class="flex flex-wrap items-center gap-3 calorie-row">
                         <!-- greater than less than and roughly equlivalent to operator -->
-                        <select class="w-40 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <select name="calorie_operator[]" class="w-40 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option>About</option>
                             <option>At least</option>
                             <option>Under</option>
                         </select>
                         <!--  num calories integer input -->
-                        <input type="number" placeholder="Number of calories"
+                        <input type="number" name="calorie_value[]" placeholder="Number of calories"
                                class="w-44 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
 
                         <label class="text-sm text-gray-700">calories for</label>
                         <!-- mapping calorie to the set of meals -->
-                        <select class="w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <select name="calorie_target[]" class="w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             <option>each meal</option>
                             <option>all meals</option>
                             <option>each lunch</option>
@@ -108,18 +108,18 @@
             newRow.className = 'flex flex-wrap items-center gap-3 calorie-row';
 
             newRow.innerHTML = `
-                <select class="w-40 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select name="calorie_operator[]" class="w-40 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option>About</option>
                     <option>At least</option>
                     <option>Under</option>
                 </select>
 
-                <input type="number" placeholder="Number of calories"
+                <input type="number" name="calorie_value[]" placeholder="Number of calories"
                        class="w-44 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
 
                 <label class="text-sm text-gray-700">calories for</label>
 
-                <select class="w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <select name="calorie_target[]" class="w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option>each meal</option>
                     <option>all meals</option>
                     <option>each lunch</option>
