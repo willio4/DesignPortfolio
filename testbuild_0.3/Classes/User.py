@@ -114,4 +114,62 @@ class User:
         else:
             return "obese"
 
+    def dailyCalories(self, activity="moderate"):
+        """Estimate Total Daily Energy Expenditure (TDEE)"""
+        factors = {
+            "sedentary" : 1.2,
+            "light" : 1.375, 
+            "moderate" : 1.55,
+            "active" : 1.725,
+            "very active" : 1.9,
+        }
+        factor = factor.get(activity, 1.55)
+        return self.calculateBMR() * factor
     
+    def calorieTargetByGoal(self, activity = "moderate"):
+        """adjust calories based on weight goals"""
+        tdee = self.dailyCalories(activity)
+        if self._goal == "maintain" :
+            return tdee
+        elif self._goal == "lose" :
+            return max(0.0, tdee - 500)
+        elif self._goal == "gain" :
+            return tdee + 500
+        else: return tdee
+
+    def UserData(self):
+        """Return user data in organized form"""
+        return{
+            "name" : self._name,
+            "weight_lbs" : self._weight_lbs,
+            "height_ft" : self._height_ft,
+            "height_in": self._height_in,
+            "age" : self._age,
+            "sex" : self._sex,
+            "goal" : self._goal,
+            "bmi" : round(self.calculateBMI(), 1),
+            "bmi_category" : self.bmiCategory(),
+            "bmr" : round(self.calculateBMR(), 0),
+        }
+    
+    def llmPromptText(self, activity= "moderate") :
+        """ChatGPT summary strings for user prompts"""
+        bmi = self.calculateBMI()
+        tdee = self.dailyCalories(activity)
+        target = self.calculateTargetByGoal(activity)
+        return(
+            f"User: {self._name}, {self._sex}, {self._age}, years old. "
+            f"Height: {self._height_ft} ft {self._height_in} in. "
+            f"Weight: {self._weight_lbs} lbs. Goal: {self._goal}. "
+            f"BMI: {bmi:.1f} ({self.bmiCategory()}). "
+            f"BMR: {self.calculateBMR():.0f} kcal/day. "
+            f"Maintenance calories (TDEE): {tdee:.0f} kcal/day. "
+            f"Recommended daily calories for goal: {target:.0f} kcal/day."
+        )
+
+    def __str__(self):
+        return (
+        f"User({self._name}, {self._sex}, {self._age}y, "
+        f"{self._height_ft}ft {self._height_in}in, "
+        f"{self._weight_lbs}lbs, goal={self._goal})"
+    )
