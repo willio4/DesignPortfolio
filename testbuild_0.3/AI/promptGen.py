@@ -22,6 +22,7 @@ def generate_prompt(preferences: dict | None = None) -> str:
     num_breakfast = safe_int(prefs.get("num1", 0))
     num_lunch = safe_int(prefs.get("num2", 0))
     num_dinner = safe_int(prefs.get("num3", 1)) # set 1 as default just in case
+
     calories = safe_int(prefs.get("calories", 0))
 
     extras = []
@@ -30,7 +31,7 @@ def generate_prompt(preferences: dict | None = None) -> str:
 
 
     return dedent(f"""
-        You are a recipe generator that focuses on simple, healthy, and delicious meals.
+        You are a recipe generator that focuses on healthy, and delicious meals.
         Return ONLY valid JSON with the exact schema: {SCHEMA}
 
         Requirements:
