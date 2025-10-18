@@ -1,0 +1,22 @@
+<!-- templates/feed.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feed</title>
+</head>
+<body>
+    <h1>Feed</h1>
+    <a href="{{ url_for('home') }}">Add a New Post</a>
+    <hr>
+
+    {% for post in posts %}
+        <div>
+            <strong>{{ post.user }}</strong> at {{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+            {{ post.content }}
+        </div>
+        <hr>
+    {% else %}
+        <p>No posts yet.</p>
+    {% endfor %}
+</body>
+</html>
