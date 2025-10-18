@@ -8,11 +8,19 @@
 <body class="bg-gray-100 flex flex-col  justify-center items-center justify-start min-h-screen space-y-8 p-8">
 
     <!-- ✅ Log In Button (Top Right Corner) -->
-  <div class="absolute top-6 right-8">
-    <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
-      Log In
-    </button>
+  <div class="absolute top-6 right-8 flex space-x-4">
+    <a href = "{{ url_for('login') }}">
+      <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
+        Log In
+      </button>
+    </a>
+    <a href = "{{ url_for('signup') }}">
+      <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
+        Sign Up
+      </button>
+    </a>
   </div>
+    
   <!-- Section 1 the Get started button -->
   <div class="w-[800px] h-[250px] bg-white shadow-lg rounded-3xl text-center p-6 flex flex-col">
     <h2 class="text-xl font-semibold">Prepify AI Meal Planning</h2>
