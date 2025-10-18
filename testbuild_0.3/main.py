@@ -17,13 +17,15 @@ from Utility.recipeGen import generateRecipes
 from AI.promptGen import generate_prompt
 from AI.callModel import call_model
 
+from Feed.feed import register_feed_routes
+
 import logging
 
 app = Flask(__name__)
 
 logging.basicConfig(level=logging.DEBUG)
 
-
+register_feed_routes(app)
 
 # Route to the homepage
 # Returns the index template
