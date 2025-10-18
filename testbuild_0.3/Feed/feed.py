@@ -18,7 +18,7 @@ def register_feed_routes(app):
 
     @app.route('/add_post', methods=['POST'])
     def add_post():
-        user = request.form.get('user', 'Anonymous')
+        user = request.form.get('user', '').strip() or 'Guest'
         content = request.form['content']
         new_post = Post(user, content)
         feed.append(new_post)

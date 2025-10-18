@@ -7,7 +7,7 @@
 
 # use the get nutritional info method to return the calories of the meal as an integer and any other health related info if we have it
 
-from Ingredient import Ingredient
+from Classes.Ingredient import Ingredient
 from enum import Enum
 from typing import List
 
