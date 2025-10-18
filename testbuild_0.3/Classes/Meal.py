@@ -10,11 +10,11 @@ class Meal:
         self.calories = calories            # calories per meal
         self.instructions = instructions    # cooking instructions for each meal
         self.carbs = carbs                  ## Macronutrients
-        self.fats = fats                     ##
+        self.fats = fats                    ##
         self.protein = protein              ##
         
     # Neatly displays the name, ingredients and instructions of meal object
-    def displayMeal(self):
+    def display_meal(self):
         print()
         print(f"Name: {self.name}")
         print("  Ingredients:")
@@ -24,7 +24,7 @@ class Meal:
         print()
         
     # neatly displays the macros of each meal object
-    def displayMacros(self):
+    def display_macros(self):
         print(f"  Calories: \t{self.calories}")
         print(f"  Total Carbs: \t{self.carbs}g")
         print(f"  Total Fat: \t{self.fats}g")
@@ -38,8 +38,7 @@ class Meal:
         
         # loop that iterates through each meal from llm output
         for meal_data in data["meals"]:     
-            ingredients = create_ingredients_from_output(meal_data["ingredients"]) # create ingredient objects. may need to rename function once implemented
-            # creates meal object from JSON
+            ingredients = create_ingredients_from_output(meal_data["ingredients"]) 
             meal = cls(
                 mealType=meal_data["mealType"],
                 name=meal_data["name"],
@@ -50,7 +49,5 @@ class Meal:
                 fats=meal_data["fats"],
                 protein=meal_data["protein"],
             )
-            #adds meal to mealplan list
             meal_plan.append(meal)
-        return meal_plan    # return mealplan to MealPlan class (hopefully)
-
+        return meal_plan
