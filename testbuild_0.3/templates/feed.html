@@ -31,25 +31,25 @@
         <ul class="grid grid-flow-col text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-1 shadow-inner shadow-gray-400">
             <li>
               <a href="{{ url_for('index') }}" 
-                 class="flex justify-center py-4 px-6 transition transform hover:-translate-y-0.5 hover:shadow-[0_6px_12px_rgba(0,0,0,0.3)]">
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
                  Home
               </a>
             </li>
             <li>
               <a href="{{ url_for('get_started') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-black transition">
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
                  Get Started
               </a>
             </li>
             <li>
               <a href="{{ url_for('shopping_list') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-black transition">
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
                  Shopping List
               </a>
             </li>
             <li>
               <a href="{{ url_for('calendar') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-black transition">
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
                  Calendar
               </a>
             </li>
@@ -62,21 +62,60 @@
           </ul>
 
         <!-- Meal Planning features-->
-        <body class="h-full">
-            <h1>Feed</h1>
-            <a href="{{ url_for('home') }}">Add a New Post</a>
-            <hr>
-    
-            {% for post in posts %}
-                <div>
-                    <strong>{{ post.user }}</strong> at {{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}<br>
-                    {{ post.content }}
-                </div>
-                <hr>
-            {% else %}
-                <p>No posts yet.</p>
-            {% endfor %}
-        </body>
+
+        <!-- Vertical Tabs -->
+<div class="flex bg-[#0D1734] min-h-screen p-10 text-gray-200">
+  <!-- Left: Tabs -->
+  <div class="flex flex-col w-64 border border-gray-600 rounded-lg divide-y divide-gray-600 h-full max-h-1/4">
+    <button
+      class="py-3 px-4 text-left text-xl font-semibold text-green-400 bg-gray-800 transition active:bg-gray-700"
+    >
+      Feed
+    </button>
+    <button
+      class="py-3 px-4 text-left text-xl font-semibold hover:text-green-400 hover:bg-gray-800 transition active:bg-gray-700"
+    >
+      Featured
+    </button>
+    <button
+      class="py-3 px-4 text-left text-xl font-semibold hover:text-green-400 hover:bg-gray-800 transition active:bg-gray-700"
+    >
+      For You
+    </button>
+    <button
+      class="py-3 px-4 text-left text-xl font-semibold hover:text-green-400 hover:bg-gray-800 transition active:bg-gray-700"
+    >
+      Following
+    </button>
+    <button
+      class="py-3 px-4 text-left text-xl font-semibold hover:text-green-400 hover:bg-gray-800 transition active:bg-gray-700"
+    >
+      Profile
+    </button>
+  </div>
+
+  <!-- Right: Content -->
+  <div
+    class="ml-10 flex-1 border border-gray-600 rounded-lg bg-[#111A3C] p-6 overflow-y-auto min-h-full"
+  >
+    {% for post in posts %}
+      <div class="mb-6">
+        <button>
+        <strong class="text-green-400 hover:underline hover:text-white">{{ post.user }}</strong>
+      </button>
+        
+        <span class="text-sm text-gray-400">
+          @ {{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+        </span>
+        <p class="mt-2 text-gray-200">{{ post.content }}</p>
+        <hr class="mt-4 border-gray-600" />
+      </div>
+    {% else %}
+      <p class="text-center text-gray-400">No posts yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
           
           <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
             <!-- Left side: contact info -->
