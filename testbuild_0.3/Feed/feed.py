@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, url_for
 from datetime import datetime
 
-# stores all post for display as feed
+# stores list of Post for display @ '/feed'
 feed = []
 
 # Post class
