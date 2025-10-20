@@ -35,6 +35,18 @@ register_auth_routes(app)
 def index():
     return render_template("index.html")
 
+@app.route("/get_started")
+def get_started():
+    return render_template("get_started.html")
+
+@app.route("/shopping_list")
+def shopping_list():
+    return render_template("shopping_list.html")
+
+@app.route("/calendar")
+def calendar():
+    return render_template("calendar.html")
+
 # main function 
 # use for testing
 # adjust user prefrences here

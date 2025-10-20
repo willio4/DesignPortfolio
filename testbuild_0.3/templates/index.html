@@ -1,84 +1,108 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Prepify Home</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 flex flex-col  justify-center items-center justify-start min-h-screen space-y-8 p-8">
+    <head class="bg-[#0D1734]">
+        <title>Login</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
 
-    <!-- ✅ Log In Button (Top Right Corner) -->
-  <div class="absolute top-6 right-8 flex space-x-4">
-    <a href = "{{ url_for('login') }}">
-      <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
-        Log In
-      </button>
-    </a>
-    <a href = "{{ url_for('signup') }}">
-      <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
-        Sign Up
-      </button>
-    </a>
-  </div>
     
-  <!-- Section 1 the Get started button -->
-  <div class="w-[800px] h-[250px] bg-white shadow-lg rounded-3xl text-center p-6 flex flex-col">
-    <h2 class="text-xl font-semibold">Prepify AI Meal Planning</h2>
-    <div class="flex flex-1 items-center justify-center">
-      <a href = "{{ url_for('startMealPlan') }}">
-        <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-green-600 transition">
-          Get Started
-        </button>
-      </a>
-    </div>
-  </div>
-
-  <!-- section 2 the about us section-->
-  <div class="w-[90%] bg-white shadow-lg rounded-3xl text-center p-8">
-    <h2 class="text-2xl font-semibold mb-4">Who We Are</h2>
-    <p class="text-gray-600 leading-relaxed max-w-3xl mx-auto">
-        The Prepify Team is dedicated to creating the ideal meal for everyone.
-        Our AI recipe system is designed simplify the meal planning process
-        while helping people find new flavors and meet their dietary goals. Explore recipes shared 
-        from around the world with our recipe feeds!
-    </p>
-  </div>
-
-
-  <!-- Section 3, overview of features -->
-  <div class="w-[90%] flex flex-col md:flex-row justify-between gap-6">
     
-    <!-- Meal Planning features-->
-    <div class="flex-1 bg-white shadow-[0_8px_20px_rgba(173,216,230,0.9)] rounded-3xl text-center p-6">
-      <h3 class="text-xl font-semibold mb-3">Smart Meal Planning</h3>
-      <ul class="text-gray-600 text-left max-w-xs mx-auto list-disc list-inside space-y-1">
-        <li>Generate personalized recipes</li>
-        <li>Input dietary goals and preferrences</li>
-        <li>export grocery lists for easy shopping</li>
-      </ul>
-    </div>
 
-    <!-- Social Meal and meal organisation  box-->
-    <div class="flex-1 bg-white  shadow-[0_8px_20px_rgba(173,116,230,0.4)]  rounded-3xl text-center p-6">
-      <h3 class="text-xl font-semibold mb-3">Save and Share</h3>
-      <ul class="text-gray-600 text-left max-w-xs mx-auto list-disc list-inside space-y-1">
-        <li>Store and organize recipes for easy meal planning</li>
-        <li>Share your favorite recipes on your profile for others to enjoy!</li>
-        <li>Search for other reicpes users have enjoyed</li>
-      </ul>
-    </div>
+    <body class="bg-[#0D1734]">
 
-    <!-- Sell your recipes to make money box -->
-    <div class="flex-1 bg-white shadow-[0_8px_20px_rgba(34,139,34,0.4)]  rounded-3xl text-center p-6">
-      <h3 class="text-xl font-semibold mb-3">Get Money With Your Recipes</h3>
-      <ul class="text-gray-600 text-left max-w-xs mx-auto list-disc list-inside space-y-1">
-        <li>Put your favorite recipes for sale</li>
-        <li>Share youre recipes on your profile with the option for others to buy the recipe</li>
-        <li>Set your own prices and regulations for recipe usage</li>
-      </ul>
-    </div>
+        <header class="text-center my-0 py-4">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="mx-auto">
+        </header>
 
-  </div>
+        <div class="absolute top-6 right-8 flex space-x-4">
+            <a href = "{{ url_for('login') }}">
+                <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
+                    Log In
+                </button>
+            </a>
+            <a href = "{{ url_for('signup') }}">
+                <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
+                    Sign Up
+                </button>
+            </a>
+        </div>
 
-</body>
+        <ul class="grid grid-flow-col text-center text-gray-500 bg-[#E1E1E1] rounded-full p-0">
+            <li>
+              <a href="{{ url_for('index') }}" class="flex font-bold justify-center bg-white rounded-full shadow text-green-300 py-4">Home</a>
+            <li>
+              <a href="{{ url_for('get_started') }}" class="flex justify-center py-4">Get Started</a>
+            </li>
+            <li>
+              <a href="{{ url_for('shopping_list') }}" class="flex justify-center py-4">Shopping List</a>
+            </li>
+            <li>
+              <a href="{{ url_for('calendar') }}" class="flex justify-center py-4">Calendar</a>
+            </li>
+            <li>
+              <a href="{{ url_for('show_feed') }}" class="flex justify-center py-4">Feed</a>
+            </li>
+          </ul>
+
+        <!-- Meal Planning features-->
+        <div class="flex items-center justify-between px-20 mt-20">
+            <!-- Left column -->
+            <div class="w-1/2 flex justify-center">
+                <div class="w-2/3 h-60 bg-black p-6 shadow-[0_8px_20px_rgba(173,216,230,0.9)] rounded-3xl flex flex-col items-center text-center">
+                  <h3 class="underline decoration-solid text-2xl text-white font-semibold mb-3">
+                    Meal Planning
+                  </h3>
+                  <ul class="text-gray-400 text-left list-disc list-inside space-y-1">
+                    <li>Generate AI-powered recipes based on your preferences</li>
+                    <li>Organize and store recipes for easy access</li>
+                    <li>Export grocery lists for convenient shopping</li>
+                  </ul>
+                </div>
+              </div>
+          
+            <!-- Right column (optional placeholder) -->
+            <div class="w-1/2 flex justify-center">
+                <img src="{{ url_for('static', filename='images/robochef.jpg') }}" alt="Prepify Logo" class="w-auto h-96">
+            </div>
+          </div>
+
+
+          <div class="flex justify-between px-20 mt-20">
+            <!-- Left column -->
+            <div class="w-1/2 flex justify-center">
+                <img src="{{ url_for('static', filename='images/lcs.jpg') }}" alt="Prepify Logo" class="w-auto h-96">
+            </div>
+          
+            <!-- Right column (optional placeholder) -->
+            <div class="w-1/2 flex justify-center items-center">
+              <div class="w-2/3 h-60 bg-black p-6 shadow-[0_8px_20px_rgba(173,216,230,0.9)] rounded-3xl flex flex-col items-center text-center">
+                <h3 class="underline decoration-solid text-2xl text-white font-semibold mb-3">
+                    Social
+                </h3>
+                <ul class="text-gray-400 text-left list-disc list-inside space-y-1">
+                    <li>Explore recipes created and rated by the community</li>
+                    <li>Join discussions, ask questions, and get tips on the Feed</li>
+                    <li>Follow your favorite creators for a personalized recipe feed</li>
+                </ul>
+                  
+              </div>
+            </div>
+          </div>
+          
+          <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
+            <!-- Left side: contact info -->
+            <div class="flex flex-col space-y-1">
+              <span>Contact Support</span>
+              <span>(702) 555-1234</span>
+              <span>support@prepify.com</span>
+            </div>
+          
+            <!-- Right side: copyright -->
+            <div class="text-center w-1/3">
+              <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
+            </div>
+          </footer>
+          
+    </body>
 </html>
+
