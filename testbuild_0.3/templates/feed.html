@@ -28,20 +28,36 @@
             </a>
         </div>
 
-        <ul class="grid grid-flow-col text-center text-gray-500 bg-[#E1E1E1] rounded-full p-0">
+        <ul class="grid grid-flow-col text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-1 shadow-inner shadow-gray-400">
             <li>
-              <a href="{{ url_for('index') }}" class="flex justify-center py-4">Home</a>
-            <li>
-              <a href="{{ url_for('get_started') }}" class="flex justify-center py-4">Get Started</a>
+              <a href="{{ url_for('index') }}" 
+                 class="flex justify-center py-4 px-6 transition transform hover:-translate-y-0.5 hover:shadow-[0_6px_12px_rgba(0,0,0,0.3)]">
+                 Home
+              </a>
             </li>
             <li>
-              <a href="{{ url_for('shopping_list') }}" class="flex justify-center py-4">Shopping List</a>
+              <a href="{{ url_for('get_started') }}" 
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-black transition">
+                 Get Started
+              </a>
             </li>
             <li>
-              <a href="{{ url_for('calendar') }}" class="flex justify-center py-4">Calendar</a>
+              <a href="{{ url_for('shopping_list') }}" 
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-black transition">
+                 Shopping List
+              </a>
             </li>
             <li>
-              <a href="{{ url_for('show_feed') }}" class="flex justify-center font-bold bg-white rounded-full shadow text-green-300 py-4">Feed</a>
+              <a href="{{ url_for('calendar') }}" 
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-black transition">
+                 Calendar
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('show_feed') }}" 
+                 class="flex justify-center font-bold  bg-gradient-to-b from-white to-gray-200 rounded-full shadow-[0_4px_8px_rgba(0,0,0,0.2)] text-green-400 py-4 px-6 text-gray-700 hover:text-black transition">
+                 Feed
+              </a>
             </li>
           </ul>
 
