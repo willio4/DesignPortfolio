@@ -17,17 +17,27 @@ from Utility.recipeGen import generateRecipes
 from AI.promptGen import generate_prompt
 from AI.callModel import call_model
 
+# User Authentication imports
 from Feed.feed import register_feed_routes
-from User_Auth.user_auth import register_auth_routes
+from User_Auth.user_auth import db, register_auth_routes
 
 import logging
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///prepify.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = 'your-secret-key'
 
 logging.basicConfig(level=logging.DEBUG)
 
+db.init_app(app)
 register_feed_routes(app)
 register_auth_routes(app)
+
+with app.app_context():
+    db.session.remove() # Uncomment this if you want to delete all data each time you run
+    db.drop_all()       # Uncomment this if you want to delete all data each time you run
+    db.create_all()     # recreate tables after drop
 
 # Route to the homepage
 # Returns the index template

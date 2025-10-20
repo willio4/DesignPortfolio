@@ -1,9 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html class="h-full bg-gray-900">
 <head>
-    <title>signup</title>
+    <title>Signup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body>
-    
-</body>
+    <button onclick="history.back()" class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-green-400 to-blue-600 group-hover:from-green-400 group-hover:to-blue-600 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-green-200 dark:focus:ring-green-800">
+        <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
+            ↩  Back
+        </span>
+    </button>
+  
+    <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+      <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="mx-auto"/>
+      </div>
+  
+      <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm border shadow-lg rounded-xl p-6 transform transition-transform duration-300 hover:-translate-y-2">
+        <form action="#" method="POST" class="space-y-6">
+          <h2 class="text-center text-2xl font-bold text-white">Create your account</h2>
+  
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-100">Username</label>
+            <input id="username" type="text" name="username" required class="block w-full rounded-md bg-white/10 px-3 py-1.5 text-white placeholder-gray-500 focus:outline-2 focus:outline-indigo-500"/>
+          </div>
+  
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-100">Email address</label>
+            <input id="email" type="email" name="email" required class="block w-full rounded-md bg-white/10 px-3 py-1.5 text-white placeholder-gray-500 focus:outline-2 focus:outline-indigo-500"/>
+          </div>
+  
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-100">Password</label>
+            <input id="password" type="password" name="password" required class="block w-full rounded-md bg-white/10 px-3 py-1.5 text-white placeholder-gray-500 focus:outline-2 focus:outline-indigo-500"/>
+          </div>
+  
+          <div>
+            <button type="submit" class="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-white hover:bg-indigo-400">Sign Up</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+  
 </html>
