@@ -24,11 +24,6 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 
-# To test the openai connection and api key then run the server and navigate to
-# http://127.0.0.1:5000/test_openai
-from test_api_route import test_api
-app.register_blueprint(test_api)
-
 
 # Route to the homepage
 # Returns the index template
