@@ -52,10 +52,6 @@ def _extract_json_from_text(text: str) -> str | None:
 
 
 def call_model(prompt: str, max_tokens: int = 900) -> dict:
-
-    prompt += f"\n\n# Request timestamp: {datetime.utcnow().isoformat()}"
-    logging.debug(f"Final prompt sent to model: {prompt}")
-
     r = client.responses.create(
         model="gpt-4.1-nano",
         input=[
@@ -105,6 +101,7 @@ def call_model(prompt: str, max_tokens: int = 900) -> dict:
     # As a final fallback, return an empty structure and avoid crashing the app
     logging.error("Unable to parse model output as JSON; returning empty dict")
     return {}
+
 
         
 
