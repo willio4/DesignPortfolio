@@ -34,6 +34,17 @@ class User:
         "Vegan"
     ]
 
+    ALLERGIES = [
+        "Dairy",
+        "Eggs",
+        "Peanuts",
+        "Tree Nuts",
+        "Soy",
+        "Gluten",
+        "Wheat",
+        "Shellfish"
+    ]
+
 
     def __init__(self, name="", weight_lbs=0.0, height_ft=0, height_in=0,
                  age=0, sex="M", goal="maintain"):
