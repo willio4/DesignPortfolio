@@ -1,12 +1,4 @@
-# Kenny
-# toDO:
-# set constructor , see UML diagram for more
-# main focus is display recipe method, ensure each Ingredient is printed line by line using the toString method
-# from the Ingredient class
-# besure to print the meal name as well
-
-# use the get nutritional info method to return the calories of the meal as an integer and any other health related info if we have it
-
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OMAR W ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import Ingredient
 import json
 
@@ -38,12 +30,16 @@ class Meal:
         print(f"  Total Fat: \t{self.fats}g")
         print(f"  Protein: \t{self.protein}g")
         
+    # used class method to be able to create meal objects
     @classmethod
     def create_meals_from_output(cls, llm_output):
-        data = json.loads(llm_output)
-        meal_plan = []
-        for meal_data in data["meals"]:
-            ingredients = create_ingredients_from_output(meal_data["ingredients"])
+        data = json.loads(llm_output)       # parses JSON text into objects
+        meal_plan = []                      # list of meals as a meal plan
+        
+        # loop that iterates through each meal from llm output
+        for meal_data in data["meals"]:     
+            ingredients = create_ingredients_from_output(meal_data["ingredients"]) # create ingredient objects. may need to rename function once implemented
+            # creates meal object from JSON
             meal = cls(
                 mealType=meal_data["mealType"],
                 name=meal_data["name"],
@@ -54,6 +50,7 @@ class Meal:
                 fats=meal_data["fats"],
                 protein=meal_data["protein"],
             )
+            #adds meal to mealplan list
             meal_plan.append(meal)
-        return meal_plan
+        return meal_plan    # return mealplan to MealPlan class (hopefully)
 
