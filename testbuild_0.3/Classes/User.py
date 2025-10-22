@@ -45,6 +45,12 @@ class User:
         "Shellfish"
     ]
 
+    MEAL_PREFERENCES = [
+        "Mostly Chicken",
+        "Mostly Beef",
+        "Mostly Fish"
+    ]
+
 
     def __init__(self, name="", weight_lbs=0.0, height_ft=0, height_in=0,
                  age=0, sex="M", goal="maintain"):
