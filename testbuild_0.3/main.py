@@ -19,7 +19,9 @@ from AI.callModel import call_model
 
 # User Authentication imports
 from Feed.feed import register_feed_routes
-from User_Auth.user_auth import db, register_auth_routes
+from User_Auth.database import db
+from User_Auth.user_auth import UserModel, register_auth_routes
+from User_Auth.user_profile import UserProfile
 
 import logging
 

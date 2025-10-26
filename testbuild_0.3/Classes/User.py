@@ -1,3 +1,5 @@
+from User_Auth.user_auth import UserModel
+
 class User:
 
     DIETARY_RESTRICTIONS = [
@@ -31,19 +33,11 @@ class User:
     ]
 
 
-    def __init__(self, name="", weight_lbs=0.0, height_ft=0, height_in=0,
-                 age=0, sex="M", goal="maintain"):
-
-        self._name = name
-        self._weight_lbs = float(weight_lbs)
-        self._height_ft = int(height_ft)
-        self._height_in = int(height_in)
-        self._age = int(age)
-        self._sex = sex.upper()
-        self._goal = goal.lower()
+    def __init__(self, user_model: UserModel):
+        self.auth = user_model
+        self.profile = user_model.profile
         self._currentMealPlan = [] # added storing of user meal plan as list of meal objects
-
-
+    
     def _to_kg(self):
         return self._weight_lbs * 0.45359237
 
@@ -53,22 +47,26 @@ class User:
 
     # getters
     def getName(self):
-        return self._name
+        return self.profile.name
+
+    def getName(self):
+        return self.profile.name
 
     def getWeightLbs(self):
-        return self._weight_lbs
+        return self.profile.weight_lbs
 
     def getHeightFeetInches(self):
-        return (self._height_ft, self._height_in)
-
+        return (self.profile.height_ft, self.profile.height_in)
+    
     def getAge(self):
-        return self._age
-
+        return self.profile.age 
+    
     def getSex(self):
-        return self._sex
+        return self.profile.sex
 
     def getGoal(self):
-        return self._goal
+        return self.profile.goal
+
 
     def setName(self, name): self._name = name
     def setWeightLbs(self, weight_lbs): self._weight_lbs = float(weight_lbs)
