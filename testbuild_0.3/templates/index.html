@@ -5,27 +5,23 @@
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
 
-    
-    
+    <body class="bg-white">
 
-    <body class="bg-[#0D1734]">
-
-        <header class="text-center my-0 py-4">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="mx-auto">
-        </header>
-
-        <div class="absolute top-6 right-8 flex space-x-4">
-            <a href = "{{ url_for('login') }}">
+      <header class="flex justify-between items-center py-4 px-8">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="h-12">
+        <div class="flex space-x-4">
+            <a href="{{ url_for('login') }}">
                 <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
                     Log In
                 </button>
             </a>
-            <a href = "{{ url_for('signup') }}">
+            <a href="{{ url_for('signup') }}">
                 <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
                     Sign Up
                 </button>
             </a>
         </div>
+    </header>
 
         <ul class="grid grid-flow-col text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-1 shadow-inner shadow-gray-400">
           <li>
@@ -65,8 +61,8 @@
         <div class="flex items-center justify-between px-20 mt-20">
             <!-- Left column -->
             <div class="w-1/2 flex justify-center">
-                <div class="w-2/3 h-60 bg-black p-6 shadow-[0_8px_20px_rgba(173,216,230,0.9)] rounded-3xl flex flex-col items-center text-center">
-                  <h3 class="underline decoration-solid text-2xl text-white font-semibold mb-3">
+                <div class="w-2/3 h-60 bg-white p-6 shadow-[0_8px_20px_rgba(173,216,230,0.9)] rounded-3xl flex flex-col items-center text-center">
+                  <h3 class="underline decoration-solid text-2xl text-black font-semibold mb-3">
                     Meal Planning
                   </h3>
                   <ul class="text-gray-400 text-left list-disc list-inside space-y-1">
@@ -79,7 +75,7 @@
           
             <!-- Right column (optional placeholder) -->
             <div class="w-1/2 flex justify-center">
-                <img src="{{ url_for('static', filename='images/robochef.jpg') }}" alt="Prepify Logo" class="w-auto h-96">
+                <img src="{{ url_for('static', filename='images/robochef.jpg') }}" alt="Prepify Logo" class="h-80 w-150">
             </div>
           </div>
 
@@ -87,13 +83,13 @@
           <div class="flex justify-between px-20 mt-20">
             <!-- Left column -->
             <div class="w-1/2 flex justify-center">
-                <img src="{{ url_for('static', filename='images/lcs.jpg') }}" alt="Prepify Logo" class="w-auto h-96">
+                <img src="{{ url_for('static', filename='images/lcs.jpg') }}" alt="Prepify Logo" class="h-80 w-150">
             </div>
           
             <!-- Right column (optional placeholder) -->
             <div class="w-1/2 flex justify-center items-center">
-              <div class="w-2/3 h-60 bg-black p-6 shadow-[0_8px_20px_rgba(173,216,230,0.9)] rounded-3xl flex flex-col items-center text-center">
-                <h3 class="underline decoration-solid text-2xl text-white font-semibold mb-3">
+              <div class="w-2/3 h-60 bg-white p-6 shadow-[0_8px_20px_rgba(173,116,230,0.4)] rounded-3xl flex flex-col items-center text-center">
+                <h3 class="underline decoration-solid text-2xl text-black font-semibold mb-3">
                     Social
                 </h3>
                 <ul class="text-gray-400 text-left list-disc list-inside space-y-1">

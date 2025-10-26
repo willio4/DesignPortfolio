@@ -1,61 +1,59 @@
 <!DOCTYPE html>
-<html class="h-full bg-gray-900">
+<html class="h-full bg-white">
 <head>
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
+<body>
+  <button onclick="history.back()" class="relative inline-flex items-center justify-center p-0.5 mt-1 mx-1 mb-2 me-2 overflow-hidden text-sm font-medium text-black rounded-lg">
+      <span class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
+          ↩ Back
+      </span>
+  </button>
 
+  <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+      <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="mx-auto"/>
+      </div>
 
-    <button onclick="history.back()" class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-green-400 to-blue-600 group-hover:from-green-400 group-hover:to-blue-600 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-green-200 dark:focus:ring-green-800">
-        <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-transparent group-hover:dark:bg-transparent">
-            ↩  Back
-        </span>
-    </button>
-
-<body class="h-full">
-<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="mx-auto"/>
-      <h2 class="mt-10 text-center text-2xl leading-9 font-bold tracking-tight text-white">Sign in to your account</h2>
-    </div>
-  
-    <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-      <form action="#" method="POST" class="space-y-6">
-        <div>
-          <label for="email" class="block text-sm leading-6 font-medium text-gray-100">Email address</label>
-          <div class="mt-2">
-            <input id="email" type="email" name="email" required autocomplete="email"
-                   class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm leading-6"/>
-          </div>
-        </div>
-  
-        <div>
-          <div class="flex items-center justify-between">
-            <label for="password" class="block text-sm leading-6 font-medium text-gray-100">Password</label>
-            <div class="text-sm">
-              <a href="#" class="font-semibold text-indigo-400 hover:text-indigo-300">Forgot password?</a>
+      <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm border shadow-lg rounded-xl p-6 transform transition-transform duration-300 hover:-translate-y-2">
+        <form action="#" method="POST" class="space-y-6">
+          <h2 class="text-center text-2xl font-bold text-black">Sign in to your account</h2>
+          <div>
+            <label for="email" class="block text-sm leading-6 font-medium text-black">Email address:</label>
+            <div class="mt-2">
+              <input id="email" type="email" name="email" required autocomplete="email"
+                     class="block w-full rounded-md bg-black/5 px-3 py-1.5 text-base text-white placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm leading-6"/>
             </div>
           </div>
-          <div class="mt-2">
-            <input id="password" type="password" name="password" required autocomplete="current-password"
-                   class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm leading-6"/>
+
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="password" class="block text-sm leading-6 font-medium text-black">Password:</label>
+              <div class="text-sm">
+                <a href="#" class="font-semibold text-indigo-400 hover:text-indigo-300">Forgot password?</a>
+              </div>
+            </div>
+            <div class="mt-2">
+              <input id="password" type="password" name="password" required autocomplete="current-password"
+                     class="block w-full rounded-md bg-black/5 px-3 py-1.5 text-base text-white placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm leading-6"/>
+            </div>
           </div>
-        </div>
-  
-        <div>
-          <button type="submit"
-                  class="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm leading-6 font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-            Sign in
-          </button>
-        </div>
-      </form>
-  
-      <p class="mt-10 text-center text-sm leading-6 text-gray-400">
-        Not a member?
-        <a href="#" class="font-semibold text-indigo-400 hover:text-indigo-300">Create an account</a>
-      </p>
-    </div>
-</div>
+
+          <div>
+            <button type="submit"
+                    class="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm leading-6 font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
+              Sign in
+            </button>
+          </div>
+        </form>
+
+        <p class="mt-10 text-center text-sm leading-6 text-gray-400">
+          Not a member?
+          <a href="#" class="font-semibold text-indigo-400 hover:text-indigo-300">Create an account</a>
+        </p>
+      </div>
+  </div>
 </body>
 </html>
