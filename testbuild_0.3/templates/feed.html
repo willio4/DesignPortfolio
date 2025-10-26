@@ -83,28 +83,6 @@
             {% endfor %}
           </div>
         </div>
-        
-
-  <!-- Right: Content -->
-  <div
-    class="ml-10 flex-1 border border-gray-600 rounded-lg bg-gray-200 p-6 overflow-y-auto min-h-full"
-  >
-    {% for post in posts %}
-      <div class="mb-6">
-        <button>
-        <strong class="text-green-400 hover:underline hover:text-white">{{ post.user }}</strong>
-      </button>
-        
-        <span class="text-sm text-gray-400">
-          @ {{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-        </span>
-        <p class="mt-2 text-gray-200">{{ post.content }}</p>
-        <hr class="mt-4 border-gray-600" />
-      </div>
-    {% else %}
-      <p class="text-center text-gray-400">No posts yet.</p>
-    {% endfor %}
-  </div>
 </div>
 
           
