@@ -35,8 +35,8 @@ register_feed_routes(app)
 register_auth_routes(app)
 
 with app.app_context():
-    db.session.remove() # Uncomment this if you want to delete all data each time you run
-    db.drop_all()       # Uncomment this if you want to delete all data each time you run
+    # db.session.remove() # Uncomment this if you want to delete all data each time you run
+    # db.drop_all()       # Uncomment this if you want to delete all data each time you run
     db.create_all()     # recreate tables after drop
 
 # Route to the homepage

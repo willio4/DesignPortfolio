@@ -1,17 +1,6 @@
-<<<<<<< HEAD
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OMAR W ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 from .Ingredient import Ingredient, create_ingredients_from_output
 import json
-=======
-# Kenny
-# toDO:
-# set constructor , see UML diagram for more
-# main focus is display recipe method, ensure each Ingredient is printed line by line using the toString method
-# from the Ingredient class
-# besure to print the meal name as well
-
-# use the get nutritional info method to return the calories of the meal as an integer and any other health related info if we have it
-
 from Classes.Ingredient import Ingredient
 from enum import Enum
 from typing import List
@@ -21,7 +10,6 @@ class MealType(Enum):
     LUNCH = 2
     DINNER = 3
     SNACK = 4
->>>>>>> cca5e47 (added html files for testing)
 
 class Meal:
     def __init__(self, mealType: str, name: str, ingredients: list[Ingredient], calories: int, instructions: str, carbs: int, fats: int, protein: int):
