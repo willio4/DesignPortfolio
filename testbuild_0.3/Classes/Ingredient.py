@@ -15,3 +15,37 @@ class Ingredient:
     
     def toString(self):
         return f"{self.ingredientID} {self.name}/s"
+
+# added helper function to create the ingredient object from model output
+def create_ingredients_from_output(items):
+    """Convert model output into a list of Ingredient objects.
+
+    Accepts either:
+      - a list of strings (e.g. "1 cup rice")
+      - a list of dicts with keys: name, quantity, unit (optional)
+
+    This is intentionally forgiving: if the model returns simple strings we pack
+    them into Ingredient objects using the string as the name and default
+    quantity/unit values. If dicts are provided we use those fields.
+    """
+    result = []
+    if not items:
+        return result
+
+    for idx, it in enumerate(items):
+        if isinstance(it, dict):
+            name = it.get("name") or it.get("ingredient") or str(it)
+            try:
+                quantity = float(it.get("quantity", 1))
+            except Exception:
+                quantity = 1
+            unit = it.get("unit", "")
+        else:
+            # treat as a free-form string
+            name = str(it)
+            quantity = 1
+            unit = ""
+
+        result.append(Ingredient(ingredientID=idx, name=name, quantity=quantity, unit=unit))
+
+    return result

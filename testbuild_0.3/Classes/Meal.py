@@ -1,9 +1,9 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OMAR W ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-import Ingredient
+from .Ingredient import Ingredient, create_ingredients_from_output
 import json
 
 class Meal:
-    def __init__(self, mealType: str, name: str, ingredients: Ingredient, calories: int, instructions: str, carbs: int, fats: int, protein: int):
+    def __init__(self, mealType: str, name: str, ingredients: list[Ingredient], calories: int, instructions: str, carbs: int, fats: int, protein: int):
         self.mealType = mealType            # added: breakfast, lunch, dinner
         self.name = name                    # name of meal
         self.ingredients = ingredients      # list of ingredients
