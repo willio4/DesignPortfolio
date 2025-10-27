@@ -1,4 +1,6 @@
 from .database import db
+from sqlalchemy import column # adding to store constraints per user
+from sqlalchemy.types import JSON # SQLAlchemy JSON type
 
 class UserProfile(db.Model):
     __tablename__ = 'user_profiles'
@@ -15,3 +17,6 @@ class UserProfile(db.Model):
     age = db.Column(db.Integer)
     sex = db.Column(db.String(1))
     goal = db.Column(db.String(20))
+
+    # Additional column to store user-specific constraints
+    constraints = db.Column(JSON, nullable=False, default={})
