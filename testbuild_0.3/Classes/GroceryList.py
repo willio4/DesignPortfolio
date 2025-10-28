@@ -12,3 +12,16 @@ class GroceryList:
         self.listID = listID
         self.user = user
         self.ingredients = ingredients if ingredients is not None else []
+
+    def generateFromMealPlan(self, mealPlan: MealPlan) -> None:
+        ingredients_dict = {}
+
+        for meal in mealPlan.getMealPlan():
+            for ing in meal.ingredients:
+                if ing.name in ingredients_dict:
+                    ingredients_dict[ing.name].quantity += ing.quantity
+                else:
+                    ingredients_dict[ing.name] = Ingredient(
+                        ing.ingredientID, ing.name, ing.quantity, ing.unit
+                    )
+        self.ingredients = list(ingredients_dict.values())
