@@ -1,6 +1,4 @@
-# imports
-from flask import request, render_template, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
+from flask import request, render_template, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from .database import db
 
@@ -29,10 +27,10 @@ def register_auth_routes(app):
             email = request.form['email']
             password = request.form['password']
             
-            # check if user already exist
+            # Check if user already exists
             existing_user = UserModel.query.filter_by(email=email).first()
             if existing_user:
-                return "User already exists!" # throw error for now but should be changed to a template later on
+                return "User already exists!"  # Replace with flash message later
             
             # Create user instance
             new_user = UserModel(username=username, email=email)
@@ -40,11 +38,16 @@ def register_auth_routes(app):
 
             db.session.add(new_user)
             db.session.commit()
+
+            # ✅ Store user_id in session for later use
+            session['user_id'] = new_user.id
             
-            return redirect(url_for('setup_profile', user_id = new_user.id))
+            # Redirect to profile setup
+            return redirect(url_for('setup_profile'))
         
         return render_template('signup.html')
     
+
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':
@@ -53,8 +56,41 @@ def register_auth_routes(app):
 
             user = UserModel.query.filter_by(email=email).first()
             if user and user.check_password(password):
-                # TODO: set session or login user
+                # ✅ Store user_id in session for later use
+                session['user_id'] = user.id
                 return redirect(url_for('show_feed'))
             else:
-                return "Invalid credentials"  # or flash message
+                return "Invalid credentials"  # Replace with flash later
         return render_template('login.html')
+    
+
+    @app.route('/setup_profile', methods=['GET', 'POST'])
+    def setup_profile():
+        from .user_profile import UserProfile
+
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('login'))  # force login if session expired
+
+        if request.method == 'POST':
+            profile = UserProfile(
+                user_id=user_id,
+                f_name=request.form['f_name'],
+                l_name=request.form['l_name'],
+                age=int(request.form['age']),
+                sex=request.form['sex'],
+                weight_lbs=float(request.form['weight_lbs']),
+                height_ft=int(request.form['height_ft']),
+                height_in=int(request.form['height_in']),
+                goal=request.form['goal']
+            )
+
+            db.session.add(profile)
+            db.session.commit()
+
+            # ✅ Clear session after setup if you want to log them in again later
+            session.pop('user_id', None)
+
+            return redirect(url_for('login'))
+
+        return render_template('setup_profile.html')
