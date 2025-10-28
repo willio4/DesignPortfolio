@@ -1,41 +1,174 @@
-<!-- Template that dynamically returns responses -->
 <!DOCTYPE html>
-<!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <title>Meal Plan Results</title>
-    <style>
-      body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}
-      pre{background:#111;color:#eee;padding:12px;border-radius:8px;overflow:auto}
-      hr{margin:20px 0}
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your New Meals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body>
-    <h1>Meal Plan Results</h1>
 
+
+
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+
+
+      <header class="flex justify-between items-center py-4 px-8">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="h-12">
+        <div class="flex space-x-4">
+            <a href="{{ url_for('login') }}">
+                <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
+                    Log In
+                </button>
+            </a>
+            <a href="{{ url_for('signup') }}">
+                <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
+                    Sign Up
+                </button>
+            </a>
+        </div>
+    </header>
+
+        <ul class="grid grid-flow-col text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-1 shadow-inner shadow-gray-400">
+            <li>
+              <a href="{{ url_for('index') }}" 
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition ">
+                 Home
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('get_started') }}" 
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
+                 Get Started
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('shopping_list') }}" 
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
+                 Shopping List
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('calendar') }}" 
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
+                 Calendar
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('show_feed') }}" 
+                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
+                 Feed
+              </a>
+            </li>
+          </ul>
+    <main class='flex-grow flex flex-col items-center p-6'> 
+    <h1 class="text-3xl font-bold mb-8 text-gray-800">Meal Plan Results</h1>
+<!--  display the recipes in a grid fashion with 3 meals -->
     {% if data and data.meals %}
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl"
+    >
       {% for r in data.meals %}
-        <h2>{{ r.name }} ({{ r.mealType }})</h2>
-        <p>Calories: {{ r.calories }} |
-           C {{ r.carbs }}g • F {{ r.fats }}g • P {{ r.protein }}g</p>
-
-        <h3>Ingredients</h3>
-        <ul>
+      <!-- show each meal as card that can be clicked -->
+      <div
+        class="bg-white rounded-2xl shadow-lg p-6 cursor-pointer transform transition duration-200 hover:scale-[1.02]"
+        onclick="openModal('{{ loop.index0 }}')"
+      >
+      <!--  top of card display the meal name -->
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">
+          {{ r.name }} ({{ r.mealType }})
+        </h2>
+        <!-- list of the nutrional info -->
+        <p class="text-gray-600 mb-3">
+          <span class="font-medium">Calories:</span> {{ r.calories }} |
+          C {{ r.carbs }}g • F {{ r.fats }}g • P {{ r.protein }}g
+        </p>
+        <!--  list off the ingrideints -->
+        <h3 class="text-gray-700 font-medium mb-1">Ingredients</h3>
+        <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
           {% for ing in r.ingredients %}
-            <li>{{ ing }}</li>
+          <li>{{ ing }}</li>
           {% endfor %}
         </ul>
+      </div>
 
-        <h3>Instructions</h3>
-        <pre>{{ r.instructions }}</pre>
-        <hr />
+      <!-- the elemtn that is shown when clicked on  -->
+      <div
+        id="modal-{{ loop.index0 }}"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+      >
+        <div
+          class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative"
+        >
+          <button
+            onclick="closeModal('{{ loop.index0 }}')"
+            class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+          >
+            ✕
+          </button>
+          <!-- re display info but add instructions here since we have more space -->
+          <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+            {{ r.name }} ({{ r.mealType }})
+          </h2>
+          <p class="text-gray-600 mb-4">
+            <span class="font-medium">Calories:</span> {{ r.calories }} |
+            C {{ r.carbs }}g • F {{ r.fats }}g • P {{ r.protein }}g
+          </p>
+          <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
+          <ul class="list-disc list-inside text-gray-600 text-sm mb-4">
+            {% for ing in r.ingredients %}
+            <li>{{ ing }}</li>
+            {% endfor %}
+          </ul>
+          <h3 class="text-gray-700 font-medium mb-2">Instructions</h3>
+          <pre
+            class="bg-gray-100 p-4 rounded-lg text-gray-700 text-sm overflow-auto max-h-60 whitespace-pre-wrap"
+          >
+          {{ r.instructions }}
+          </pre>
+        </div>
+      </div>
       {% endfor %}
+    </div>
     {% else %}
-      <!-- Fallback: show whatever the backend sent -->
-      <pre>{{ data | tojson(indent=2) if data else "No data passed." }}</pre>
+    <pre
+      class="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-auto w-full max-w-4xl"
+    >{{ data | tojson(indent=2) if data else "No data passed." }}</pre>
     {% endif %}
 
-    <p><a href="{{ url_for('startMealPlan') }}">Try again</a></p>
+    <p class="mt-8">
+      <a
+        href="{{ url_for('get_started') }}"
+        class="text-blue-600 hover:underline font-medium"
+        >Try again</a
+      >
+    </p>
+</main>
+
+
+      <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
+            <!-- Left side: contact info -->
+            <div class="flex flex-col space-y-1">
+              <span>Contact Support</span>
+              <span>(702) 555-1234</span>
+              <span>support@prepify.com</span>
+            </div>
+          
+            <!-- Right side: copyright -->
+            <div class="text-center w-1/3">
+              <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
+            </div>
+          </footer>
+          
+    <script>
+      // logic for showing the modal element and hiding it
+      function openModal(id) {
+        document.getElementById("modal-" + id).classList.remove("hidden");
+        document.getElementById("modal-" + id).classList.add("flex");
+      }
+      function closeModal(id) {
+        document.getElementById("modal-" + id).classList.remove("flex");
+        document.getElementById("modal-" + id).classList.add("hidden");
+      }
+    </script>
   </body>
 </html>
