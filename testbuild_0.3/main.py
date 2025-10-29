@@ -5,6 +5,7 @@ load_dotenv()
 
 from flask import Flask, request, render_template
 import logging
+from Utility.ingredient_utils import normalize_meals
 
 # Database
 from User_Auth.database import db
@@ -86,6 +87,11 @@ def startMealPlan():
     # Call the model and log the response
     data = call_model(prompt)
     logging.debug(f"Model response: {data}")
+
+    # Normalize meals (ingredients and instructions) using Utility helper
+    if data and isinstance(data, dict):
+        meals = data.get("meals", []) or []
+        normalize_meals(meals)
 
     return render_template("results.html", data=data)
 

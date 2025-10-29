@@ -82,11 +82,27 @@
           <span class="font-medium">Calories:</span> {{ r.calories }} |
           C {{ r.carbs }}g • F {{ r.fats }}g • P {{ r.protein }}g
         </p>
-        <!--  list off the ingrideints -->
+        <!--  list off the ingredients (supports structured ingredient objects or plain strings) -->
         <h3 class="text-gray-700 font-medium mb-1">Ingredients</h3>
         <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
           {% for ing in r.ingredients %}
-          <li>{{ ing }}</li>
+              {% if ing is mapping %}
+              <li class="ingredient-item">
+                <span class="ingredient-qty font-semibold">
+                  {% if ing.quantity_display %}
+                    {{ ing.quantity_display }}
+                  {% elif ing.quantity is not none %}
+                    {{ ing.quantity }}
+                  {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
+                </span>
+                <span class="ingredient-name"> {{ ing.name }}</span>
+                {% if ing.estimated_calories is not none %}
+                  <span class="ingredient-cal text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
+                {% endif %}
+              </li>
+            {% else %}
+              <li class="ingredient-item">{{ ing }}</li>
+            {% endif %}
           {% endfor %}
         </ul>
       </div>
@@ -116,15 +132,42 @@
           <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
           <ul class="list-disc list-inside text-gray-600 text-sm mb-4">
             {% for ing in r.ingredients %}
-            <li>{{ ing }}</li>
+              {% if ing is mapping %}
+                <li class="ingredient-item">
+                  <span class="ingredient-qty font-semibold">
+                    {% if ing.quantity_display %}
+                      {{ ing.quantity_display }}
+                    {% elif ing.quantity is not none %}
+                      {{ ing.quantity }}
+                    {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
+                  </span>
+                  <span class="ingredient-name"> {{ ing.name }}</span>
+                  {% if ing.estimated_calories is not none %}
+                    <span class="ingredient-cal text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
+                  {% endif %}
+                </li>
+              {% else %}
+                <li class="ingredient-item">{{ ing }}</li>
+              {% endif %}
             {% endfor %}
           </ul>
           <h3 class="text-gray-700 font-medium mb-2">Instructions</h3>
-          <pre
-            class="bg-gray-100 p-4 rounded-lg text-gray-700 text-sm overflow-auto max-h-60 whitespace-pre-wrap"
-          >
-          {{ r.instructions }}
-          </pre>
+          {% if r.instructions is string %}
+            {% set lines = r.instructions.split('\n') %}
+            <ol class="list-decimal list-inside text-gray-700 text-sm mb-4">
+              {% for line in lines %}
+                {% if line.strip() %}
+                  <li>{{ line.strip() }}</li>
+                {% endif %}
+              {% endfor %}
+            </ol>
+          {% else %}
+            <ol class="list-decimal list-inside text-gray-700 text-sm mb-4">
+              {% for step in r.instructions %}
+                <li>{{ step }}</li>
+              {% endfor %}
+            </ol>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
