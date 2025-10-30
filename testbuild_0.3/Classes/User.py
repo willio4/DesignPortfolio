@@ -168,10 +168,10 @@ class User:
         f"{self._weight_lbs}lbs, goal={self._goal})"
     )
 
-    def generateMealPlannerPrompt(self, dietary restrictions=none, allergies=none, meal_preferences="Mixed", activity="moderate"):
+    def generateMealPlannerPrompt(self, dietary_restrictions=None, allergies=None, meal_preferences="Mixed", activity="moderate"):
         if DIETARY_RESTRICTIONS in None:
             DIETARY_RESTRICTIONS = []
-        if ALLERGIES is None
+        if ALLERGIES is None:
             ALLERGIES = []
 
     #Caloric values

@@ -1,7 +1,7 @@
 from flask import request, render_template, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from .database import db
-
+from .user_profile import UserProfile
 class UserModel(db.Model):
     __tablename__ = 'users'
 
@@ -30,8 +30,22 @@ def register_auth_routes(app):
             # Check if user already exists
             existing_user = UserModel.query.filter_by(email=email).first()
             if existing_user:
-                return "User already exists!"  # Replace with flash message later
-            
+                # check if user completed signup by querying user_profiles table based on id (foregin key)
+
+                completed_signUp=UserProfile.query.filter_by(user_id=existing_user.id).first()
+                # if not compelted signup then take to signup page
+                if completed_signUp:
+                    return "ERROR User already exists with this email"  # Replace with flash message later
+                elif username!=existing_user.username:
+                    # check if the user entered an existing email with a different username but hasnt completed sign up,
+                    # can cause error where user finishes signup but username is not updated
+                        return "ERROR Existing Signup Process Found with your email but with a different username \n to continue sign up retry with your original username: {existing_user.username}"
+                # else allow user to continue sign up
+                else:   
+                    # redirect to prevent a database error uploading same user twice
+                    session['user_id']=existing_user.id
+                    return redirect(url_for('setup_profile'))
+
             # Create user instance
             new_user = UserModel(username=username, email=email)
             new_user.set_password(password)
@@ -58,7 +72,13 @@ def register_auth_routes(app):
             if user and user.check_password(password):
                 # ✅ Store user_id in session for later use
                 session['user_id'] = user.id
-                return redirect(url_for('show_feed'))
+                # check if user has compelted sign up
+                completed_signUp=UserProfile.query.filter_by(user_id=user.id).first()
+                if completed_signUp:
+                    return redirect(url_for('get_started'))
+                    # if not completed sign up then allow them to finish sign up
+                else:
+                    return redirect(url_for('setup_profile'))
             else:
                 return "Invalid credentials"  # Replace with flash later
         return render_template('login.html')
