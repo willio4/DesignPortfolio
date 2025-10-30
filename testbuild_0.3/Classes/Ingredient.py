@@ -13,8 +13,7 @@ class Ingredient:
     def __str__(self):
         return f"{self.name} {self.quantity} {self.unit}"
     
-    def toString(self):
-        return f"{self.ingredientID} {self.name}/s"
+    # keep toString removed in favor of __str__ (Java-style method removed)
 
 # added helper function to create the ingredient object from model output
 def create_ingredients_from_output(items):

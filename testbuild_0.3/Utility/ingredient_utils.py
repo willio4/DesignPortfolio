@@ -189,13 +189,32 @@ def normalize_meals(meals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     - ingredients will be a list of normalized ingredient dicts
     - instructions: if a string with multiple lines will be converted to a list; otherwise left as-is
     """
+    def _strip_leading_numbering(s: str) -> str:
+        """Remove common leading numbering or list markers from an instruction line.
+
+        Examples removed: "1.", "1)", "1 -", "1:", "1 - Step" etc.
+        """
+        if not s:
+            return s
+        # remove leading whitespace then common numbering tokens like '1.', '1)', '1 -', '1:'
+        s2 = re.sub(r"^\s*\d+\s*[\.):\-]+\s*", "", s)
+        # also handle cases like '1. Step:' or '1) Step -'
+        s2 = re.sub(r"^\s*\d+\s+[-–—:]\s*", "", s2)
+        return s2.strip()
+
     for meal in meals:
         ing_list = meal.get("ingredients", []) or []
         meal["ingredients"] = [normalize_ingredient(i) for i in ing_list]
 
         instr = meal.get("instructions")
+        # if instructions are a single string, split into lines and clean them
         if isinstance(instr, str):
             lines = [ln.strip() for ln in instr.splitlines() if ln.strip()]
-            meal["instructions"] = lines if len(lines) > 1 else instr
+            # strip leading numbering markers from each line
+            cleaned = [_strip_leading_numbering(ln) for ln in lines]
+            meal["instructions"] = cleaned if len(cleaned) > 1 else cleaned[0] if cleaned else instr
+        # if instructions are a list, ensure we clean each element
+        elif isinstance(instr, list):
+            meal["instructions"] = [_strip_leading_numbering(str(ln)) for ln in instr]
 
     return meals

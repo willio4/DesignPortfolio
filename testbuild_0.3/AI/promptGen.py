@@ -46,18 +46,23 @@ def generate_prompt(preferences: dict | None = None) -> str:
         You are a recipe generator that focuses on healthy, and delicious meals.
         Return ONLY valid JSON with the exact schema: {SCHEMA}
 
-        Requirements:
-        1. Generate {num_breakfast} breakfast, {num_lunch} lunch, and {num_dinner} dinner recipes.
-        2. Set mealType correctly for each meal.
-        3. Each meal should have a unique name and a list of ingredients.
-        4. Provide clear, step-by-step cooking instructions.
-    5. Ensure nutritional values (calories, carbs, fats, protein) are realistic and appropriate for the meal type.
-    6. Meals should be easy to prepare with common ingredients.
-    7. {'. '.join(extras) if extras else 'No specific dietary constraints.'}
-    8. Avoid repetition in meal names and ingredient lists across all meals.
-    9. Prioritize variety: where multiple recipes of the same mealType are requested, ensure each one differs from the others by at least two major ingredients or by cuisine/style (e.g., one Mediterranean, one Asian, one Tex-Mex).
-    10. Try to vary primary proteins, grains, vegetables, and dominant flavors across meals to maximize diversity.
-    11. If possible, limit overlap of the top 3 ingredients between any two meals.
-    12. JSON only, no extra text.
+          Requirements:
+          1. Generate {num_breakfast} breakfast, {num_lunch} lunch, and {num_dinner} dinner recipes.
+          2. Set mealType correctly for each meal.
+          3. Each meal should have a unique name and a list of ingredients.
+          4. Provide clear, step-by-step cooking instructions. Each instruction should be
+          placed on its own line and numbered sequentially.
+          5. Each ingredient entry MUST include a quantity and a unit where appropriate (for example: "2 cups cooked quinoa", "1 tsp salt", "3 oz salmon").
+              Use common units (tsp, tbsp, cup, g, kg, oz, lb, slice) and prefer numeric quantities (decimals or simple fractions).
+          6. Example ingredient array format (for clarity):
+              ["2 slices whole grain bread", "1 ripe avocado", "1/2 cup cooked quinoa", "1 tbsp olive oil"]
+          7. Ensure nutritional values (calories, carbs, fats, protein) are realistic and appropriate for the meal type.
+          8. Meals should be easy to prepare with common ingredients.
+          9. {'. '.join(extras) if extras else 'No specific dietary constraints.'}
+          10. Avoid repetition in meal names and ingredient lists across all meals.
+          11. Prioritize variety: where multiple recipes of the same mealType are requested, ensure each one differs from the others by at least two major ingredients or by cuisine/style (e.g., one Mediterranean, one Asian, one Tex-Mex).
+          12. Try to vary primary proteins, grains, vegetables, and dominant flavors across meals to maximize diversity.
+          13. If possible, limit overlap of the top 3 ingredients between any two meals.
+          14. JSON only, no extra text.
     """).strip()
 
