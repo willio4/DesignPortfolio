@@ -167,3 +167,12 @@ class User:
         f"{self._height_ft}ft {self._height_in}in, "
         f"{self._weight_lbs}lbs, goal={self._goal})"
     )
+
+    def generateMealPlannerPrompt(self, dietary restrictions=none, allergies=none, meal_preferences="Mixed", activity="moderate"):
+        if DIETARY_RESTRICTIONS in None:
+            DIETARY_RESTRICTIONS = []
+        if ALLERGIES is None
+            ALLERGIES = []
+
+    #Caloric values
+    #target-calories = round(self.calorieTargetByGoal(activity))
