@@ -34,11 +34,14 @@
                  Home
               </a>
             </li>
+          {% if session.get('user_id') %}
+
             <li>
               <a href="{{ url_for('get_started') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
                  Get Started
               </a>
             </li>
+            {% endif %}
             <li>
               <a href="{{ url_for('shopping_list') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
                  Shopping List

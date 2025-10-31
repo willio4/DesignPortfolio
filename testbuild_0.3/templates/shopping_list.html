@@ -33,12 +33,16 @@
                  Home
               </a>
             </li>
+
+            {% if session.get('user_id') %}
             <li>
               <a href="{{ url_for('get_started') }}" 
                  class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
                  Get Started
               </a>
             </li>
+              {% endif %}
+
             <li>
               <a href="{{ url_for('shopping_list') }}" 
                  class="flex justify-center font-bold  bg-gradient-to-b from-white to-gray-200 rounded-full shadow-[0_4px_8px_rgba(0,0,0,0.2)] text-green-400 py-4 px-6">

@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template,session
 import logging
 from Utility.ingredient_utils import normalize_meals
 
@@ -56,6 +56,8 @@ def index():
 
 @app.route("/get_started")
 def get_started():
+    if 'user_id' not in session:
+        return render_template('signup.html')
     return render_template("get_started.html")
 
 @app.route("/shopping_list")
