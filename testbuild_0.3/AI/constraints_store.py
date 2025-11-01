@@ -1,3 +1,4 @@
+# To Do: add `merge_constraints(global_user_prefs)` helper"
 """
 Validated constraints store for development.
 - File-backed JSON store at AI/constraints.json
