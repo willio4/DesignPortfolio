@@ -16,7 +16,9 @@ def safe_int(value, default=0, non_negative=True):
         return int_val if (not non_negative or int_val >= 0) else default
     except (ValueError, TypeError):
         return default
-
+# To Do: update to accept merged dict and include a sort section
+# in the prompt showing the constraints that have been applied 
+# log the merged constraints within the prompt in `main.py` before calling the model
 def generate_prompt(preferences: dict | None = None) -> str:
     prefs = preferences or {}
     # test to make sure constraits works

@@ -75,6 +75,10 @@ def calendar():
 # be sure to add them here too
 @app.route("/startMealPlan", methods = ['GET', 'POST'])
 def startMealPlan():
+    # Tess TO DO:
+    # modify to be able to read global user preferences
+    # merge final constraints
+    # pass merged constraints into promptGen.generate_prompt(final_constraints)
     if request.method == 'GET':
         return render_template("mealGen.html")
 

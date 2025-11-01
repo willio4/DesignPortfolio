@@ -1,6 +1,9 @@
 # contains helper functions to read/write contstraints per user
 # TO DO:
 #update_user_constraints function
+# Add per-user write capability
+# imlement update_user_constraints function
+# add a small route for users to view/edit constraints
 
 import json
 from typing import Any, Dict
