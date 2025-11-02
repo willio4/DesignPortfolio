@@ -7,211 +7,218 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
 
+  <body class="bg-gray-100 min-h-screen flex flex-col relative">
 
-
-  <body class="bg-gray-100 min-h-screen flex flex-col">
-
-
-      <header class="flex justify-between items-center py-4 px-8">
-        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="h-12">
-        <div class="flex space-x-4">
-            <a href="{{ url_for('login') }}">
-                <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
-                    Log In
-                </button>
-            </a>
-            <a href="{{ url_for('signup') }}">
-                <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
-                    Sign Up
-                </button>
-            </a>
-        </div>
+    <!-- Header -->
+    <header class="flex justify-between items-center py-4 px-8">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="h-12">
+      <div class="flex space-x-4">
+        <a href="{{ url_for('login') }}">
+          <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
+            Log In
+          </button>
+        </a>
+        <a href="{{ url_for('signup') }}">
+          <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
+            Sign Up
+          </button>
+        </a>
+      </div>
     </header>
 
-        <ul class="grid grid-flow-col text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-1 shadow-inner shadow-gray-400">
-            <li>
-              <a href="{{ url_for('index') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition ">
-                 Home
-              </a>
-            </li>
-            <li>
-              <a href="{{ url_for('get_started') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
-                 Get Started
-              </a>
-            </li>
-            <li>
-              <a href="{{ url_for('shopping_list') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
-                 Shopping List
-              </a>
-            </li>
-            <li>
-              <a href="{{ url_for('calendar') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
-                 Calendar
-              </a>
-            </li>
-            <!-- <li>
-              <a href="{{ url_for('show_feed') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
-                 Feed
-              </a>
-            </li> -->
-          </ul>
-    <main class='flex-grow flex flex-col items-center p-6'> 
-    <h1 class="text-3xl font-bold mb-8 text-gray-800">Meal Plan Results</h1>
-<!--  display the recipes in a grid fashion with 3 meals -->
-    {% if data and data.meals %}
-    <div
-      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl"
-    >
-      {% for r in data.meals %}
-      <!-- show each meal as card that can be clicked -->
-      <div
-        class="bg-white rounded-2xl shadow-lg p-6 cursor-pointer transform transition duration-200 hover:scale-[1.02]"
-        onclick="openModal('{{ loop.index0 }}')"
-      >
-      <!--  top of card display the meal name -->
-        <h2 class="text-xl font-semibold text-gray-800 mb-2">
-          {{ r.name }} ({{ r.mealType }})
-        </h2>
-        <!-- list of the nutrional info -->
-        <p class="text-gray-600 mb-3">
-          <span class="font-medium">Calories:</span> {{ r.calories }} |
-          C {{ r.carbs }}g • F {{ r.fats }}g • P {{ r.protein }}g
-        </p>
-        <!--  list off the ingredients (supports structured ingredient objects or plain strings) -->
-        <h3 class="text-gray-700 font-medium mb-1">Ingredients</h3>
-        <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
-          {% for ing in r.ingredients %}
-              {% if ing is mapping %}
-              <li class="ingredient-item">
-                <span class="ingredient-qty font-semibold">
-                  {% if ing.quantity_display %}
-                    {{ ing.quantity_display }}
-                  {% elif ing.quantity is not none %}
-                    {{ ing.quantity }}
-                  {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
-                </span>
-                <span class="ingredient-name"> {{ ing.name }}</span>
-                {% if ing.estimated_calories is not none %}
-                  <span class="ingredient-cal text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
-                {% endif %}
-              </li>
-            {% else %}
-              <li class="ingredient-item">{{ ing }}</li>
-            {% endif %}
-          {% endfor %}
-        </ul>
-      </div>
+    <!-- Navigation -->
+    <ul class="grid grid-flow-col text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-1 shadow-inner shadow-gray-400">
+      <li><a href="{{ url_for('index') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Home</a></li>
+      <li><a href="{{ url_for('get_started') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Get Started</a></li>
+      <li><a href="{{ url_for('shopping_list') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Shopping List</a></li>
+      <li><a href="{{ url_for('calendar') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Calendar</a></li>
+    </ul>
 
-      <!-- the elemtn that is shown when clicked on  -->
-      <div
-        id="modal-{{ loop.index0 }}"
-        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
-      >
-        <div
-          class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative"
+    <!-- Instruction Text -->
+    <div class="text-center text-gray-700 text-lg font-medium mt-6">
+      Click on meals to select them for saving
+    </div>
+
+    <main class="flex-grow flex flex-col items-center p-6">
+      <h1 class="text-3xl font-bold mb-8 text-gray-800">Meal Plan Results</h1>
+
+      {% if data and data.meals %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
+        {% for r in data.meals %}
+        <!-- Meal Card -->
+        <div 
+          class="relative bg-white rounded-2xl shadow-lg p-6 cursor-pointer transform transition duration-200 hover:scale-[1.02]"
+          onclick="toggleSelect(this, '{{ r.id }}')"
         >
-          <button
-            onclick="closeModal('{{ loop.index0 }}')"
-            class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl"
+          <!-- Info Button -->
+          <button 
+            onclick="event.stopPropagation(); openModal('{{ loop.index0 }}');"
+            class="absolute top-3 right-3 bg-white border border-gray-300 rounded-full p-1 shadow-sm hover:bg-gray-100 transition"
+            title="View Details"
           >
-            ✕
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+            </svg>
           </button>
-          <!-- re display info but add instructions here since we have more space -->
-          <h2 class="text-2xl font-semibold mb-4 text-gray-800">
+
+          <h2 class="text-xl font-semibold text-gray-800 mb-2">
             {{ r.name }} ({{ r.mealType }})
           </h2>
-          <p class="text-gray-600 mb-4">
+          <p class="text-gray-600 mb-3">
             <span class="font-medium">Calories:</span> {{ r.calories }} |
             C {{ r.carbs }}g • F {{ r.fats }}g • P {{ r.protein }}g
           </p>
-          <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
-          <ul class="list-disc list-inside text-gray-600 text-sm mb-4">
+
+          <h3 class="text-gray-700 font-medium mb-1">Ingredients</h3>
+          <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
             {% for ing in r.ingredients %}
               {% if ing is mapping %}
-                <li class="ingredient-item">
-                  <span class="ingredient-qty font-semibold">
+                <li>
+                  <span class="font-semibold">
                     {% if ing.quantity_display %}
                       {{ ing.quantity_display }}
                     {% elif ing.quantity is not none %}
                       {{ ing.quantity }}
                     {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
                   </span>
-                  <span class="ingredient-name"> {{ ing.name }}</span>
+                  <span>{{ ing.name }}</span>
                   {% if ing.estimated_calories is not none %}
-                    <span class="ingredient-cal text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
+                    <span class="text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
                   {% endif %}
                 </li>
               {% else %}
-                <li class="ingredient-item">{{ ing }}</li>
+                <li>{{ ing }}</li>
               {% endif %}
             {% endfor %}
           </ul>
-          <h3 class="text-gray-700 font-medium mb-2">Instructions</h3>
-          {% if r.instructions is string %}
-            {% set lines = r.instructions.split('\n') %}
-            <ol class="list-decimal list-inside text-gray-700 text-sm mb-4">
-              {% for line in lines %}
-                {% if line.strip() %}
-                  <li>{{ line.strip() }}</li>
-                {% endif %}
+        </div>
+
+        <!-- Modal -->
+        <div id="modal-{{ loop.index0 }}" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+          <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative">
+            <button onclick="closeModal('{{ loop.index0 }}')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">✕</button>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">{{ r.name }} ({{ r.mealType }})</h2>
+            <p class="text-gray-600 mb-4">
+              <span class="font-medium">Calories:</span> {{ r.calories }} |
+              C {{ r.carbs }}g • F {{ r.fats }}g • P {{ r.protein }}g
+            </p>
+            <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
+            <ul class="list-disc list-inside text-gray-600 text-sm mb-4">
+              {% for ing in r.ingredients %}
+                <li>{{ ing.name }}</li>
               {% endfor %}
-            </ol>
-          {% else %}
+            </ul>
+            <h3 class="text-gray-700 font-medium mb-2">Instructions</h3>
             <ol class="list-decimal list-inside text-gray-700 text-sm mb-4">
               {% for step in r.instructions %}
                 <li>{{ step }}</li>
               {% endfor %}
             </ol>
-          {% endif %}
+          </div>
         </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <pre
-      class="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-auto w-full max-w-4xl"
-    >{{ data | tojson(indent=2) if data else "No data passed." }}</pre>
-    {% endif %}
+      {% else %}
+      <pre class="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-auto w-full max-w-4xl">
+        {{ data | tojson(indent=2) if data else "No data passed." }}
+      </pre>
+      {% endif %}
+    </main>
 
-    <p class="mt-8">
-      <a
-        href="{{ url_for('get_started') }}"
-        class="text-blue-600 hover:underline font-medium"
-        >Try again</a
+    <!-- Save Meals Button -->
+    <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2">
+      <button 
+        id="saveMealsBtn"
+        disabled
+        class="px-8 py-3 rounded-full text-white font-semibold bg-gray-300 cursor-not-allowed transition relative group"
       >
-    </p>
-</main>
+        Save Meals
+        <span class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 whitespace-nowrap">
+          Select at least one meal to save
+        </span>
+      </button>
+    </div>
 
+    <!-- Footer -->
+    <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
+      <div class="flex flex-col space-y-1">
+        <span>Contact Support</span>
+        <span>(702) 555-1234</span>
+        <span>support@prepify.com</span>
+      </div>
+      <div class="text-center w-1/3">
+        <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
+      </div>
+    </footer>
 
-      <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
-            <!-- Left side: contact info -->
-            <div class="flex flex-col space-y-1">
-              <span>Contact Support</span>
-              <span>(702) 555-1234</span>
-              <span>support@prepify.com</span>
-            </div>
-          
-            <!-- Right side: copyright -->
-            <div class="text-center w-1/3">
-              <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
-            </div>
-          </footer>
-          
     <script>
-      // logic for showing the modal element and hiding it
+      const selectedMeals = new Set();
+
+      function toggleSelect(card, mealId) {
+        if (card.classList.contains('border-green-500')) {
+          card.classList.remove('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
+          selectedMeals.delete(mealId);
+        } else {
+          card.classList.add('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
+          selectedMeals.add(mealId);
+        }
+        updateSaveButton();
+      }
+
+      function updateSaveButton() {
+        const btn = document.getElementById('saveMealsBtn');
+        if (selectedMeals.size > 0) {
+          btn.disabled = false;
+          btn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+          btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+        } else {
+          btn.disabled = true;
+          btn.classList.add('bg-gray-300', 'cursor-not-allowed');
+          btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        }
+      }
+
       function openModal(id) {
         document.getElementById("modal-" + id).classList.remove("hidden");
         document.getElementById("modal-" + id).classList.add("flex");
       }
+
       function closeModal(id) {
         document.getElementById("modal-" + id).classList.remove("flex");
         document.getElementById("modal-" + id).classList.add("hidden");
       }
+
+      // Call backend to save meals
+      document.getElementById('saveMealsBtn').addEventListener('click', async () => {
+        if (selectedMeals.size === 0) return;
+
+        try {
+          const response = await fetch("{{ url_for('save_meals') }}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ meal_ids: Array.from(selectedMeals) })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert("Meals Successfully Saved");
+            selectedMeals.clear();
+            document.querySelectorAll('.border-green-500').forEach(card => {
+              card.classList.remove('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
+            });
+            updateSaveButton();
+          } else {
+            alert("ERROR! Failed to save meals: " + (data.error || "Unknown error"));
+          }
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred while saving meals.");
+        }
+      });
     </script>
   </body>
 </html>

@@ -6,6 +6,7 @@ load_dotenv()
 from flask import Flask, request, render_template,session
 import logging
 from Utility.ingredient_utils import normalize_meals
+from Utility.mealSaver import saveNewMeals,generatemealIDs
 
 # Database
 from User_Auth.database import db
@@ -54,6 +55,24 @@ with app.app_context():
 def index():
     return render_template("index.html")
 
+# from flask import Flask, request, jsonify
+
+
+
+@app.route('/save_meals', methods=['POST'])
+def save_meals():
+    data = request.get_json()
+    meal_ids = data.get('meal_ids', [])
+    
+    # Example: call your actual saving function
+    try:
+        # save_selected_meals(meal_ids)  # <- your backend logic here
+        print("Saving meals:", meal_ids)
+        return jsonify({"status": "success", "saved": meal_ids}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/get_started")
 def get_started():
     if 'user_id' not in session:
@@ -94,6 +113,15 @@ def startMealPlan():
     if data and isinstance(data, dict):
         meals = data.get("meals", []) or []
         normalize_meals(meals)
+
+    ids=generatemealIDs(session["user_id"],len(data)) # generate ids for the meals for ui and databse
+    # data["meals"]["id"]=ids # add to json
+    ctr=0
+    for m in data["meals"]:
+        data["meals"][ctr]["id"]=ids[ctr]
+        ctr+=1
+
+    saveNewMeals(session["user_id"],data) # saves the meals to database
 
     return render_template("results.html", data=data)
 

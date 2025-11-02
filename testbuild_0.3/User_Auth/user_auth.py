@@ -108,9 +108,9 @@ def register_auth_routes(app):
             db.session.add(profile)
             db.session.commit()
 
-            # ✅ Clear session after setup if you want to log them in again later
-            session.pop('user_id', None)
+            # # ✅ Clear session after setup if you want to log them in again later
+            # session.pop('user_id', None)
 
-            return redirect(url_for('login'))
+            return redirect(url_for('index'))
 
         return render_template('setup_profile.html')
