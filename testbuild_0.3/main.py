@@ -23,6 +23,8 @@ from Classes.GroceryList import GroceryList
 # AI imports
 from AI.promptGen import generate_prompt
 from AI.callModel import call_model
+from AI import constraints_store as cs
+from AI import constraints_db as cdb
 
 # Routes
 from Feed.feed import register_feed_routes
@@ -94,15 +96,33 @@ def calendar():
 # be sure to add them here too
 @app.route("/startMealPlan", methods = ['GET', 'POST'])
 def startMealPlan():
+    # Tess TO DO:
+    # modify to be able to read global user preferences
+    # merge final constraints
+    # pass merged constraints into promptGen.generate_prompt(final_constraints)
     if request.method == 'GET':
         return render_template("mealGen.html")
 
     # Log the received form data
-    prefs = dict(request.form)
-    logging.debug(f"Received form data: {prefs}")
+    form_prefs = dict(request.form)
+    logging.debug(f"Received form data: {form_prefs}")
+
+    # Load stored global constraints and user-specific constraints (if logged in)
+    global_constraints = cs.get() or {}
+    user_constraints = {}
+    user_id = session.get('user_id')
+    if user_id:
+        try:
+            user_constraints = cdb.get_user_constraints(int(user_id)) or {}
+        except Exception:
+            logging.exception("Failed to load user constraints")
+
+    # Merge constraints (pure function; does not persist)
+    merged_prefs = cs.merge_constraints(global_constraints, user_constraints, form_prefs)
+    logging.debug("Merged preferences used for prompt: %s", merged_prefs)
 
     # Generate the prompt and log it
-    prompt = generate_prompt(prefs)
+    prompt = generate_prompt(merged_prefs)
     logging.debug(f"Generated prompt: {prompt}")
 
     # Call the model and log the response

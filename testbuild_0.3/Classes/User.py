@@ -1,178 +1,193 @@
-from User_Auth.user_auth import UserModel
+"""User helper used by the testbuild (cleaned, dataclass-based).
 
+        This module provides a small, well-tested User model with serialization and
+        methods useful for prompt generation (BMR, BMI, calorie targets, etc.).
+        """
+
+from dataclasses import dataclass, field, asdict
+from typing import Any, Dict, List, Optional
+
+
+@dataclass
 class User:
+    name: Optional[str] = None
+    weight_lbs: Optional[float] = None
+    height_ft: Optional[int] = None
+    height_in: Optional[int] = None
+    age: Optional[int] = None
+    sex: Optional[str] = None  # 'M' or 'F'
+    goal: Optional[str] = None  # 'maintain'|'lose'|'gain'
+    disliked_ingredients: List[str] = field(default_factory=list)
+    allergies: List[str] = field(default_factory=list)
+    prefs: Dict[str, Any] = field(default_factory=dict)
 
-    DIETARY_RESTRICTIONS = [
-        "Kosher",
-        "Halal",
-        "Carnivore",
-        "Keto",
-        "Pescatarian",
-        "Gluten-Free",
-        "Lactose-Free",
-        "Paleo",
-        "Vegetarian",
-        "Vegan"
-    ]
+    @classmethod
+    def from_user_model(cls, user_model: Any) -> "User":
+        """Construct from an arbitrary user_model object (e.g. ORM model).
 
-    ALLERGIES = [
-        "Dairy",
-        "Eggs",
-        "Peanuts",
-        "Tree Nuts",
-        "Soy",
-        "Gluten",
-        "Wheat",
-        "Shellfish"
-    ]
+        This is defensive: it looks for common attributes and falls back to dict
+        access where appropriate.
+        """
+        src = user_model
+        def _get(attr, default=None):
+            return getattr(src, attr, src.get(attr, default) if isinstance(src, dict) else default)
 
-    MEAL_PREFERENCES = [
-        "Mostly Chicken",
-        "Mostly Beef",
-        "Mostly Fish"
-    ]
+        return cls(
+            name=_get("name"),
+            weight_lbs=_get("weight_lbs"),
+            height_ft=_get("height_ft"),
+            height_in=_get("height_in"),
+            age=_get("age"),
+            sex=(_get("sex") or _get("gender")),
+            goal=_get("goal"),
+            disliked_ingredients=_get("disliked_ingredients") or _get("dislikes") or [],
+            allergies=_get("allergies") or [],
+            prefs=_get("prefs") or {},
+        )
 
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
 
-    def __init__(self, user_model: UserModel):
-        self.auth = user_model
-        self.profile = user_model.profile
-        self._currentMealPlan = [] # added storing of user meal plan as list of meal objects
-    
-    def _to_kg(self):
-        return self._weight_lbs * 0.45359237
+    # internal conversions
+    def _weight_kg(self) -> float:
+        return (self.weight_lbs or 0.0) * 0.45359237
 
-    def _to_cm(self):
-        total_inches = self._height_ft * 12 + self._height_in
+    def _height_cm(self) -> float:
+        ft = int(self.height_ft or 0)
+        inch = int(self.height_in or 0)
+        total_inches = ft * 12 + inch
         return total_inches * 2.54
 
-    # getters
-    def getName(self):
-        return self.profile.name
+    # health calculations
+    def calculateBMR(self) -> float:
+        """Basal Metabolic Rate using Mifflin–St Jeor Equation.
 
-    def getName(self):
-        return self.profile.name
-
-    def getWeightLbs(self):
-        return self.profile.weight_lbs
-
-    def getHeightFeetInches(self):
-        return (self.profile.height_ft, self.profile.height_in)
-    
-    def getAge(self):
-        return self.profile.age 
-    
-    def getSex(self):
-        return self.profile.sex
-
-    def getGoal(self):
-        return self.profile.goal
-
-
-    def setName(self, name): self._name = name
-    def setWeightLbs(self, weight_lbs): self._weight_lbs = float(weight_lbs)
-    def setHeight(self, feet, inches=0):
-        self._height_ft = int(feet)
-        self._height_in = int(inches)
-    def setAge(self, age): self._age = int(age)
-    def setSex(self, sex): self._sex = sex.upper()
-    def setGoal(self, goal): self._goal = goal.lower()
-
-
-    def calculateBMR(self):
-        """Basal Metabolic Rate using Mifflin–St Jeor Equation"""
-        w = self._to_kg()
-        h = self._to_cm()
-        a = self._age
-        if self._sex == "M":
+        Returns float kcal/day. Sex must be 'M' or 'F' (case-insensitive).
+        """
+        w = self._weight_kg()
+        h = self._height_cm()
+        a = int(self.age or 0)
+        s = (self.sex or "").upper()
+        if s == "M":
             return 88.362 + (13.397 * w) + (4.799 * h) - (5.677 * a)
-        elif self._sex == "F":
+        elif s == "F":
             return 447.593 + (9.247 * w) + (3.098 * h) - (4.330 * a)
         else:
-            raise ValueError("Sex must be 'M' or 'F'")
+            # fall back to average formula if sex unknown
+            return  (88.362 + 447.593) / 2 + (13.397 + 9.247) / 2 * w + (4.799 + 3.098) / 2 * h - (5.677 + 4.330) / 2 * a
 
-    def calculateBMI(self):
-        """BMI = weight(kg) / height(m)^2"""
-        h_m = self._to_cm() / 100.0
-        w_kg = self._to_kg()
+    def calculateBMI(self) -> float:
+        h_m = self._height_cm() / 100.0
+        w_kg = self._weight_kg()
+        if h_m <= 0:
+            return 0.0
         return w_kg / (h_m ** 2)
 
-    def bmiCategory(self):
-        """Return BMI classification string"""
+    def bmiCategory(self) -> str:
         bmi = self.calculateBMI()
+        if bmi <= 0:
+            return "unknown"
         if bmi < 18.5:
             return "underweight"
-        elif bmi < 25:
+        if bmi < 25:
             return "normal"
-        elif bmi < 30:
+        if bmi < 30:
             return "overweight"
-        else:
-            return "obese"
+        return "obese"
 
-    def dailyCalories(self, activity="moderate"):
-        """Estimate Total Daily Energy Expenditure (TDEE)"""
+    def dailyCalories(self, activity: str = "moderate") -> float:
         factors = {
-            "sedentary" : 1.2,
-            "light" : 1.375, 
-            "moderate" : 1.55,
-            "active" : 1.725,
-            "very active" : 1.9,
+            "sedentary": 1.2,
+            "light": 1.375,
+            "moderate": 1.55,
+            "active": 1.725,
+            "very active": 1.9,
         }
-        factor = factor.get(activity, 1.55)
+        key = (activity or "").lower()
+        factor = factors.get(key, 1.55)
         return self.calculateBMR() * factor
-    
-    def calorieTargetByGoal(self, activity = "moderate"):
-        """adjust calories based on weight goals"""
-        tdee = self.dailyCalories(activity)
-        if self._goal == "maintain" :
-            return tdee
-        elif self._goal == "lose" :
-            return max(0.0, tdee - 500)
-        elif self._goal == "gain" :
-            return tdee + 500
-        else: return tdee
 
-    def UserData(self):
-        """Return user data in organized form"""
-        return{
-            "name" : self._name,
-            "weight_lbs" : self._weight_lbs,
-            "height_ft" : self._height_ft,
-            "height_in": self._height_in,
-            "age" : self._age,
-            "sex" : self._sex,
-            "goal" : self._goal,
-            "bmi" : round(self.calculateBMI(), 1),
-            "bmi_category" : self.bmiCategory(),
-            "bmr" : round(self.calculateBMR(), 0),
+    def calorieTargetByGoal(self, activity: str = "moderate") -> float:
+        tdee = self.dailyCalories(activity)
+        g = (self.goal or "").lower()
+        if g == "maintain":
+            return tdee
+        if g == "lose":
+            return max(0.0, tdee - 500)
+        if g == "gain":
+            return tdee + 500
+        return tdee
+
+    # compatibility helper similar to old code
+    def UserData(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "weight_lbs": self.weight_lbs,
+            "height_ft": self.height_ft,
+            "height_in": self.height_in,
+            "age": self.age,
+            "sex": self.sex,
+            "goal": self.goal,
+            "bmi": round(self.calculateBMI(), 1),
+            "bmi_category": self.bmiCategory(),
+            "bmr": round(self.calculateBMR(), 0),
         }
-    
-    def llmPromptText(self, activity= "moderate") :
-        """ChatGPT summary strings for user prompts"""
+
+    def llmPromptText(self, activity: str = "moderate") -> str:
         bmi = self.calculateBMI()
         tdee = self.dailyCalories(activity)
-        target = self.calculateTargetByGoal(activity)
-        return(
-            f"User: {self._name}, {self._sex}, {self._age}, years old. "
-            f"Height: {self._height_ft} ft {self._height_in} in. "
-            f"Weight: {self._weight_lbs} lbs. Goal: {self._goal}. "
+        target = self.calorieTargetByGoal(activity)
+        return (
+            f"User: {self.name}, {self.sex}, {self.age} years old. "
+            f"Height: {self.height_ft} ft {self.height_in} in. "
+            f"Weight: {self.weight_lbs} lbs. Goal: {self.goal}. "
             f"BMI: {bmi:.1f} ({self.bmiCategory()}). "
             f"BMR: {self.calculateBMR():.0f} kcal/day. "
             f"Maintenance calories (TDEE): {tdee:.0f} kcal/day. "
             f"Recommended daily calories for goal: {target:.0f} kcal/day."
         )
 
-    def __str__(self):
+    # convenience getters/setters (small compatibility layer)
+    def getName(self):
+        return self.name
+
+    def getWeightLbs(self):
+        return self.weight_lbs
+
+    def getHeightFeetInches(self):
+        return (self.height_ft, self.height_in)
+
+    def getAge(self):
+        return self.age
+
+    def getSex(self):
+        return self.sex
+
+    def getGoal(self):
+        return self.goal
+
+    def setName(self, name: str):
+        self.name = name
+
+    def setWeightLbs(self, weight_lbs: float):
+        self.weight_lbs = float(weight_lbs)
+
+    def setHeight(self, feet: int, inches: int = 0):
+        self.height_ft = int(feet)
+        self.height_in = int(inches)
+
+    def setAge(self, age: int):
+        self.age = int(age)
+
+    def setSex(self, sex: str):
+        self.sex = sex.upper() if sex else sex
+
+    def setGoal(self, goal: str):
+        self.goal = goal.lower() if goal else goal
+
+    def __str__(self) -> str:
         return (
-        f"User({self._name}, {self._sex}, {self._age}y, "
-        f"{self._height_ft}ft {self._height_in}in, "
-        f"{self._weight_lbs}lbs, goal={self._goal})"
-    )
-
-    def generateMealPlannerPrompt(self, dietary_restrictions=None, allergies=None, meal_preferences="Mixed", activity="moderate"):
-        if DIETARY_RESTRICTIONS in None:
-            DIETARY_RESTRICTIONS = []
-        if ALLERGIES is None:
-            ALLERGIES = []
-
-    #Caloric values
-    #target-calories = round(self.calorieTargetByGoal(activity))
+            f"User({self.name}, {self.sex}, {self.age}y, "
+            f"{self.height_ft}ft {self.height_in}in, "
+            f"{self.weight_lbs}lbs, goal={self.goal})"
+        )
