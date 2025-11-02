@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Any, Dict
+import builtins
 
 FILE = os.path.join(os.path.dirname(__file__), "constraints.json")
 
@@ -92,6 +93,68 @@ def validate_constraints(mapping: Dict[str, Any]) -> Dict[str, Any]:
         out[k] = _sanitize_value(k, v)
     return out
 
+# merge mutiple constraints dicts, the later ones will override previous ones
+def merge_list_values(a: Any, b: Any, c: Any) -> list:
+    """Merge "list-like" values/constraints coming from three sources (global,
+    user, prefs).
+    
+    Accepts lists, comma-separated strings, or None. Will return a deduplicated, 
+    lower-cased list preserving first-seen order.
+    """
+    # iterate the 3 values skipping any falsy values
+    items: list[str] = []
+    for values in (a, b, c):
+        if not values:
+            continue
+        if isinstance(values, list):
+            items.extend([str(x).strip().lower() for x in values if str(x).strip()])
+        elif isinstance(values, str):
+            items.extend([x.strip().lower() for x in values.split(",") if x.strip()])
+        else:
+            items.append(str(values).strip().lower())
+
+    # use builtins.set because this module defines a `set()` function below
+    seen: set[str] = builtins.set()
+    out: list[str] = []
+    for it in items:
+        # `it` is already a lower-cased, stripped string
+        if it not in seen:
+            seen.add(it)
+            out.append(it)
+    return out
+
+def merge_constraints(global_constraints: Dict[str, Any] | None,
+                      user_constraints: Dict[str, Any] | None = None,
+                      prefs: Dict[str, Any] | None = None) -> Dict[str, Any]:
+    """Merge constraints with precedence: prefs > user_constraints > global_constraints.
+    
+    - Accepts None for any input.
+    - Merges 'disliked_ingredients' as the union of all sources.
+    - Returns a sanitized dict via validate_constraints().
+    - Pure function:, does not persist anything."""
+
+    global_constraints = global_constraints or {}
+    user_constraints = user_constraints or {}
+    prefs = prefs or {}
+
+    # begin with global, then overlay user, then prefs (last-writer-wins)
+    merged: Dict[str, Any] = dict(global_constraints)
+    merged.update(user_constraints)
+    merged.update(prefs)
+
+    # special handling of list-like merging for disliked_ingredients (disliked
+    # ingredients is just an example, we can extend this)
+    if (("disliked_ingredients" in global_constraints) or 
+       ("disliked_ingredients" in user_constraints) or
+       ("disliked_ingredients" in prefs)):
+        merged["disliked_ingredients"] = merge_list_values(
+            global_constraints.get("disliked_ingredients"),
+            user_constraints.get("disliked_ingredients"),
+            prefs.get("disliked_ingredients"),
+        )
+
+    # sanitize everything before returning
+    return validate_constraints(merged)
 
 def update(mapping: Dict[str, Any]) -> Dict[str, Any]:
     """Merge mapping (after validation) into stored constraints and persist."""
