@@ -48,10 +48,26 @@ def saveNewMeals(userID,newMeals):
     # upload each meal to the database
     for meal in newMeals["meals"]:
 
+
+        # Tess: Commented this out for now to fix the nested f-string error ↓
         # create new meal object
-        newMeal=SavedRecipe(user_id=userID,meal_id=meal["id"],recipe_name=meal["name"],meal_type=meal["mealType"],
-        instructions=f"{meal["instructions"]}",ingredients=f"{meal["ingredients"]}",carbs=meal["carbs"],
-        fats=meal["fats"],protein=meal["protein"])
+        #newMeal=SavedRecipe(user_id=userID,meal_id=meal["id"],recipe_name=meal["name"],meal_type=meal["mealType"],
+        #instructions=f"{meal["instructions"]}",ingredients=f"{meal["ingredients"]}",carbs=meal["carbs"],
+        #fats=meal["fats"],protein=meal["protein"])
+
+                # create new meal object (use .get and avoid nested f-strings)
+        newMeal = SavedRecipe(
+            user_id=userID,
+            meal_id=meal.get("id"),
+            recipe_name=meal.get("name"),
+            meal_type=meal.get("mealType"),
+            instructions=str(meal.get("instructions")) if meal.get("instructions") is not None else None,
+            ingredients=str(meal.get("ingredients")) if meal.get("ingredients") is not None else None,
+            carbs=meal.get("carbs"),
+            fats=meal.get("fats"),
+            protein=meal.get("protein"),
+        )
+
         db.session.add(newMeal)
         db.session.commit()
 
