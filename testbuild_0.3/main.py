@@ -62,11 +62,13 @@ def index():
 def save_meals():
     data = request.get_json()
     meal_ids = data.get('meal_ids', [])
-    
+    collection_name = 
     try:
         print("Saving meals:", meal_ids)
         for id in meal_ids:
-            addMealToCollection(session['user_id'],collection_name,id)
+            pass
+            # still needing to bring in collection_name for this  to be funcitonal
+            # addMealToCollection(session['user_id'],collection_name,id)
 
         return jsonify({"status": "success", "saved": meal_ids}), 200
     except Exception as e:
