@@ -6,7 +6,7 @@ load_dotenv()
 from flask import Flask, request, render_template,session
 import logging
 from Utility.ingredient_utils import normalize_meals
-from Utility.mealSaver import saveNewMeals,generatemealIDs
+from Utility.mealSaver import saveNewMeals,generatemealIDs,addMealToCollection,createNewCollection
 
 # Database
 from User_Auth.database import db
@@ -50,15 +50,12 @@ register_auth_routes(app)
 with app.app_context():
     # db.session.remove() # Uncomment this if you want to delete all data each time you run
     # db.drop_all()       # Uncomment this if you want to delete all data each time you run
-    db.create_all()  # This will create all tables for imported models
+    # db.create_all()  # This will create all tables for imported models
+    pass
 
 # Routes
 @app.route("/")
 def index():
-    return render_template("index.html")
-
-# from flask import Flask, request, jsonify
-
 
 
 @app.route('/save_meals', methods=['POST'])
@@ -66,10 +63,11 @@ def save_meals():
     data = request.get_json()
     meal_ids = data.get('meal_ids', [])
     
-    # Example: call your actual saving function
     try:
-        # save_selected_meals(meal_ids)  # <- your backend logic here
         print("Saving meals:", meal_ids)
+        for id in meal_ids:
+            addMealToCollection(session['user_id'],collection_name,id)
+
         return jsonify({"status": "success", "saved": meal_ids}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

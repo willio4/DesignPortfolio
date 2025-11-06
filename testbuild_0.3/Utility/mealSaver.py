@@ -29,6 +29,58 @@ class SavedRecipe(db.Model):
         return f" Recipe: {self.recipe_name} Saved for user (User {self.user_id})>"
 
 
+#table for storing the meals users have saved to a given collection
+class MealCollections(db.Model):
+    __tablename__ = 'collection_meals'
+
+    meal_id = db.Column(db.String(80),db.ForeignKey('generated_recipes.meal_id'), primary_key=True, nullable=False)
+    
+    # Foreign key to existing users table
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    collection_name=db.Columns(db.String(200),db.ForeignKey('collections.collection_name'),nullable=False)
+
+
+
+# stores all collections created by users
+class CollectionInfo(db.Model):
+    __tablename__="collections"
+    user_id = db.Column(db.Integer,primary_key=True db.ForeignKey('users.id'), nullable=False)
+    
+    collection_name=db.Column(db.String(200),nullable=False)
+    collection_image=db.Column(db.Text,nullable=True)
+
+
+# adds new meal to a collection if it hasnt been already
+def addMealToCollection(userID,collectionName,mealID):
+    meal2Add=MealCollections(user_id=userID,collection_name=collectionName,meal_id=mealID)
+    alreadyAdded = MealCollections.query.filter_by(
+    user_id=userID,
+    meal_id=mealID,
+    collection_name=collectionName
+    ).first()
+    if alreadyAdded:
+        return False
+    
+    db.session.add(meal2Add)
+    db.session.commit()
+    return True
+
+
+# adds a new collection to the databsse if it doesent exist
+def createNewCollection(userID,collectionName):
+    alreadyCreated = CollectionInfo.query.filter_by(
+    collection_name=collectionName,
+    user_id=userID
+    ).first()
+    if alreadyCreated:
+        return False
+
+    newCollectionm = CollectionInfo(user_id=userID,collection_name=collectionName)
+    db.session.add(newMeal)
+    db.session.commit()
+    return True
+
 # used to generate unique recipe Ids to help with saviing meals in the front end
 def generatemealIDs(userID,nRecipes):
     # SavedRecipe.__table__.drop(db)

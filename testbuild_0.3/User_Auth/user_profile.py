@@ -20,7 +20,7 @@ class UserProfile(db.Model):
     goal = db.Column(db.String(20))
     # Additional column to store user-specific constraints
     constraints = db.Column(JSON, nullable=False, default={})
-    
+        
     def set_f_name(self, x):
         self.f_name = x
         
