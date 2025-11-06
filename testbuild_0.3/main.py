@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, request, render_template,session
+from flask import Flask, request, render_template, session, jsonify
 import logging
 from Utility.ingredient_utils import normalize_meals
 from Utility.mealSaver import saveNewMeals,generatemealIDs
@@ -130,20 +130,30 @@ def startMealPlan():
     logging.debug(f"Model response: {data}")
 
     # Normalize meals (ingredients and instructions) using Utility helper
+    meals = []
     if data and isinstance(data, dict):
         meals = data.get("meals", []) or []
         normalize_meals(meals)
 
-    ids=generatemealIDs(session["user_id"],len(data)) # generate ids for the meals for ui and databse
-    # data["meals"]["id"]=ids # add to json
-    ctr=0
-    for m in data["meals"]:
-        data["meals"][ctr]["id"]=ids[ctr]
-        ctr+=1
+    n_meals = len(meals)
+    if n_meals == 0:
+        return render_template("results.html", data={"meals": []})
 
-    saveNewMeals(session["user_id"],data) # saves the meals to database
+    # generate ids for the meals for ui and database
+    user_id = session.get("user_id")
+    ids = generatemealIDs(user_id, n_meals)
 
-    return render_template("results.html", data=data)
+    # Attach ids defensively (fall back to a simple generated id if mismatch)
+    for i, meal in enumerate(meals):
+        try:
+            meal_id = ids[i]
+        except Exception:
+            meal_id = f"{user_id}_{i+1}"
+        meal["id"] = meal_id
+
+    saveNewMeals(user_id, {"meals": meals})  # saves the meals to database
+
+    return render_template("results.html", data={"meals": meals})
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -123,6 +123,20 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
             inferred = infer_quantity_from_name(name)
             if inferred is not None:
                 qty = inferred
+        # Normalize unit detection: only treat unit as a separate unit token
+        # if it matches a known units list; otherwise push it back into the name
+        KNOWN_UNITS = {
+            'tsp', 'tbsp', 'teaspoon', 'teaspoons', 'tablespoon', 'tablespoons',
+            'cup', 'cups', 'oz', 'ounce', 'ounces', 'g', 'gram', 'grams',
+            'kg', 'kilogram', 'lb', 'lbs', 'pound', 'pounds', 'clove', 'cloves',
+            'slice', 'slices', 'can', 'cans', 'tbsp', 'pinch', 'dash'
+        }
+        unit_token = unit.strip().lower()
+        if unit_token and unit_token not in KNOWN_UNITS:
+            # put the parsed unit back into the name (it was likely part of the ingredient name)
+            name = (unit + ' ' + name).strip()
+            unit = ''
+
         return {
             "name": name,
             "quantity": qty,
