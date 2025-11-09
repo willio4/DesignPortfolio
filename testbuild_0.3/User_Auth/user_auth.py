@@ -2,6 +2,8 @@ from flask import request, render_template, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from .database import db
 from .user_profile import UserProfile
+
+
 class UserModel(db.Model):
     __tablename__ = 'users'
 
