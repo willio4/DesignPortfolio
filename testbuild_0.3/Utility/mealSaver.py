@@ -39,14 +39,14 @@ class MealCollections(db.Model):
     # Foreign key to existing users table
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
-    collection_name=db.Columns(db.String(200),db.ForeignKey('collections.collection_name'),nullable=False)
+    collection_name=db.Column(db.String(200),db.ForeignKey('collections.collection_name'),nullable=False)
 
 
 
 # stores all collections created by users
 class CollectionInfo(db.Model):
     __tablename__="collections"
-    user_id = db.Column(db.Integer,primary_key=True db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
     
     collection_name=db.Column(db.String(200),nullable=False)
     collection_image=db.Column(db.Text,nullable=True)
@@ -59,14 +59,13 @@ def getCollections(userID):
     select * from collections
     where user_id="{userID}"
     '''
-    collecitons=[]
-    # 
-    userMeals=pd.read_sql(queryCollections,db.engine)
-    if len(userMeals)==0:
+    collections = []
+    userMeals = pd.read_sql(queryCollections, db.engine)
+    if len(userMeals) == 0:
         return []
     else:
         for collection in userMeals["collection_name"].unique():
-            collecitons.append(collection)
+            collections.append(collection)
     return collections
 
 
@@ -128,7 +127,7 @@ def createNewCollection(userID,collectionName):
         return False
 
     newCollectionm = CollectionInfo(user_id=userID,collection_name=collectionName)
-    db.session.add(newMeal)
+    db.session.add(newCollectionm)
     db.session.commit()
     return True
 
