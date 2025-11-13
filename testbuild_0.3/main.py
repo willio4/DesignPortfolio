@@ -3,8 +3,9 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, request, render_template,session
+from flask import Flask, jsonify, request, render_template,session
 import logging
+import re
 from Utility.ingredient_utils import normalize_meals
 from Utility.mealSaver import saveNewMeals,generatemealIDs,addMealToCollection,createNewCollection,getCollections
 
@@ -56,19 +57,19 @@ with app.app_context():
 # Routes
 @app.route("/")
 def index():
+    return render_template("index.html")  # Replace "index.html" with the appropriate template if needed
 
 
 @app.route('/save_meals', methods=['POST'])
 def save_meals():
     data = request.get_json()
     meal_ids = data.get('meal_ids', [])
-    collection_name = 
+    
     try:
         print("Saving meals:", meal_ids)
         for id in meal_ids:
-            pass
-            # still needing to bring in collection_name for this  to be funcitonal
-            # addMealToCollection(session['user_id'],collection_name,id)
+            collection_name = "default_collection"  # Define a default collection name or retrieve it dynamically
+            addMealToCollection(session['user_id'], collection_name, id)
 
         return jsonify({"status": "success", "saved": meal_ids}), 200
     except Exception as e:
@@ -129,22 +130,100 @@ def startMealPlan():
     data = call_model(prompt)
     logging.debug(f"Model response: {data}")
 
-    # Normalize meals (ingredients and instructions) using Utility helper
-    if data and isinstance(data, dict):
-        meals = data.get("meals", []) or []
+    # Defensive: ensure we have a dict with a meals list
+    if not data or not isinstance(data, dict):
+        logging.warning('Model returned invalid data: %r', data)
+        return render_template("results.html", data={"meals": []})
+
+    meals = data.get("meals", []) or []
+    # normalize ingredients and instructions in-place
+    try:
         normalize_meals(meals)
+    except Exception:
+        logging.exception('normalize_meals failed')
 
-    ids=generatemealIDs(session["user_id"],len(data)) # generate ids for the meals for ui and databse
-    # data["meals"]["id"]=ids # add to json
-    ctr=0
-    for m in data["meals"]:
-        data["meals"][ctr]["id"]=ids[ctr]
-        ctr+=1
+    # sanitize and filter meals: ensure name, ingredients, and numeric nutrition
+    cleaned = []
+    for m in meals:
+        if not isinstance(m, dict):
+            logging.warning('Skipping non-dict meal: %r', m)
+            continue
+        # normalize name
+        name = (m.get('name') or '').strip()
+        if not name:
+            name = '(Untitled)'
+        m['name'] = name
 
-    saveNewMeals(session["user_id"],data) # saves the meals to database
+        # mealType normalization (keep original if present)
+        m['mealType'] = (m.get('mealType') or '').strip()
+
+
+        # coerce nutrition fields
+        for k in ('calories', 'carbs', 'fats', 'protein'):
+            v = m.get(k)
+            try:
+                if v in (None, ''):
+                    m[k] = 0
+                else:
+                    if isinstance(v, str):
+                        num = re.sub(r'[^0-9\.\-]', '', v)
+                        m[k] = int(float(num)) if num else 0
+                    else:
+                        m[k] = int(float(v))
+            except Exception:
+                m[k] = 0
+
+        # clean ingredients: remove empty entries
+        new_ings = []
+        for ig in (m.get('ingredients') or []):
+            if isinstance(ig, dict):
+                if (ig.get('name') or '').strip() or ig.get('quantity') is not None:
+                    new_ings.append(ig)
+            elif isinstance(ig, str):
+                if ig.strip() and ig.strip() != '-':
+                    new_ings.append(ig.strip())
+        m['ingredients'] = new_ings
+
+        # normalize instructions to a list
+        instr = m.get('instructions')
+        if instr is None:
+            m['instructions'] = []
+        elif isinstance(instr, str):
+            m['instructions'] = [ln.strip() for ln in instr.splitlines() if ln.strip()]
+        elif isinstance(instr, list):
+            m['instructions'] = [str(x).strip() for x in instr if str(x).strip()]
+
+        if not m['ingredients']:
+            logging.warning('Dropping meal with no ingredients: %s', m.get('name'))
+            continue
+
+        cleaned.append(m)
+
+    meals = cleaned
+
+    # generate ids and attach
+    uid = session.get('user_id')
+    try:
+        ids = generatemealIDs(uid, len(meals)) if isinstance(meals, list) else []
+    except Exception:
+        logging.exception('generatemealIDs failed')
+        ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
+
+    for i in range(len(meals)):
+        meals[i]['id'] = ids[i]
+
+    data['meals'] = meals
+
+    # save if logged in
+    try:
+        if uid and meals:
+            saveNewMeals(uid, data)
+    except Exception:
+        logging.exception('Failed to save new meals')
 
     collections=getCollections(session["user_id"])# get the collecitons for a given user
     return render_template("results.html", data=data,collections=collections) # pass data to ui
+
 
 if __name__ == "__main__":
     app.run(debug=True)

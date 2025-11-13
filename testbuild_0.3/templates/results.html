@@ -106,7 +106,20 @@
             <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
             <ul class="list-disc list-inside text-gray-600 text-sm mb-4">
               {% for ing in r.ingredients %}
-                <li>{{ ing.name }}</li>
+                <li>
+                  {% if ing is mapping %}
+                    <span class="font-semibold">
+                      {% if ing.quantity_display %}
+                        {{ ing.quantity_display }}
+                      {% elif ing.quantity is not none %}
+                        {{ ing.quantity }}
+                      {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
+                    </span>
+                    <span>{{ ing.name }}</span>
+                  {% else %}
+                    {{ ing }}
+                  {% endif %}
+                </li>
               {% endfor %}
             </ul>
             <h3 class="text-gray-700 font-medium mb-2">Instructions</h3>
