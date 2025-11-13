@@ -34,7 +34,7 @@
       <li><a href="{{ url_for('calendar') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Calendar</a></li>
     </ul>
 
-    <!-- Instruction Text -->
+    <!-- Instruction -->
     <div class="text-center text-gray-700 text-lg font-medium mt-6">
       Click on meals to select them for saving
     </div>
@@ -94,7 +94,7 @@
           </ul>
         </div>
 
-        <!-- Modal -->
+        <!-- Meal Detail Modal -->
         <div id="modal-{{ loop.index0 }}" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
           <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative">
             <button onclick="closeModal('{{ loop.index0 }}')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">✕</button>
@@ -153,6 +153,40 @@
       </button>
     </div>
 
+    <!-- Save Meals → Choose Collection Modal -->
+    <div id="collectionsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative">
+        
+        <button onclick="closeCollectionsModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">✕</button>
+
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Save Meals To Collection</h2>
+
+        <div id="collectionsList" class="space-y-3 mb-6">
+          {% for c in collections %}
+          <div class="flex justify-between items-center border p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition"
+               onclick="toggleCollectionSelection('{{ c.name }}', this)">
+            <span class="font-medium text-gray-800">{{ c.name }}</span>
+            <span class="text-gray-600 text-sm">{{ c.count }} items</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <button 
+          class="w-full py-2 mb-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+          onclick="createCollectionPrompt()">
+          + Create Collection
+        </button>
+
+        <button 
+          id="confirmSaveBtn"
+          class="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+          disabled
+          onclick="confirmSaveMeals()">
+          Save to Selected Collections
+        </button>
+      </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
       <div class="flex flex-col space-y-1">
@@ -165,9 +199,13 @@
       </div>
     </footer>
 
+    <!-- Scripts -->
     <script>
+      // Selected meals (meal ids) and selected collections (collection names)
       const selectedMeals = new Set();
+      const selectedCollections = new Set();
 
+      /* --------------------- meal selection UI --------------------- */
       function toggleSelect(card, mealId) {
         if (card.classList.contains('border-green-500')) {
           card.classList.remove('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
@@ -192,6 +230,7 @@
         }
       }
 
+//  modal for showing more info about the meals
       function openModal(id) {
         document.getElementById("modal-" + id).classList.remove("hidden");
         document.getElementById("modal-" + id).classList.add("flex");
@@ -202,36 +241,131 @@
         document.getElementById("modal-" + id).classList.add("hidden");
       }
 
-      // Call backend to save meals
-      document.getElementById('saveMealsBtn').addEventListener('click', async () => {
-        if (selectedMeals.size === 0) return;
+//  modal for saving meals
+      function openCollectionsModal() {
+        document.getElementById("collectionsModal").classList.remove("hidden");
+        document.getElementById("collectionsModal").classList.add("flex");
+      }
+
+      function closeCollectionsModal() {
+        document.getElementById("collectionsModal").classList.remove("flex");
+        document.getElementById("collectionsModal").classList.add("hidden");
+
+        // clear selection state
+        selectedCollections.clear();
+        document.querySelectorAll('#collectionsList > div').forEach(el => {
+          el.classList.remove('bg-blue-100', 'border-blue-500');
+        });
+
+        document.getElementById("confirmSaveBtn").disabled = true;
+      }
+
+      // open modal when Save Meals clicked
+      document.getElementById('saveMealsBtn').addEventListener('click', openCollectionsModal);
+
+      // toggle collection selection (multi-select)
+      function toggleCollectionSelection(name, element) {
+        if (selectedCollections.has(name)) {
+          selectedCollections.delete(name);
+          element.classList.remove('bg-blue-100', 'border-blue-500');
+        } else {
+          selectedCollections.add(name);
+          element.classList.add('bg-blue-100', 'border-blue-500');
+        }
+
+        document.getElementById("confirmSaveBtn").disabled = selectedCollections.size === 0;
+      }
+
+      // used to prompt and create a new collection name
+
+      async function createCollectionPrompt() {
+        const name = prompt("Enter a new collection name:");
+        if (!name) return;
 
         try {
-          const response = await fetch("{{ url_for('save_meals') }}", {
+          const res = await fetch("{{ url_for('create_collection') }}", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ meal_ids: Array.from(selectedMeals) })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name })
           });
 
-          const data = await response.json();
+          const data = await res.json();
 
-          if (response.ok) {
-            alert("Meals Successfully Saved");
-            selectedMeals.clear();
-            document.querySelectorAll('.border-green-500').forEach(card => {
-              card.classList.remove('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
-            });
-            updateSaveButton();
-          } else {
-            alert("ERROR! Failed to save meals: " + (data.error || "Unknown error"));
+          if (!res.ok) {
+            alert(data.error || "Failed to create collection.");
+            return;
           }
+
+          // Append new collection to UI and auto-select it
+          const list = document.getElementById("collectionsList");
+          const div = document.createElement("div");
+          div.className = "flex justify-between items-center border p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition";
+          div.onclick = () => toggleCollectionSelection(name, div);
+          div.innerHTML = `
+            <span class="font-medium text-gray-800">${name}</span>
+            <span class="text-gray-600 text-sm">0 items</span>
+          `;
+          list.appendChild(div);
+
+          // auto-select the newly created collection
+          selectedCollections.add(name);
+          div.classList.add('bg-blue-100', 'border-blue-500');
+          document.getElementById("confirmSaveBtn").disabled = false;
+
+          // Optionally show message returned from backend
+          if (data.message) {
+            alert(data.message);
+          } else {
+            alert("Collection created!");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("An error occurred while creating the collection.");
+        }
+      }
+
+    //   used to save meals to the backend db
+
+      async function confirmSaveMeals() {
+        if (selectedMeals.size === 0 || selectedCollections.size === 0) return;
+
+        try {
+          const res = await fetch("{{ url_for('save_meals') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              meal_ids: Array.from(selectedMeals),
+              collections: Array.from(selectedCollections) // Option A format
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            alert(data.error || "Failed to save meals.");
+            return;
+          }
+
+          // Show backend message if provided
+          if (data.message) {
+            alert(data.message);
+          } else {
+            alert("Meals saved!");
+          }
+
+          // Reset UI
+          closeCollectionsModal();
+          selectedMeals.clear();
+          document.querySelectorAll('.border-green-500').forEach(card => {
+            card.classList.remove('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
+          });
+          updateSaveButton();
         } catch (err) {
           console.error(err);
           alert("An error occurred while saving meals.");
         }
-      });
+      }
     </script>
+
   </body>
 </html>

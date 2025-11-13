@@ -7,7 +7,7 @@ from flask import Flask, jsonify, request, render_template,session
 import logging
 import re
 from Utility.ingredient_utils import normalize_meals
-from Utility.mealSaver import saveNewMeals,generatemealIDs,addMealToCollection,createNewCollection,getCollections
+from Utility.mealSaver import saveNewMeals,generatemealIDs,addMealToCollection,createNewCollection,getCollections,getUserMeals
 
 # Database
 from User_Auth.database import db
@@ -68,12 +68,30 @@ def save_meals():
     try:
         print("Saving meals:", meal_ids)
         for id in meal_ids:
-            collection_name = "default_collection"  # Define a default collection name or retrieve it dynamically
+            # collection_name = "default_collection"  # Define a default collection name or retrieve it dynamically
             addMealToCollection(session['user_id'], collection_name, id)
 
         return jsonify({"status": "success", "saved": meal_ids}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/create_collection',methods=['POST'])
+def create_collection():
+    data=request.get_json()
+    collectionName=data.get('name')
+    collectionCreated=createNewCollection(session['user_id'],collectionName)
+    if collectionCreated==False:
+        return jsonify({
+        "success": False,
+        "message": f"Collection '{collectionName}' was already created!"
+    })
+    else:
+        return jsonify({
+        "success": True,
+        "message": f"Collection '{collectionName}' was created successfully!"
+    })
+
 
 
 @app.route("/get_started")
@@ -221,7 +239,8 @@ def startMealPlan():
     except Exception:
         logging.exception('Failed to save new meals')
 
-    collections=getCollections(session["user_id"])# get the collecitons for a given user
+    # collections=getCollections(session["user_id"])# get the collecitons for a given user
+    collections=getUserMeals(session["user_id"])
     return render_template("results.html", data=data,collections=collections) # pass data to ui
 
 
