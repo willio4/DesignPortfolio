@@ -6,7 +6,7 @@ load_dotenv()
 from flask import Flask, request, render_template,session
 import logging
 from Utility.ingredient_utils import normalize_meals
-from Utility.mealSaver import saveNewMeals,generatemealIDs,addMealToCollection,createNewCollection
+from Utility.mealSaver import saveNewMeals,generatemealIDs,addMealToCollection,createNewCollection,getCollections
 
 # Database
 from User_Auth.database import db
@@ -143,7 +143,8 @@ def startMealPlan():
 
     saveNewMeals(session["user_id"],data) # saves the meals to database
 
-    return render_template("results.html", data=data)
+    collections=getCollections(session["user_id"])# get the collecitons for a given user
+    return render_template("results.html", data=data,collections=collections) # pass data to ui
 
 if __name__ == "__main__":
     app.run(debug=True)
