@@ -64,12 +64,13 @@ def index():
 def save_meals():
     data = request.get_json()
     meal_ids = data.get('meal_ids', [])
-    
+    collections=data.get('collections',[])
     try:
         print("Saving meals:", meal_ids)
         for id in meal_ids:
+            for collction in collecitons:
             # collection_name = "default_collection"  # Define a default collection name or retrieve it dynamically
-            addMealToCollection(session['user_id'], collection_name, id)
+                addMealToCollection(session['user_id'], collction, id)
 
         return jsonify({"status": "success", "saved": meal_ids}), 200
     except Exception as e:
