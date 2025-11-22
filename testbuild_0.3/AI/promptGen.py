@@ -39,6 +39,7 @@ def generate_prompt(merged_constraints: dict | None = None) -> str:
     num_dinner = safe_int(prefs.get("num_dinner", prefs.get("num3", 1)))
 
     calories = safe_int(prefs.get("calories", 0))
+    banned_items = [str(x).strip() for x in (prefs.get("banned_ingredients") or []) if str(x).strip()]
 
     extras = []
     if isinstance(dietary_restrictions, str) and dietary_restrictions.strip():
@@ -46,6 +47,18 @@ def generate_prompt(merged_constraints: dict | None = None) -> str:
             extras.append(f"Dietary constraints: {dietary_restrictions}")
     if calories > 0:
         extras.append(f"Per meal target ~{calories} calories (±10%)")
+    if banned_items:
+        preview = ", ".join(banned_items[:12])
+        if len(banned_items) > 12:
+            preview += ", ..."
+        extras.append(f"Forbidden ingredients: {preview}. Never include them.")
+
+    constraint_text = '. '.join(extras) if extras else 'No specific dietary constraints.'
+    banned_rule = (
+        "No additional banned ingredients beyond the general constraints."
+        if not banned_items else
+        "Absolutely DO NOT use any of the banned ingredients listed above in any recipe."
+    )
 
     return dedent(f"""
         You are a recipe generator that focuses on healthy, and delicious meals.
@@ -63,12 +76,13 @@ def generate_prompt(merged_constraints: dict | None = None) -> str:
               ["2 slices whole grain bread", "1 ripe avocado", "1/2 cup cooked quinoa", "1 tbsp olive oil"]
           7. Ensure nutritional values (calories, carbs, fats, protein) are realistic and appropriate for the meal type.
           8. Meals should be easy to prepare with common ingredients.
-          9. {'. '.join(extras) if extras else 'No specific dietary constraints.'}
-          10. Avoid repetition in meal names and ingredient lists across all meals.
-          11. Prioritize variety: where multiple recipes of the same mealType are requested, ensure each one differs from the others by at least two major ingredients or by cuisine/style (e.g., one Mediterranean, one Asian, one Tex-Mex).
-          12. Try to vary primary proteins, grains, vegetables, and dominant flavors across meals to maximize diversity.
-          13. If possible, limit overlap of the top 3 ingredients between any two meals.
-          14. JSON only, no extra text.
+          9. {constraint_text}
+          10. {banned_rule}
+          11. Avoid repetition in meal names and ingredient lists across all meals.
+          12. Prioritize variety: where multiple recipes of the same mealType are requested, ensure each one differs from the others by at least two major ingredients or by cuisine/style (e.g., one Mediterranean, one Asian, one Tex-Mex).
+          13. Try to vary primary proteins, grains, vegetables, and dominant flavors across meals to maximize diversity.
+          14. If possible, limit overlap of the top 3 ingredients between any two meals.
+          15. JSON only, no extra text.
     """).strip()
 
 
@@ -138,6 +152,11 @@ def build_prompt(user: Any = None,
         constraint_lines.append("dislikes: " + ", ".join(merged["disliked_ingredients"]))
     if merged.get("calories"):
         constraint_lines.append(f"max_calories: {merged['calories']}")
+    if merged.get("banned_ingredients"):
+        banned_preview = ", ".join(merged["banned_ingredients"][:6])
+        if len(merged["banned_ingredients"]) > 6:
+            banned_preview += ", ..."
+        constraint_lines.append(f"banned: {banned_preview}")
 
     body = generate_prompt(merged)
 

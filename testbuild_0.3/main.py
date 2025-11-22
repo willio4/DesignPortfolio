@@ -68,7 +68,7 @@ def save_meals():
     try:
         print("Saving meals:", meal_ids)
         for id in meal_ids:
-            for collction in collecitons:
+            for collction in collections:
             # collection_name = "default_collection"  # Define a default collection name or retrieve it dynamically
                 addMealToCollection(session['user_id'], collction, id)
 
@@ -124,7 +124,11 @@ def startMealPlan():
         return render_template("mealGen.html")
 
     # Log the received form data
-    form_prefs = dict(request.form)
+    form_prefs = request.form.to_dict(flat=True)
+    selected_diets = [d.strip().lower() for d in request.form.getlist("dietary") if d.strip()]
+    if selected_diets:
+        # store the first one for compatibility; remainder are handled when we build banned lists
+        form_prefs["dietary_restrictions"] = selected_diets[0]
     logging.debug(f"Received form data: {form_prefs}")
 
     # Load stored global constraints and user-specific constraints (if logged in)
@@ -140,6 +144,32 @@ def startMealPlan():
     # Merge constraints (pure function; does not persist)
     merged_prefs = cs.merge_constraints(global_constraints, user_constraints, form_prefs)
     logging.debug("Merged preferences used for prompt: %s", merged_prefs)
+
+    banned_terms = [str(x).strip().lower() for x in (merged_prefs.get("banned_ingredients") or []) if str(x).strip()]
+    if selected_diets:
+        extra_banned = cs.banned_for_diets(selected_diets)
+        if extra_banned:
+            existing = set(banned_terms)
+            for term in extra_banned:
+                low = term.strip().lower()
+                if low and low not in existing:
+                    banned_terms.append(low)
+                    existing.add(low)
+
+    def _find_banned_hit(ingredients):
+        """Return (banned_term, ingredient_text) if any normalized ingredient violates banned constraints."""
+        if not banned_terms:
+            return (None, None)
+        for ing in ingredients or []:
+            if isinstance(ing, dict):
+                text = " ".join(filter(None, [ing.get("name"), ing.get("raw"), ing.get("note")]))
+            else:
+                text = str(ing)
+            haystack = text.lower()
+            for banned in banned_terms:
+                if banned and banned in haystack:
+                    return banned, text.strip() or text
+        return (None, None)
 
     # Generate the prompt and log it
     prompt = generate_prompt(merged_prefs)
@@ -192,7 +222,7 @@ def startMealPlan():
             except Exception:
                 m[k] = 0
 
-        # clean ingredients: remove empty entries
+        # clean ingredients: remove empty entries and enforce banned list
         new_ings = []
         for ig in (m.get('ingredients') or []):
             if isinstance(ig, dict):
@@ -202,6 +232,11 @@ def startMealPlan():
                 if ig.strip() and ig.strip() != '-':
                     new_ings.append(ig.strip())
         m['ingredients'] = new_ings
+
+        banned_term, offending = _find_banned_hit(new_ings)
+        if banned_term:
+            logging.warning('Dropping %s because it contains banned ingredient "%s" (matched term "%s")', name, offending, banned_term)
+            continue
 
         # normalize instructions to a list
         instr = m.get('instructions')
