@@ -5,6 +5,7 @@ from typing import Any
 
 # local import from this package
 from . import constraints_store
+from .retrieval_contract import RetrievalBatch
 
 # Todo: increase complexity of prompt as needed
 # schema - what we want the model to return
@@ -22,7 +23,8 @@ def safe_int(value, default=0, non_negative=True):
 # To Do: update to accept merged dict and include a sort section
 # in the prompt showing the constraints that have been applied 
 # log the merged constraints within the prompt in `main.py` before calling the model
-def generate_prompt(merged_constraints: dict | None = None) -> str:
+def generate_prompt(merged_constraints: dict | None = None,
+                    retrieval_batch: RetrievalBatch | None = None) -> str:
     """
     Generate the model prompt body from a merged/sanitized constraints dict.
 
@@ -60,7 +62,13 @@ def generate_prompt(merged_constraints: dict | None = None) -> str:
         "Absolutely DO NOT use any of the banned ingredients listed above in any recipe."
     )
 
-    return dedent(f"""
+    facts_block = ""
+    if retrieval_batch:
+        block = retrieval_batch.to_prompt_block()
+        if block:
+            facts_block = block + "\n\n"
+
+    body = dedent(f"""
         You are a recipe generator that focuses on healthy, and delicious meals.
         Return ONLY valid JSON with the exact schema: {SCHEMA}
 
@@ -83,7 +91,12 @@ def generate_prompt(merged_constraints: dict | None = None) -> str:
           13. Try to vary primary proteins, grains, vegetables, and dominant flavors across meals to maximize diversity.
           14. If possible, limit overlap of the top 3 ingredients between any two meals.
           15. JSON only, no extra text.
+          16. When supporting ingredient facts are provided, ensure recipes stay consistent with their nutrition guidance.
     """).strip()
+
+    if facts_block:
+        return f"{facts_block}{body}"
+    return body
 
 
 def user_to_prompt(user: Any) -> str:
@@ -132,7 +145,8 @@ def user_to_prompt(user: Any) -> str:
 def build_prompt(user: Any = None,
                  global_constraints: dict | None = None,
                  user_constraints: dict | None = None,
-                 prefs: dict | None = None) -> str:
+                 prefs: dict | None = None,
+                 retrieval_batch: RetrievalBatch | None = None) -> str:
     """
     Build the full model prompt by merging constraints and including a short
     user fragment.
@@ -158,7 +172,7 @@ def build_prompt(user: Any = None,
             banned_preview += ", ..."
         constraint_lines.append(f"banned: {banned_preview}")
 
-    body = generate_prompt(merged)
+    body = generate_prompt(merged, retrieval_batch=retrieval_batch)
 
     header = ""
     if ufrag:

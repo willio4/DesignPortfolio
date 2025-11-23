@@ -11,6 +11,48 @@ SYSTEM = (
     "You are a recipe generator. Respond with ONLY valid JSON; no prose, no comments, no trailing commas."
 )
 
+
+def _parse_partial_meals(text: str | None) -> dict | None:
+    """Attempt to salvage well-formed meal objects from a truncated JSON blob."""
+    if not text:
+        return None
+
+    match = re.search(r'"meals"\s*:\s*\[', text)
+    if not match:
+        return None
+
+    decoder = json.JSONDecoder()
+    meals: list[dict] = []
+    idx = match.end()
+    text_len = len(text)
+
+    while idx < text_len:
+        # skip whitespace or commas between entries
+        while idx < text_len and text[idx] in " \t\r\n,":
+            idx += 1
+
+        if idx >= text_len or text[idx] == ']':
+            break
+
+        try:
+            obj, consumed = decoder.raw_decode(text[idx:])
+        except json.JSONDecodeError as exc:
+            logging.debug("Partial decode stopped at index %s: %s", idx, exc)
+            break
+
+        if isinstance(obj, dict):
+            meals.append(obj)
+        else:
+            logging.debug("Skipping non-dict meal recovered from partial JSON: %r", obj)
+
+        idx += consumed
+
+    if meals:
+        logging.debug("Recovered %d meals from partial JSON", len(meals))
+        return {"meals": meals, "_partial": True}
+
+    return None
+
 def _extract_json_from_text(text: str) -> str | None:
     """Try to extract the first JSON object or array from text and balance braces/brackets.
 
@@ -80,6 +122,11 @@ def call_model(prompt: str, max_tokens: int = 900) -> dict:
         except json.JSONDecodeError as e:
             logging.debug("json.loads on extracted candidate failed: %s", e)
 
+    # Try to salvage any meals that decoded successfully before the truncation
+    partial = _parse_partial_meals(candidate or text)
+    if partial:
+        return partial
+
     # Fallback: ask the model to repair to valid JSON only
     try:
         fix = client.responses.create(
@@ -95,6 +142,11 @@ def call_model(prompt: str, max_tokens: int = 900) -> dict:
             return json.loads(fixed_text)
         except json.JSONDecodeError as e:
             logging.error("Repair attempt still failed to produce valid JSON: %s", e)
+
+        # Last-ditch effort: salvage whatever meals are valid in the repaired text
+        partial_fixed = _parse_partial_meals(fixed_text)
+        if partial_fixed:
+            return partial_fixed
     except Exception as e:
         logging.error("Error during repair request: %s", e)
 

@@ -26,6 +26,7 @@ from AI.promptGen import generate_prompt
 from AI.callModel import call_model
 from AI import constraints_store as cs
 from AI import constraints_db as cdb
+from AI.retriever import StubIngredientRetriever, DEFAULT_STUB_STORE
 
 # Routes
 from Feed.feed import register_feed_routes
@@ -38,6 +39,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'your-secret-key'
 
 logging.basicConfig(level=logging.DEBUG)
+
+INGREDIENT_RETRIEVER = StubIngredientRetriever(DEFAULT_STUB_STORE)
 
 # Initialize DB with app
 db.init_app(app)
@@ -123,6 +126,9 @@ def startMealPlan():
     if request.method == 'GET':
         return render_template("mealGen.html")
 
+    # Gather list-style preferences before flattening
+    favorite_terms = [f.strip().lower() for f in request.form.getlist("favorites[]") if f.strip()]
+
     # Log the received form data
     form_prefs = request.form.to_dict(flat=True)
     selected_diets = [d.strip().lower() for d in request.form.getlist("dietary") if d.strip()]
@@ -160,6 +166,12 @@ def startMealPlan():
         """Return (banned_term, ingredient_text) if any normalized ingredient violates banned constraints."""
         if not banned_terms:
             return (None, None)
+
+        plant_milk_allow = (
+            'almond milk', 'soy milk', 'oat milk', 'coconut milk',
+            'cashew milk', 'hemp milk', 'pea milk', 'rice milk'
+        )
+
         for ing in ingredients or []:
             if isinstance(ing, dict):
                 text = " ".join(filter(None, [ing.get("name"), ing.get("raw"), ing.get("note")]))
@@ -168,92 +180,151 @@ def startMealPlan():
             haystack = text.lower()
             for banned in banned_terms:
                 if banned and banned in haystack:
+                    if banned == 'milk' and any(alt in haystack for alt in plant_milk_allow):
+                        # Allow plant-based milks even when "milk" is banned for vegan diets
+                        continue
                     return banned, text.strip() or text
         return (None, None)
 
+    retrieval_batch = None
+    if favorite_terms:
+        try:
+            retrieval_batch = INGREDIENT_RETRIEVER.fetch(favorite_terms)
+            logging.debug("Retrieved ingredient facts: %s", retrieval_batch.to_dict())
+        except Exception:
+            logging.exception("Ingredient retrieval failed")
+
     # Generate the prompt and log it
-    prompt = generate_prompt(merged_prefs)
+    prompt = generate_prompt(merged_prefs, retrieval_batch=retrieval_batch)
     logging.debug(f"Generated prompt: {prompt}")
 
-    # Call the model and log the response
-    data = call_model(prompt)
-    logging.debug(f"Model response: {data}")
+    def _safe_count(value):
+        try:
+            return max(0, int(value))
+        except Exception:
+            return 0
 
-    # Defensive: ensure we have a dict with a meals list
-    if not data or not isinstance(data, dict):
-        logging.warning('Model returned invalid data: %r', data)
-        return render_template("results.html", data={"meals": []})
+    desired_counts = {
+        'breakfast': _safe_count(merged_prefs.get('num_breakfast', merged_prefs.get('num1'))),
+        'lunch': _safe_count(merged_prefs.get('num_lunch', merged_prefs.get('num2'))),
+        'dinner': _safe_count(merged_prefs.get('num_dinner', merged_prefs.get('num3'))),
+    }
+    total_needed = sum(desired_counts.values())
 
-    meals = data.get("meals", []) or []
-    # normalize ingredients and instructions in-place
-    try:
-        normalize_meals(meals)
-    except Exception:
-        logging.exception('normalize_meals failed')
+    def _normalize_meal_type(tag: str | None) -> str:
+        t = (tag or '').strip().lower()
+        if t.startswith('breakfast'):
+            return 'breakfast'
+        if t.startswith('lunch'):
+            return 'lunch'
+        if t.startswith('dinner'):
+            return 'dinner'
+        return ''
 
-    # sanitize and filter meals: ensure name, ingredients, and numeric nutrition
-    cleaned = []
-    for m in meals:
-        if not isinstance(m, dict):
-            logging.warning('Skipping non-dict meal: %r', m)
-            continue
-        # normalize name
-        name = (m.get('name') or '').strip()
-        if not name:
-            name = '(Untitled)'
-        m['name'] = name
+    MAX_MODEL_ATTEMPTS = 2
+    attempt = 0
+    meals: list[dict] = []
+    data: dict = {"meals": []}
 
-        # mealType normalization (keep original if present)
-        m['mealType'] = (m.get('mealType') or '').strip()
+    while True:
+        raw_data = call_model(prompt)
+        if not isinstance(raw_data, dict):
+            logging.warning('Model returned invalid payload (attempt %s): %r', attempt + 1, raw_data)
+            raw_data = {}
 
+        partial_response = bool(raw_data.pop('_partial', False))
+        logging.debug("Model response (attempt %s): %s", attempt + 1, raw_data)
 
-        # coerce nutrition fields
-        for k in ('calories', 'carbs', 'fats', 'protein'):
-            v = m.get(k)
-            try:
-                if v in (None, ''):
-                    m[k] = 0
-                else:
-                    if isinstance(v, str):
+        data = raw_data or {"meals": []}
+        meals = data.get("meals", []) or []
+
+        try:
+            normalize_meals(meals)
+        except Exception:
+            logging.exception('normalize_meals failed')
+
+        cleaned: list[dict] = []
+        for m in meals:
+            if not isinstance(m, dict):
+                logging.warning('Skipping non-dict meal: %r', m)
+                continue
+
+            name = (m.get('name') or '').strip() or '(Untitled)'
+            m['name'] = name
+            m['mealType'] = (m.get('mealType') or '').strip()
+
+            for k in ('calories', 'carbs', 'fats', 'protein'):
+                v = m.get(k)
+                try:
+                    if v in (None, ''):
+                        m[k] = 0
+                    elif isinstance(v, str):
                         num = re.sub(r'[^0-9\.\-]', '', v)
                         m[k] = int(float(num)) if num else 0
                     else:
                         m[k] = int(float(v))
-            except Exception:
-                m[k] = 0
+                except Exception:
+                    m[k] = 0
 
-        # clean ingredients: remove empty entries and enforce banned list
-        new_ings = []
-        for ig in (m.get('ingredients') or []):
-            if isinstance(ig, dict):
-                if (ig.get('name') or '').strip() or ig.get('quantity') is not None:
-                    new_ings.append(ig)
-            elif isinstance(ig, str):
-                if ig.strip() and ig.strip() != '-':
-                    new_ings.append(ig.strip())
-        m['ingredients'] = new_ings
+            new_ings = []
+            for ig in (m.get('ingredients') or []):
+                if isinstance(ig, dict):
+                    if (ig.get('name') or '').strip() or ig.get('quantity') is not None:
+                        new_ings.append(ig)
+                elif isinstance(ig, str):
+                    if ig.strip() and ig.strip() != '-':
+                        new_ings.append(ig.strip())
+            m['ingredients'] = new_ings
 
-        banned_term, offending = _find_banned_hit(new_ings)
-        if banned_term:
-            logging.warning('Dropping %s because it contains banned ingredient "%s" (matched term "%s")', name, offending, banned_term)
+            banned_term, offending = _find_banned_hit(new_ings)
+            if banned_term:
+                logging.warning('Dropping %s because it contains banned ingredient "%s" (matched term "%s")', name, offending, banned_term)
+                continue
+
+            instr = m.get('instructions')
+            if instr is None:
+                m['instructions'] = []
+            elif isinstance(instr, str):
+                m['instructions'] = [ln.strip() for ln in instr.splitlines() if ln.strip()]
+            elif isinstance(instr, list):
+                m['instructions'] = [str(x).strip() for x in instr if str(x).strip()]
+
+            if not m['ingredients']:
+                logging.warning('Dropping meal with no ingredients: %s', m.get('name'))
+                continue
+
+            cleaned.append(m)
+
+        meals = cleaned
+
+        if total_needed and meals:
+            counts = {k: 0 for k in desired_counts}
+            limited: list[dict] = []
+            for meal in meals:
+                if len(limited) >= total_needed:
+                    break
+                mtype = _normalize_meal_type(meal.get('mealType'))
+                if mtype and counts[mtype] >= desired_counts[mtype]:
+                    continue
+                if mtype:
+                    counts[mtype] += 1
+                limited.append(meal)
+            meals = limited
+
+        data['meals'] = meals
+
+        need_retry = (
+            total_needed and len(meals) < total_needed and attempt < (MAX_MODEL_ATTEMPTS - 1)
+        )
+        if need_retry:
+            logging.warning(
+                'Generated %d/%d meals (partial=%s); retrying attempt %d/%d',
+                len(meals), total_needed, partial_response, attempt + 1, MAX_MODEL_ATTEMPTS
+            )
+            attempt += 1
             continue
 
-        # normalize instructions to a list
-        instr = m.get('instructions')
-        if instr is None:
-            m['instructions'] = []
-        elif isinstance(instr, str):
-            m['instructions'] = [ln.strip() for ln in instr.splitlines() if ln.strip()]
-        elif isinstance(instr, list):
-            m['instructions'] = [str(x).strip() for x in instr if str(x).strip()]
-
-        if not m['ingredients']:
-            logging.warning('Dropping meal with no ingredients: %s', m.get('name'))
-            continue
-
-        cleaned.append(m)
-
-    meals = cleaned
+        break
 
     # generate ids and attach
     uid = session.get('user_id')
@@ -275,8 +346,10 @@ def startMealPlan():
     except Exception:
         logging.exception('Failed to save new meals')
 
-    # collections=getCollections(session["user_id"])# get the collecitons for a given user
-    collections=getUserMeals(session["user_id"])
+    if uid:
+        collections = getUserMeals(uid)
+    else:
+        collections = []
     return render_template("results.html", data=data,collections=collections) # pass data to ui
 
 
