@@ -1,9 +1,3 @@
-"""User helper used by the testbuild (cleaned, dataclass-based).
-
-        This module provides a small, well-tested User model with serialization and
-        methods useful for prompt generation (BMR, BMI, calorie targets, etc.).
-        """
-
 from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 
@@ -108,8 +102,22 @@ class User:
         return self.calculateBMR() * factor
 
     def calorieTargetByGoal(self, activity: str = "moderate") -> float:
-        tdee = self.dailyCalories(activity)
         g = (self.goal or "").lower()
+        s = (self.sex or "").upper()
+
+        # If sex is not M/F, use a neutral 2000 kcal/day baseline
+        if s not in ("M", "F"):
+            base = 2000.0  # neutral fixed daily diet
+            if g == "maintain":
+                return base
+            if g == "lose":
+                return max(0.0, base - 500)
+            if g == "gain":
+                return base + 500
+            return base
+
+        # Normal path for M/F: use calculated TDEE
+        tdee = self.dailyCalories(activity)
         if g == "maintain":
             return tdee
         if g == "lose":
@@ -117,7 +125,7 @@ class User:
         if g == "gain":
             return tdee + 500
         return tdee
-
+    
     # compatibility helper similar to old code
     def UserData(self) -> Dict[str, Any]:
         return {
@@ -137,6 +145,12 @@ class User:
         bmi = self.calculateBMI()
         tdee = self.dailyCalories(activity)
         target = self.calorieTargetByGoal(activity)
+        s = (self.sex or "").upper()
+
+        neutral_note = ""
+        if s not in ("M", "F"):
+            neutral_note = " A neutral 2000 kcal/day baseline is used because the user did not specify a sex."
+
         return (
             f"User: {self.name}, {self.sex}, {self.age} years old. "
             f"Height: {self.height_ft} ft {self.height_in} in. "
@@ -145,6 +159,7 @@ class User:
             f"BMR: {self.calculateBMR():.0f} kcal/day. "
             f"Maintenance calories (TDEE): {tdee:.0f} kcal/day. "
             f"Recommended daily calories for goal: {target:.0f} kcal/day."
+            f"{neutral_note}"
         )
 
     # convenience getters/setters (small compatibility layer)
