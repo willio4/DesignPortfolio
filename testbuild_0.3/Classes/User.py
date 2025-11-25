@@ -103,11 +103,14 @@ class User:
 
     def calorieTargetByGoal(self, activity: str = "moderate") -> float:
         g = (self.goal or "").lower()
-        s = (self.sex or "").upper()
+        s = (self.sex or "").strip().lower()  # normalize
 
-        # If sex is not M/F, use a neutral 2000 kcal/day baseline
-        if s not in ("M", "F"):
-            base = 2000.0  # neutral fixed daily diet
+        # Explicit neutral-gender cases
+        neutral_options = {"gender neutral", "prefer not to say"}
+
+        # Neutral diet option: fixed 2000 calories/day baseline
+        if s in neutral_options:
+            base = 2000.0
             if g == "maintain":
                 return base
             if g == "lose":
@@ -116,8 +119,17 @@ class User:
                 return base + 500
             return base
 
-        # Normal path for M/F: use calculated TDEE
+        # Normal male/female flow
+        if s in ("m", "male"):
+            sex_normalized = "M"
+        elif s in ("f", "female"):
+            sex_normalized = "F"
+        else:
+            # Unknown or unsupported → fallback to TDEE calculation using average BMR
+            sex_normalized = None
+
         tdee = self.dailyCalories(activity)
+
         if g == "maintain":
             return tdee
         if g == "lose":
@@ -145,11 +157,12 @@ class User:
         bmi = self.calculateBMI()
         tdee = self.dailyCalories(activity)
         target = self.calorieTargetByGoal(activity)
-        s = (self.sex or "").upper()
+        s = (self.sex or "").strip().lower()
 
+        neutral_options = {"gender neutral", "prefer not to say"}
         neutral_note = ""
-        if s not in ("M", "F"):
-            neutral_note = " A neutral 2000 kcal/day baseline is used because the user did not specify a sex."
+        if s in neutral_options:
+            neutral_note = " A neutral 2000 kcal/day plan was applied because the user selected a gender-neutral option."
 
         return (
             f"User: {self.name}, {self.sex}, {self.age} years old. "
