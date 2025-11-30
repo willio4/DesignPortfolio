@@ -3,9 +3,21 @@
 from textwrap import dedent
 from typing import Any
 
-# local import from this package
-from . import constraints_store
-from .retrieval_contract import RetrievalBatch
+# local imports when running inside the package
+try:
+    from . import constraints_store
+    from .retrieval_contract import RetrievalBatch
+except ImportError:  # script execution fallback
+    import importlib
+    import os
+    import sys
+
+    PACKAGE_ROOT = os.path.dirname(os.path.dirname(__file__))
+    if PACKAGE_ROOT not in sys.path:
+        sys.path.insert(0, PACKAGE_ROOT)
+
+    constraints_store = importlib.import_module("AI.constraints_store")
+    RetrievalBatch = importlib.import_module("AI.retrieval_contract").RetrievalBatch
 
 # Todo: increase complexity of prompt as needed
 # schema - what we want the model to return
@@ -78,10 +90,11 @@ def generate_prompt(merged_constraints: dict | None = None,
           3. Each meal should have a unique name and a list of ingredients.
           4. Provide clear, step-by-step cooking instructions. Each instruction should be
           placed on its own line and numbered sequentially.
-          5. Each ingredient entry MUST include a quantity and a unit where appropriate (for example: "2 cups cooked quinoa", "1 tsp salt", "3 oz salmon").
-              Use common units (tsp, tbsp, cup, g, kg, oz, lb, slice) and prefer numeric quantities (decimals or simple fractions).
+          5. Each ingredient entry MUST include an explicit weight in both grams and ounces, formatted like "2 chicken breasts (300 g | 10.6 oz)" or "1 cup spinach (30 g | 1.1 oz)".
+              Always keep the familiar kitchen measure (cups, tablespoons, slices, etc.) before the parentheses so cooks can follow the recipe naturally.
+              If you cannot determine the weight, regenerate the meal before responding.
           6. Example ingredient array format (for clarity):
-              ["2 slices whole grain bread", "1 ripe avocado", "1/2 cup cooked quinoa", "1 tbsp olive oil"]
+              ["2 slices whole grain bread (60 g | 2.1 oz)", "1 ripe avocado (136 g | 4.8 oz)", "1/2 cup cooked quinoa (92 g | 3.2 oz)", "1 tbsp olive oil (14 g | 0.5 oz)"]
           7. Ensure nutritional values (calories, carbs, fats, protein) are realistic and appropriate for the meal type.
           8. Meals should be easy to prepare with common ingredients.
           9. {constraint_text}
@@ -92,6 +105,7 @@ def generate_prompt(merged_constraints: dict | None = None,
           14. If possible, limit overlap of the top 3 ingredients between any two meals.
           15. JSON only, no extra text.
           16. When supporting ingredient facts are provided, ensure recipes stay consistent with their nutrition guidance.
+          17. Do not return a meal unless every ingredient lists grams and ounces exactly as described above.
     """).strip()
 
     if facts_block:

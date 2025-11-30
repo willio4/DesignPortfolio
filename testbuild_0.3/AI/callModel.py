@@ -2,14 +2,40 @@
 # AI/callModel.py
 import json
 import logging
+import os
 import re
+from typing import Any, Callable, Dict, Optional
+
 from openai import OpenAI
+
 client = OpenAI()
 logging.getLogger(__name__).setLevel(logging.DEBUG)
 
 SYSTEM = (
     "You are a recipe generator. Respond with ONLY valid JSON; no prose, no comments, no trailing commas."
 )
+
+_CHAT_COMPLETION_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4.1-mini")
+_RESPONSES_MODEL = os.getenv("OPENAI_RESPONSES_MODEL", "gpt-4.1-nano")
+
+_LOOKUP_INGREDIENT_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "lookupIngredient",
+        "description": "Fetch USDA-backed nutrition facts for a single ingredient term.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ingredient": {
+                    "type": "string",
+                    "description": "Plain ingredient term to look up (e.g., 'salmon fillet').",
+                }
+            },
+            "required": ["ingredient"],
+            "additionalProperties": False,
+        },
+    },
+}
 
 
 def _parse_partial_meals(text: str | None) -> dict | None:
@@ -93,20 +119,113 @@ def _extract_json_from_text(text: str) -> str | None:
     return candidate
 
 
-def call_model(prompt: str, max_tokens: int = 900) -> dict:
+def call_model(
+    prompt: str,
+    *,
+    tool_executor: Optional[Callable[[str, Dict[str, Any]], Dict[str, Any]]] = None,
+    max_tokens: int = 900,
+) -> dict:
+    """Call the model via chat-completions when tools are provided; fall back to Responses API otherwise."""
+
+    if tool_executor is not None:
+        return _call_with_chat_tools(prompt, tool_executor=tool_executor, max_tokens=max_tokens)
+    return _call_with_responses(prompt, max_tokens=max_tokens)
+
+
+def _call_with_chat_tools(
+    prompt: str,
+    *,
+    tool_executor: Callable[[str, Dict[str, Any]], Dict[str, Any]],
+    max_tokens: int,
+) -> dict:
+    messages: list[dict[str, Any]] = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": prompt},
+    ]
+
+    while True:
+        response = client.chat.completions.create(
+            model=_CHAT_COMPLETION_MODEL,
+            messages=messages,
+            tools=[_LOOKUP_INGREDIENT_TOOL],
+            tool_choice="auto",
+            temperature=0.6,
+            top_p=1.0,
+            max_tokens=max_tokens,
+        )
+
+        choice = response.choices[0]
+        message = choice.message
+        tool_calls = message.tool_calls or []
+
+        if tool_calls:
+            messages.append(_assistant_message_payload(message))
+            for call in tool_calls:
+                function_name = call.function.name
+                raw_args = call.function.arguments or "{}"
+                try:
+                    args = json.loads(raw_args)
+                except json.JSONDecodeError:
+                    logging.warning("Tool %s received invalid args JSON: %s", function_name, raw_args)
+                    args = {}
+
+                try:
+                    result = tool_executor(function_name, args) or {}
+                except Exception:
+                    logging.exception("Tool %s execution failed", function_name)
+                    result = {"ok": False, "error": "tool_execution_failed"}
+
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call.id,
+                        "content": json.dumps(result, ensure_ascii=False),
+                    }
+                )
+            continue
+
+        text = message.content or ""
+        logging.debug("Chat completion output:\n%s", text)
+        return _parse_json_with_repair(text, max_tokens)
+
+
+def _assistant_message_payload(message) -> dict:
+    payload = {
+        "role": "assistant",
+        "content": message.content or "",
+    }
+    if message.tool_calls:
+        payload["tool_calls"] = [
+            {
+                "id": call.id,
+                "type": call.type,
+                "function": {
+                    "name": call.function.name,
+                    "arguments": call.function.arguments,
+                },
+            }
+            for call in message.tool_calls
+        ]
+    return payload
+
+
+def _call_with_responses(prompt: str, max_tokens: int) -> dict:
     r = client.responses.create(
-        model="gpt-4.1-nano",
+        model=_RESPONSES_MODEL,
         input=[
             {"role": "system", "content": SYSTEM},
             {"role": "user", "content": prompt},
         ],
-        temperature=0.9,          # some creativity
-        top_p=1.0,               # more creative
+        temperature=0.9,
+        top_p=1.0,
         max_output_tokens=max_tokens,
     )
     text = r.output_text or ""
-    logging.debug("Raw model output:\n%s", text)
+    logging.debug("Raw model output (responses API):\n%s", text)
+    return _parse_json_with_repair(text, max_tokens)
 
+
+def _parse_json_with_repair(text: str, max_tokens: int) -> dict:
     # First attempt: direct parse
     try:
         return json.loads(text)
@@ -130,7 +249,7 @@ def call_model(prompt: str, max_tokens: int = 900) -> dict:
     # Fallback: ask the model to repair to valid JSON only
     try:
         fix = client.responses.create(
-            model="gpt-4.1-nano",
+            model=_RESPONSES_MODEL,
             input=f"Fix to strictly valid JSON only (no commentary):\n{text}",
             temperature=0.0,
             top_p=0.0,
@@ -150,7 +269,6 @@ def call_model(prompt: str, max_tokens: int = 900) -> dict:
     except Exception as e:
         logging.error("Error during repair request: %s", e)
 
-    # As a final fallback, return an empty structure and avoid crashing the app
     logging.error("Unable to parse model output as JSON; returning empty dict")
     return {}
 

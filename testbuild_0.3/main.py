@@ -1,4 +1,6 @@
 # load environment variables first
+from __future__ import annotations
+
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -26,7 +28,12 @@ from AI.promptGen import generate_prompt
 from AI.callModel import call_model
 from AI import constraints_store as cs
 from AI import constraints_db as cdb
-from AI.retriever import StubIngredientRetriever, DEFAULT_STUB_STORE
+from AI.retriever import (
+    DEFAULT_STUB_STORE,
+    StubIngredientRetriever,
+    USDAIngredientRetriever,
+)
+from AI.usda_client import USDAFoodDataClient
 
 # Routes
 from Feed.feed import register_feed_routes
@@ -39,8 +46,205 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'your-secret-key'
 
 logging.basicConfig(level=logging.DEBUG)
+_GRAM_UNITS = {'g', 'gram', 'grams'}
+_OZ_UNITS = {'oz', 'ounce', 'ounces'}
+_WEIGHT_PATTERN = re.compile(r'(?P<value>\d+(?:\.\d+)?)\s*(?P<unit>g|gram|grams|oz|ounce|ounces)\b', re.IGNORECASE)
 
-INGREDIENT_RETRIEVER = StubIngredientRetriever(DEFAULT_STUB_STORE)
+_STOPWORDS = {
+    'fresh', 'chopped', 'minced', 'diced', 'large', 'small', 'medium',
+    'sliced', 'fillet', 'fillets', 'boneless', 'skinless', 'ground',
+    'lean', 'ripe', 'whole', 'pieces', 'halved', 'to', 'taste',
+    'cup', 'cups', 'tbsp', 'tablespoon', 'tablespoons', 'tsp', 'teaspoon',
+    'teaspoons', 'ounce', 'ounces', 'oz', 'gram', 'grams', 'g', 'lb', 'pound',
+    'pounds'
+}
+
+_CONDIMENT_TERMS = {
+    'salt', 'pepper', 'salt pepper', 'black pepper', 'seasoning',
+    'seasonings', 'spice blend', 'herb blend'
+}
+
+
+def _init_retriever() -> StubIngredientRetriever | USDAIngredientRetriever:
+    choice = (os.getenv("INGREDIENT_RETRIEVER") or "stub").strip().lower()
+    if choice == "usda":
+        api_key = os.getenv("USDA_API_KEY", "").strip()
+        if not api_key:
+            logging.warning("INGREDIENT_RETRIEVER=usda but USDA_API_KEY is not set; falling back to stub data")
+        else:
+            client = USDAFoodDataClient(api_key=api_key)
+            page_size = int(os.getenv("USDA_PAGE_SIZE", "3") or 3)
+            logging.info("Using USDAIngredientRetriever (page_size=%s)", page_size)
+            return USDAIngredientRetriever(client=client, page_size=page_size)
+
+    logging.info("Using StubIngredientRetriever")
+    return StubIngredientRetriever(DEFAULT_STUB_STORE)
+
+
+INGREDIENT_RETRIEVER = _init_retriever()
+
+
+def _extract_weight_details(text: str | None) -> tuple[float | None, bool, bool]:
+    """Return (grams, has_grams, has_ounces) parsed from text."""
+    if not text:
+        return None, False, False
+
+    grams_from_grams = None
+    grams_from_ounces = None
+    has_grams = False
+    has_ounces = False
+
+    for match in _WEIGHT_PATTERN.finditer(text):
+        try:
+            value = float(match.group('value'))
+        except (TypeError, ValueError):
+            continue
+        unit = (match.group('unit') or '').lower()
+        if unit in _GRAM_UNITS:
+            has_grams = True
+            grams_from_grams = value
+        elif unit in _OZ_UNITS:
+            has_ounces = True
+            grams_from_ounces = value * 28.3495
+
+    grams = grams_from_grams
+    if grams is None and grams_from_ounces is not None:
+        grams = grams_from_ounces
+
+    return grams, has_grams, has_ounces
+
+
+def _extract_weight_from_text(text: str | None) -> float | None:
+    grams, _, _ = _extract_weight_details(text)
+    return grams
+
+
+def _parse_ingredient_weight(ingredient) -> tuple[float | None, bool, bool, str]:
+    """Return (grams, has_grams, has_ounces, display_name) for an ingredient entry."""
+    grams = None
+    has_grams = False
+    has_ounces = False
+    display_name = ''
+    raw_text = ''
+
+    if isinstance(ingredient, dict):
+        parts = [ingredient.get('name'), ingredient.get('raw'), ingredient.get('note')]
+        raw_text = " ".join(filter(None, parts)).strip()
+        display_name = ingredient.get('name') or ingredient.get('raw') or ''
+
+        if ingredient.get('weight_g') not in (None, ''):
+            try:
+                grams = float(ingredient['weight_g'])
+                has_grams = True
+            except (TypeError, ValueError):
+                grams = None
+
+        if ingredient.get('weight_oz') not in (None, ''):
+            try:
+                oz_val = float(ingredient['weight_oz'])
+                has_ounces = True
+                if grams is None:
+                    grams = oz_val * 28.3495
+            except (TypeError, ValueError):
+                pass
+    else:
+        raw_text = str(ingredient)
+        display_name = raw_text
+
+    parsed_grams, parsed_has_g, parsed_has_oz = _extract_weight_details(raw_text or display_name)
+    if grams is None and parsed_grams is not None:
+        grams = parsed_grams
+    has_grams = has_grams or parsed_has_g
+    has_ounces = has_ounces or parsed_has_oz
+
+    return grams, has_grams, has_ounces, display_name or raw_text
+
+
+def _has_explicit_weight(ingredient) -> bool:
+    grams, has_grams, has_ounces, _ = _parse_ingredient_weight(ingredient)
+    # Accept if either grams or ounces are present so macros can be derived.
+    return grams is not None and (has_grams or has_ounces)
+
+
+def _extract_ingredient_parts(ingredient) -> tuple[float | None, str | None, str]:
+    grams, _, _, name = _parse_ingredient_weight(ingredient)
+    name = name or (str(ingredient) if ingredient is not None else '')
+    return grams, 'g' if grams is not None else None, name
+
+
+def _normalize_term(name: str) -> str:
+    text = (name or '').lower()
+    text = re.sub(r'\([^)]*\)', ' ', text)
+    text = re.sub(r'[^a-z\s]', ' ', text)
+    tokens = [tok for tok in text.split() if tok and tok not in _STOPWORDS]
+    return ' '.join(tokens[:4]).strip()
+
+
+def apply_usda_macros(meals: list[dict]) -> None:
+    if not meals or INGREDIENT_RETRIEVER is None:
+        return
+
+    cache: dict[str, object | None] = {}
+
+    for meal in meals:
+        totals = {'calories': 0.0, 'protein': 0.0, 'carbs': 0.0, 'fats': 0.0}
+        matched = False
+        contributions: list[dict[str, float | str]] = []
+
+        for ingredient in meal.get('ingredients') or []:
+            quantity, unit, name = _extract_ingredient_parts(ingredient)
+            if unit != 'g' or quantity is None:
+                continue
+
+            term = _normalize_term(name)
+            if not term or term in _CONDIMENT_TERMS:
+                continue
+
+            if term not in cache:
+                try:
+                    batch = INGREDIENT_RETRIEVER.fetch([term])
+                except Exception:
+                    logging.exception('USDA lookup failed for %s', term)
+                    cache[term] = None
+                    continue
+                cache[term] = batch.facts[0] if batch.facts else None
+
+            fact = cache[term]
+            if not fact:
+                continue
+
+            serving_size = fact.nutrition.serving_size_g or 100.0
+            scale = max(quantity, 0.0) / serving_size if serving_size else 1.0
+            matched = True
+
+            cal = fact.nutrition.calories * scale
+            protein = fact.nutrition.protein_g * scale
+            carbs = fact.nutrition.carbs_g * scale
+            fats = fact.nutrition.fats_g * scale
+
+            totals['calories'] += cal
+            totals['protein'] += protein
+            totals['carbs'] += carbs
+            totals['fats'] += fats
+
+            contributions.append({
+                'ingredient': term,
+                'grams': round(quantity, 1),
+                'calories': round(cal, 1),
+            })
+
+        if matched:
+            meal['calories'] = int(round(totals['calories']))
+            meal['protein'] = int(round(totals['protein']))
+            meal['carbs'] = int(round(totals['carbs']))
+            meal['fats'] = int(round(totals['fats']))
+
+            logging.debug(
+                'USDA breakdown for %s: total=%s kcal contributions=%s',
+                meal.get('name'),
+                meal.get('calories'),
+                contributions,
+            )
 
 # Initialize DB with app
 db.init_app(app)
@@ -54,8 +258,10 @@ register_auth_routes(app)
 with app.app_context():
     # db.session.remove() # Uncomment this if you want to delete all data each time you run
     # db.drop_all()       # Uncomment this if you want to delete all data each time you run
-    # db.create_all()  # This will create all tables for imported models
-    pass
+    try:
+        db.create_all()  # Ensure required tables (collections, etc.) exist before requests
+    except Exception:
+        logging.exception('Database initialization failed')
 
 # Routes
 @app.route("/")
@@ -244,6 +450,7 @@ def startMealPlan():
             logging.exception('normalize_meals failed')
 
         cleaned: list[dict] = []
+        dropped_for_weight = 0
         for m in meals:
             if not isinstance(m, dict):
                 logging.warning('Skipping non-dict meal: %r', m)
@@ -275,6 +482,12 @@ def startMealPlan():
                     if ig.strip() and ig.strip() != '-':
                         new_ings.append(ig.strip())
             m['ingredients'] = new_ings
+
+            missing_weight = next((ig for ig in new_ings if not _has_explicit_weight(ig)), None)
+            if missing_weight is not None:
+                logging.warning('Dropping %s because ingredient lacks explicit g/oz weight: %r', name, missing_weight)
+                dropped_for_weight += 1
+                continue
 
             banned_term, offending = _find_banned_hit(new_ings)
             if banned_term:
@@ -313,14 +526,21 @@ def startMealPlan():
 
         data['meals'] = meals
 
-        need_retry = (
-            total_needed and len(meals) < total_needed and attempt < (MAX_MODEL_ATTEMPTS - 1)
-        )
-        if need_retry:
+        need_retry = False
+        if not meals and dropped_for_weight and attempt < (MAX_MODEL_ATTEMPTS - 1):
+            logging.warning(
+                'All meals rejected for missing ingredient weights; retrying attempt %d/%d',
+                attempt + 1, MAX_MODEL_ATTEMPTS
+            )
+            need_retry = True
+        elif total_needed and len(meals) < total_needed and attempt < (MAX_MODEL_ATTEMPTS - 1):
             logging.warning(
                 'Generated %d/%d meals (partial=%s); retrying attempt %d/%d',
                 len(meals), total_needed, partial_response, attempt + 1, MAX_MODEL_ATTEMPTS
             )
+            need_retry = True
+
+        if need_retry:
             attempt += 1
             continue
 
@@ -338,6 +558,11 @@ def startMealPlan():
         meals[i]['id'] = ids[i]
 
     data['meals'] = meals
+
+    try:
+        apply_usda_macros(meals)
+    except Exception:
+        logging.exception('Failed to overwrite macros with USDA data')
 
     # save if logged in
     try:

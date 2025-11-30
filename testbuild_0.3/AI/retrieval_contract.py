@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Dict, Iterable, List, Optional
 
 # Define dataclasses for nutrition facts
@@ -74,7 +74,7 @@ class RetrievalBatch:
                     "canonical_name": fact.canonical_name,
                     "source_id": fact.source_id,
                     "summary": fact.summary,
-                    "nutrition": fact.nutrition.__dict__,
+                    "nutrition": asdict(fact.nutrition),
                     "confidence": fact.confidence,
                     "tags": fact.tags,
                 }
