@@ -27,7 +27,7 @@ class GroceryList:
         self.ingredients = list(ingredients_dict.values())
         
     def displayList(self) -> None:
-        print(f"\nGrocery List ID: {self.listId}")
+        print(f"\nGrocery List ID: {self.listID}")
         print(f"User: {self.user}")
         print("=" * 30)
         if not self.ingredients:
