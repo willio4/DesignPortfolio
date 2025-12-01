@@ -640,18 +640,27 @@ def startMealPlan():
             missing_calorie_terms = _missing_calorie_terms(new_ings, tool_fact_cache)
             if missing_calorie_terms:
                 logging.warning(
-                    'Dropping %s because calorie data is missing for: %s',
+                    '%s missing cached nutrition facts for: %s. Will fetch from USDA backend.',
                     name,
                     ", ".join(missing_calorie_terms)
                 )
                 dropped_for_calorie += 1
-                continue
+                m.setdefault('_missing_tool_facts', missing_calorie_terms)
 
             instr = m.get('instructions')
             if instr is None:
                 m['instructions'] = []
             elif isinstance(instr, str):
-                m['instructions'] = [ln.strip() for ln in instr.splitlines() if ln.strip()]
+                lines = [ln.strip() for ln in instr.splitlines() if ln.strip()]
+                if len(lines) == 1:
+                    numbered = [part.strip() for part in re.split(r'\s*(?:\d+\.)\s*', lines[0]) if part.strip()]
+                    if numbered:
+                        lines = numbered
+                    else:
+                        sentences = [part.strip() for part in re.split(r'(?<=\.)\s+(?=[A-Z])', lines[0]) if part.strip()]
+                        if sentences:
+                            lines = sentences
+                m['instructions'] = lines
             elif isinstance(instr, list):
                 m['instructions'] = [str(x).strip() for x in instr if str(x).strip()]
 

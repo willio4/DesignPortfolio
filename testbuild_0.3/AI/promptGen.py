@@ -97,7 +97,7 @@ def generate_prompt(
         Quality rules:
         - Use 4–10 ingredients per meal with numbered, concise instructions.
         - Maximize variety across meals (cuisines, proteins, grains, veggies).
-        - Use common ingredients found in most grocery stores.
+        - Favor fresh, whole ingredients you’d grab from a standard Smith’s/Kroger; only use canned or powdered items when they’re pantry staples (e.g., tomatoes, beans) and never as the hero ingredient.
         - Avoid banned ingredients if any are listed. {constraint_text}
         - {banned_rule}
 
