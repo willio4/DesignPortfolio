@@ -55,7 +55,8 @@ def _constraint_text(dietary_restrictions: str, calories: int, banned_items: lis
 
 def generate_prompt(
     merged_constraints: dict | None = None,
-    retrieval_batch: RetrievalBatch | None = None
+    retrieval_batch: RetrievalBatch | None = None,
+    calorie_rules: list[str] | None = None
 ) -> str:
     """Build the strict tool-driven meal-generation prompt."""
 
@@ -78,6 +79,11 @@ def generate_prompt(
         if block:
             facts_block = block + "\n\n"
 
+    calorie_line = ""
+    if calorie_rules:
+        bullet_lines = "\n        ".join(f"- {rule}" for rule in calorie_rules)
+        calorie_line = f"Calorie goals:\n        {bullet_lines}\n\n"
+
     body = dedent(f"""
         You generate meal recipes. All calorie and macro math happens in the backend; never estimate totals yourself.
 
@@ -94,7 +100,7 @@ def generate_prompt(
         4) Set "calories", "carbs", "fats", and "protein" to 0 for every meal. The backend overwrites these with USDA math.
         5) Keep JSON strict: no comments, no trailing commas, no prose outside the JSON.
 
-        Quality rules:
+        {calorie_line}Quality rules:
         - Use 4–10 ingredients per meal with numbered, concise instructions.
         - Maximize variety across meals (cuisines, proteins, grains, veggies).
         - Favor fresh, whole ingredients you’d grab from a standard Smith’s/Kroger; only use canned or powdered items when they’re pantry staples (e.g., tomatoes, beans) and never as the hero ingredient.
@@ -150,7 +156,8 @@ def build_prompt(
     global_constraints: dict | None = None,
     user_constraints: dict | None = None,
     prefs: dict | None = None,
-    retrieval_batch: RetrievalBatch | None = None
+    retrieval_batch: RetrievalBatch | None = None,
+    calorie_rules: list[str] | None = None
 ) -> str:
     merged = constraints_store.merge_constraints(global_constraints, user_constraints, prefs)
 
@@ -169,7 +176,7 @@ def build_prompt(
             preview += ", ..."
         constraint_lines.append(f"banned: {preview}")
 
-    body = generate_prompt(merged, retrieval_batch=retrieval_batch)
+    body = generate_prompt(merged, retrieval_batch=retrieval_batch, calorie_rules=calorie_rules)
 
     header = ""
     if ufrag:

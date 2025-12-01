@@ -66,6 +66,26 @@ _CONDIMENT_TERMS = {
     'seasonings', 'spice blend', 'herb blend'
 }
 
+_CALORIE_OPERATOR_MAP = {
+    'about': {'code': 'about', 'text': 'about'},
+    'at least': {'code': 'at_least', 'text': 'at least'},
+    'under': {'code': 'under', 'text': 'under'},
+}
+
+_CALORIE_SCOPE_MAP = {
+    'each meal': {'type': 'per_meal', 'meal_type': None, 'label': 'each meal'},
+    'each breakfast': {'type': 'per_meal', 'meal_type': 'breakfast', 'label': 'each breakfast'},
+    'each lunch': {'type': 'per_meal', 'meal_type': 'lunch', 'label': 'each lunch'},
+    'each dinner': {'type': 'per_meal', 'meal_type': 'dinner', 'label': 'each dinner'},
+    'all meals': {'type': 'aggregate', 'meal_type': None, 'label': 'all meals'},
+    'all breakfasts': {'type': 'aggregate', 'meal_type': 'breakfast', 'label': 'all breakfasts'},
+    'all lunches': {'type': 'aggregate', 'meal_type': 'lunch', 'label': 'all lunches'},
+    'all dinners': {'type': 'aggregate', 'meal_type': 'dinner', 'label': 'all dinners'},
+}
+
+_CALORIE_ABOUT_TOLERANCE = 0.12  # ±12%
+_CALORIE_MIN_DELTA = 25  # fallback slack when targets are small
+
 
 def _init_retriever() -> StubIngredientRetriever | USDAIngredientRetriever:
     choice = (os.getenv("INGREDIENT_RETRIEVER") or "stub").strip().lower()
@@ -223,6 +243,100 @@ def _best_cached_fact(term: str, fact_cache: dict[str, IngredientFact]) -> Ingre
             best = fact
             best_overlap = overlap
     return best if best_overlap else None
+
+
+def _parse_calorie_rules(form) -> tuple[list[dict], list[str]]:
+    operators = form.getlist('calorie_operator[]')
+    values = form.getlist('calorie_value[]')
+    targets = form.getlist('calorie_target[]')
+    rules: list[dict] = []
+    summaries: list[str] = []
+
+    for op_raw, value_raw, target_raw in zip(operators, values, targets):
+        try:
+            value = int(value_raw)
+        except (TypeError, ValueError):
+            continue
+        if value <= 0:
+            continue
+
+        op_key = (op_raw or '').strip().lower()
+        operator = _CALORIE_OPERATOR_MAP.get(op_key)
+        if not operator:
+            operator = _CALORIE_OPERATOR_MAP['about']
+
+        target_key = (target_raw or '').strip().lower()
+        scope = _CALORIE_SCOPE_MAP.get(target_key)
+        if not scope:
+            continue
+
+        rule = {
+            'operator': operator['code'],
+            'operator_text': operator['text'],
+            'value': value,
+            'scope_type': scope['type'],
+            'meal_type': scope['meal_type'],
+            'scope_label': scope['label'],
+        }
+        rules.append(rule)
+        summaries.append(f"{operator['text'].capitalize()} {value} calories for {scope['label']}")
+
+    unsupported = [r for r in rules if r['scope_type'] != 'per_meal']
+    if unsupported:
+        logging.warning(
+            "Calorie goals for %s are not strictly enforced yet (totals not supported)",
+            ", ".join({r['scope_label'] for r in unsupported})
+        )
+
+    return rules, summaries
+
+
+def _calorie_value_violates(rule: dict, calories: float | int | None) -> bool:
+    if calories is None:
+        return False
+    target = rule.get('value') or 0
+    operator = rule.get('operator')
+    if operator == 'about':
+        tolerance = max(int(round(target * _CALORIE_ABOUT_TOLERANCE)), _CALORIE_MIN_DELTA)
+        return abs(float(calories) - target) > tolerance
+    if operator == 'at_least':
+        return float(calories) < target
+    if operator == 'under':
+        return float(calories) > target
+    return False
+
+
+def _enforce_calorie_rules(meals: list[dict], calorie_rules: list[dict]) -> tuple[list[dict], list[dict]]:
+    if not meals or not calorie_rules:
+        return meals, []
+
+    kept: list[dict] = []
+    violations: list[dict] = []
+
+    for meal in meals:
+        meal_type = (meal.get('mealType') or '').strip().lower()
+        calories = meal.get('calories')
+        violated = False
+        for rule in calorie_rules:
+            if rule.get('scope_type') != 'per_meal':
+                continue
+            scope_meal_type = rule.get('meal_type')
+            if scope_meal_type and scope_meal_type != meal_type:
+                continue
+            if _calorie_value_violates(rule, calories):
+                violations.append({
+                    'meal': meal,
+                    'meal_name': meal.get('name') or '(Unnamed)',
+                    'calories': calories,
+                    'rule': rule,
+                })
+                violated = True
+                break
+
+        if not violated:
+            kept.append(meal)
+
+    return kept, violations
 
 
 def _missing_calorie_terms(ingredients, fact_cache: dict[str, IngredientFact] | None) -> list[str]:
@@ -435,6 +549,12 @@ def startMealPlan():
         form_prefs["dietary_restrictions"] = selected_diets[0]
     logging.debug(f"Received form data: {form_prefs}")
 
+    calorie_rules, calorie_rule_summaries = _parse_calorie_rules(request.form)
+    if calorie_rules and not form_prefs.get('calories'):
+        fallback = next((rule for rule in calorie_rules if rule.get('scope_type') == 'per_meal' and not rule.get('meal_type')), None)
+        if fallback:
+            form_prefs['calories'] = fallback['value']
+
     # Load stored global constraints and user-specific constraints (if logged in)
     global_constraints = cs.get() or {}
     user_constraints = {}
@@ -543,7 +663,7 @@ def startMealPlan():
         return result
 
     # Generate the prompt and log it
-    prompt = generate_prompt(merged_prefs, retrieval_batch=retrieval_batch)
+    prompt = generate_prompt(merged_prefs, retrieval_batch=retrieval_batch, calorie_rules=calorie_rule_summaries)
     logging.debug(f"Generated prompt: {prompt}")
 
     def _safe_count(value):
@@ -573,6 +693,8 @@ def startMealPlan():
     attempt = 0
     meals: list[dict] = []
     data: dict = {"meals": []}
+
+    last_calorie_rule_violations: list[dict] = []
 
     while True:
         raw_data = call_model(prompt, tool_executor=_lookup_ingredient_tool)
@@ -644,7 +766,6 @@ def startMealPlan():
                     name,
                     ", ".join(missing_calorie_terms)
                 )
-                dropped_for_calorie += 1
                 m.setdefault('_missing_tool_facts', missing_calorie_terms)
 
             instr = m.get('instructions')
@@ -696,12 +817,29 @@ def startMealPlan():
         except Exception:
             logging.exception("Failed to overwrite macros with USDA data")
 
+        calorie_rule_violations: list[dict] = []
+        if calorie_rules:
+            meals, calorie_rule_violations = _enforce_calorie_rules(meals, calorie_rules)
+            if calorie_rule_violations:
+                dropped_for_calorie += len(calorie_rule_violations)
+                details = ", ".join(
+                    f"{v['meal_name']} ({v['calories']} kcal vs {v['rule']['operator_text']} {v['rule']['value']})"
+                    for v in calorie_rule_violations
+                )
+                logging.warning('Dropped %d meals for calorie rules: %s', len(calorie_rule_violations), details)
+            last_calorie_rule_violations = calorie_rule_violations or []
+
 
         need_retry = False
         if not meals and (dropped_for_weight or dropped_for_calorie) and attempt < (MAX_MODEL_ATTEMPTS - 1):
+            reasons = []
+            if dropped_for_weight:
+                reasons.append('missing weights')
+            if dropped_for_calorie:
+                reasons.append('calorie rules')
             logging.warning(
                 'All meals rejected for %s; retrying attempt %d/%d',
-                'missing weights' if dropped_for_weight else 'missing calorie lookups',
+                ', '.join(reasons) or 'validation issues',
                 attempt + 1, MAX_MODEL_ATTEMPTS
             )
             need_retry = True
@@ -741,6 +879,28 @@ def startMealPlan():
         apply_usda_macros(meals, fact_cache=tool_fact_cache)
     except Exception:
         logging.exception('Failed to overwrite macros with USDA data')
+
+    if total_needed and len(meals) < total_needed and last_calorie_rule_violations:
+        deficit = total_needed - len(meals)
+        logging.warning('Filling %d slots with closest calorie matches despite rule violations', deficit)
+        sorted_rejects = sorted(
+            last_calorie_rule_violations,
+            key=lambda v: abs((v.get('calories') or 0) - (v.get('rule', {}).get('value') or 0))
+        )
+        for violation in sorted_rejects:
+            if deficit <= 0:
+                break
+            meal = violation.get('meal')
+            if not isinstance(meal, dict):
+                continue
+            meal_note = (
+                f"{violation.get('calories')} kcal (goal {violation['rule']['operator_text']} "
+                f"{violation['rule']['value']})"
+            )
+            meal['_calorie_warning'] = meal_note
+            meals.append(meal)
+            deficit -= 1
+        data['meals'] = meals
 
     # tag source (e.g., 'live_lookup' or 'cached_lookup')
     for m in meals:

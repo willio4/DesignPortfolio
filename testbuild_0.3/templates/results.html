@@ -68,6 +68,9 @@
           <p class="text-gray-600 mb-3">
             <span class="font-medium">Calories:</span> {{ r.calories|round(0) }} |
             C {{ r.carbs|round(0) }}g • F {{ r.fats|round(0) }}g • P {{ r.protein|round(0) }}g
+            {% if r._calorie_warning %}
+              <span class="block text-xs text-amber-600 mt-1">Calorie goal miss: {{ r._calorie_warning }}</span>
+            {% endif %}
           </p>
 
           <h3 class="text-gray-700 font-medium mb-1">Ingredients</h3>
@@ -102,6 +105,9 @@
             <p class="text-gray-600 mb-4">
               <span class="font-medium">Calories:</span> {{ r.calories|round(0) }} |
               C {{ r.carbs|round(0) }}g • F {{ r.fats|round(0) }}g • P {{ r.protein|round(0) }}g
+              {% if r._calorie_warning %}
+                <span class="block text-xs text-amber-600 mt-1">Calorie goal miss: {{ r._calorie_warning }}</span>
+              {% endif %}
             </p>
             <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
             <ul class="list-disc list-inside text-gray-600 text-sm mb-4">
