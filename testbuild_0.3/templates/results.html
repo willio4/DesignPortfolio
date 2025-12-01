@@ -1,377 +1,403 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your New Meals</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
 
-  <body class="bg-gray-100 min-h-screen flex flex-col relative">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prepify – Meal Plan Results</title>
 
-    <!-- Header -->
-    <header class="flex justify-between items-center py-4 px-8">
-      <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo" class="h-12">
-      <div class="flex space-x-4">
-        <a href="{{ url_for('login') }}">
-          <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
-            Log In
-          </button>
-        </a>
-        <a href="{{ url_for('signup') }}">
-          <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
-            Sign Up
-          </button>
-        </a>
-      </div>
-    </header>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Navigation -->
-    <ul class="grid grid-flow-col text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-1 shadow-inner shadow-gray-400">
-      <li><a href="{{ url_for('index') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Home</a></li>
-      <li><a href="{{ url_for('get_started') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Get Started</a></li>
-      <li><a href="{{ url_for('shopping_list') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Shopping List</a></li>
-      <li><a href="{{ url_for('calendar') }}" class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">Calendar</a></li>
-    </ul>
+  <!-- Custom CSS (nav underline, etc.) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
+</head>
 
-    <!-- Instruction -->
-    <div class="text-center text-gray-700 text-lg font-medium mt-6">
-      Click on meals to select them for saving
+<body class="bg-[#fff5da] min-h-screen flex flex-col">
+
+  <!-- TOP BAR / HEADER -->
+  <header class="w-full flex items-center justify-between px-8 py-4 bg-[#FFF1CF] shadow-sm">
+    <!-- LEFT: Logo + Navigation -->
+    <div class="flex items-center gap-10">
+      <!-- Logo -->
+      <a href="{{ url_for('index') }}">
+        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
+          class="h-12 cursor-pointer">
+      </a>
+
+      <!-- Nav -->
+      <nav class="flex gap-8 text-lg font-medium text-gray-900">
+        <a href="{{ url_for('get_started') }}" class="nav-link">Get Started</a>
+        <a href="{{ url_for('shopping_list') }}" class="nav-link">Shopping List</a>
+        <a href="{{ url_for('calendar') }}" class="nav-link">Calendar</a>
+      </nav>
     </div>
 
-    <main class="flex-grow flex flex-col items-center p-6">
-      <h1 class="text-3xl font-bold mb-8 text-gray-800">Meal Plan Results</h1>
+    <!-- RIGHT: Auth buttons -->
+    <div class="flex space-x-3">
+      <a href="{{ url_for('login') }}" class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
+                  bg-white shadow-sm hover:bg-gray-200 transition font-medium">
+        Log In
+      </a>
 
-      {% if data and data.meals %}
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
-        {% for r in data.meals %}
-        <!-- Meal Card -->
-        <div 
-          class="relative bg-white rounded-2xl shadow-lg p-6 cursor-pointer transform transition duration-200 hover:scale-[1.02]"
-          onclick="toggleSelect(this, '{{ r.id }}')"
-        >
-          <!-- Info Button -->
-          <button 
-            onclick="event.stopPropagation(); openModal('{{ loop.index0 }}');"
-            class="absolute top-3 right-3 bg-white border border-gray-300 rounded-full p-1 shadow-sm hover:bg-gray-100 transition"
-            title="View Details"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+      <a href="{{ url_for('signup') }}" class="px-5 py-2 rounded-full text-white
+                  bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
+        Sign Up
+      </a>
+    </div>
+  </header>
+
+  <!-- Instruction -->
+  <div class="text-center text-gray-700 text-lg font-medium mt-6">
+    Click on meals to select them for saving
+  </div>
+
+  <main class="flex-grow flex flex-col items-center p-6">
+    <h1 class="text-3xl font-bold mb-8 text-gray-800">Meal Plan Results</h1>
+
+    {% if data and data.meals %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
+      {% for r in data.meals %}
+      <!-- Meal Card -->
+      <div
+        class="relative bg-white rounded-2xl shadow-lg p-6 cursor-pointer transform transition duration-200 hover:scale-[1.02]"
+        onclick="toggleSelect(this, '{{ r.id }}')">
+        <!-- Info Button -->
+        <button onclick="event.stopPropagation(); openModal('{{ loop.index0 }}');"
+          class="absolute top-3 right-3 bg-white border border-gray-300 rounded-full p-1 shadow-sm hover:bg-gray-100 transition"
+          title="View Details">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
-            </svg>
-          </button>
+          </svg>
+        </button>
 
-          <h2 class="text-xl font-semibold text-gray-800 mb-2">
-            {{ r.name }} ({{ r.mealType }})
-          </h2>
-          <p class="text-gray-600 mb-3">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">
+          {{ r.name }} ({{ r.mealType }})
+        </h2>
+        <p class="text-gray-600 mb-3">
+          <span class="font-medium">Calories:</span> {{ r.calories|round(0) }} |
+          C {{ r.carbs|round(0) }}g • F {{ r.fats|round(0) }}g • P {{ r.protein|round(0) }}g
+          {% if r._calorie_warning %}
+          <span class="block text-xs text-amber-600 mt-1">Calorie goal miss: {{ r._calorie_warning }}</span>
+          {% endif %}
+        </p>
+
+        <h3 class="text-gray-700 font-medium mb-1">Ingredients</h3>
+        <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+          {% for ing in r.ingredients %}
+          {% if ing is mapping %}
+          <li>
+            <span class="font-semibold">
+              {% if ing.quantity_display %}
+              {{ ing.quantity_display }}
+              {% elif ing.quantity is not none %}
+              {{ ing.quantity }}
+              {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
+            </span>
+            <span>{{ ing.name }}</span>
+            {% if ing.estimated_calories is not none %}
+            <span class="text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
+            {% endif %}
+          </li>
+          {% else %}
+          <li>{{ ing }}</li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Meal Detail Modal -->
+      <div id="modal-{{ loop.index0 }}"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative">
+          <button onclick="closeModal('{{ loop.index0 }}')"
+            class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">✕</button>
+          <h2 class="text-2xl font-semibold mb-4 text-gray-800">{{ r.name }} ({{ r.mealType }})</h2>
+          <p class="text-gray-600 mb-4">
             <span class="font-medium">Calories:</span> {{ r.calories|round(0) }} |
             C {{ r.carbs|round(0) }}g • F {{ r.fats|round(0) }}g • P {{ r.protein|round(0) }}g
             {% if r._calorie_warning %}
-              <span class="block text-xs text-amber-600 mt-1">Calorie goal miss: {{ r._calorie_warning }}</span>
+            <span class="block text-xs text-amber-600 mt-1">Calorie goal miss: {{ r._calorie_warning }}</span>
             {% endif %}
           </p>
-
-          <h3 class="text-gray-700 font-medium mb-1">Ingredients</h3>
-          <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+          <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
+          <ul class="list-disc list-inside text-gray-600 text-sm mb-4">
             {% for ing in r.ingredients %}
+            <li>
               {% if ing is mapping %}
-                <li>
-                  <span class="font-semibold">
-                    {% if ing.quantity_display %}
-                      {{ ing.quantity_display }}
-                    {% elif ing.quantity is not none %}
-                      {{ ing.quantity }}
-                    {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
-                  </span>
-                  <span>{{ ing.name }}</span>
-                  {% if ing.estimated_calories is not none %}
-                    <span class="text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
-                  {% endif %}
-                </li>
+              <span class="font-semibold">
+                {% if ing.quantity_display %}
+                {{ ing.quantity_display }}
+                {% elif ing.quantity is not none %}
+                {{ ing.quantity }}
+                {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
+              </span>
+              <span>{{ ing.name }}</span>
               {% else %}
-                <li>{{ ing }}</li>
+              {{ ing }}
               {% endif %}
+            </li>
             {% endfor %}
           </ul>
+          <h3 class="text-gray-700 font-medium mb-2">Instructions</h3>
+          <ol class="list-decimal list-inside text-gray-700 text-sm mb-4">
+            {% for step in r.instructions %}
+            <li>{{ step }}</li>
+            {% endfor %}
+          </ol>
         </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <pre class="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-auto w-full max-w-4xl">
+        {{ data | tojson(indent=2) if data else "No data passed." }}
+      </pre>
+    {% endif %}
+  </main>
 
-        <!-- Meal Detail Modal -->
-        <div id="modal-{{ loop.index0 }}" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-          <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative">
-            <button onclick="closeModal('{{ loop.index0 }}')" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">✕</button>
-            <h2 class="text-2xl font-semibold mb-4 text-gray-800">{{ r.name }} ({{ r.mealType }})</h2>
-            <p class="text-gray-600 mb-4">
-              <span class="font-medium">Calories:</span> {{ r.calories|round(0) }} |
-              C {{ r.carbs|round(0) }}g • F {{ r.fats|round(0) }}g • P {{ r.protein|round(0) }}g
-              {% if r._calorie_warning %}
-                <span class="block text-xs text-amber-600 mt-1">Calorie goal miss: {{ r._calorie_warning }}</span>
-              {% endif %}
-            </p>
-            <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
-            <ul class="list-disc list-inside text-gray-600 text-sm mb-4">
-              {% for ing in r.ingredients %}
-                <li>
-                  {% if ing is mapping %}
-                    <span class="font-semibold">
-                      {% if ing.quantity_display %}
-                        {{ ing.quantity_display }}
-                      {% elif ing.quantity is not none %}
-                        {{ ing.quantity }}
-                      {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
-                    </span>
-                    <span>{{ ing.name }}</span>
-                  {% else %}
-                    {{ ing }}
-                  {% endif %}
-                </li>
-              {% endfor %}
-            </ul>
-            <h3 class="text-gray-700 font-medium mb-2">Instructions</h3>
-            <ol class="list-decimal list-inside text-gray-700 text-sm mb-4">
-              {% for step in r.instructions %}
-                <li>{{ step }}</li>
-              {% endfor %}
-            </ol>
-          </div>
+  <!-- Save Meals Button -->
+  <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2">
+    <button id="saveMealsBtn" disabled
+      class="px-8 py-3 rounded-full text-white font-semibold bg-gray-300 cursor-not-allowed transition relative group">
+      Save Meals
+      <span
+        class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 whitespace-nowrap">
+        Select at least one meal to save
+      </span>
+    </button>
+  </div>
+
+  <!-- Save Meals → Choose Collection Modal -->
+  <div id="collectionsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative">
+
+      <button onclick="closeCollectionsModal()"
+        class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">✕</button>
+
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Save Meals To Collection</h2>
+
+      <div id="collectionsList" class="space-y-3 mb-6">
+        {% for c in collections %}
+        <div class="flex justify-between items-center border p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition"
+          onclick="toggleCollectionSelection('{{ c.name }}', this)">
+          <span class="font-medium text-gray-800">{{ c.name }}</span>
+          <span class="text-gray-600 text-sm">{{ c.count }} items</span>
         </div>
         {% endfor %}
       </div>
-      {% else %}
-      <pre class="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-auto w-full max-w-4xl">
-        {{ data | tojson(indent=2) if data else "No data passed." }}
-      </pre>
-      {% endif %}
-    </main>
 
-    <!-- Save Meals Button -->
-    <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2">
-      <button 
-        id="saveMealsBtn"
-        disabled
-        class="px-8 py-3 rounded-full text-white font-semibold bg-gray-300 cursor-not-allowed transition relative group"
-      >
-        Save Meals
-        <span class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 whitespace-nowrap">
-          Select at least one meal to save
-        </span>
+      <button class="w-full py-2 mb-4 bg-[#3F2EA8] text-white rounded-lg hover:bg-[#2F2180] transition"
+        onclick="createCollectionPrompt()">
+        + Create Collection
+      </button>
+
+      <button id="confirmSaveBtn"
+        class="w-full py-3 bg-[#3F2EA8] text-white font-semibold rounded-lg 
+         hover:bg-[#2F2180] transition 
+         disabled:bg-gray-300 disabled:cursor-not-allowed"
+        disabled onclick="confirmSaveMeals()">
+        Save to Selected Collections
       </button>
     </div>
+  </div>
 
-    <!-- Save Meals → Choose Collection Modal -->
-    <div id="collectionsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full relative">
-        
-        <button onclick="closeCollectionsModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">✕</button>
-
-        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Save Meals To Collection</h2>
-
-        <div id="collectionsList" class="space-y-3 mb-6">
-          {% for c in collections %}
-          <div class="flex justify-between items-center border p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition"
-               onclick="toggleCollectionSelection('{{ c.name }}', this)">
-            <span class="font-medium text-gray-800">{{ c.name }}</span>
-            <span class="text-gray-600 text-sm">{{ c.count }} items</span>
-          </div>
-          {% endfor %}
-        </div>
-
-        <button 
-          class="w-full py-2 mb-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-          onclick="createCollectionPrompt()">
-          + Create Collection
-        </button>
-
-        <button 
-          id="confirmSaveBtn"
-          class="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
-          disabled
-          onclick="confirmSaveMeals()">
-          Save to Selected Collections
-        </button>
-      </div>
+  <!-- Footer -->
+  <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
+    <div class="flex flex-col space-y-1">
+      <span>Contact Support</span>
+      <span>(702) 555-1234</span>
+      <span>support@prepify.com</span>
     </div>
+    <div class="text-center w-1/3">
+      <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
+    </div>
+  </footer>
 
-    <!-- Footer -->
-    <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
-      <div class="flex flex-col space-y-1">
-        <span>Contact Support</span>
-        <span>(702) 555-1234</span>
-        <span>support@prepify.com</span>
-      </div>
-      <div class="text-center w-1/3">
-        <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
-      </div>
-    </footer>
+  <!-- Scripts -->
+  <script>
+    // Selected meals (meal ids) and selected collections (collection names)
+    const selectedMeals = new Set();
+    const selectedCollections = new Set();
 
-    <!-- Scripts -->
-    <script>
-      // Selected meals (meal ids) and selected collections (collection names)
-      const selectedMeals = new Set();
-      const selectedCollections = new Set();
-
-      /* --------------------- meal selection UI --------------------- */
-      function toggleSelect(card, mealId) {
-        if (card.classList.contains('border-green-500')) {
-          card.classList.remove('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
-          selectedMeals.delete(mealId);
-        } else {
-          card.classList.add('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
-          selectedMeals.add(mealId);
-        }
-        updateSaveButton();
+    /* --------------------- meal selection UI --------------------- */
+    function toggleSelect(card, mealId) {
+      if (card.classList.contains("border-[#3F2EA8]")) {
+        // REMOVE highlight
+        card.classList.remove(
+          "border-2",
+          "border-[#3F2EA8]",
+          "shadow-[0_18px_60px_rgba(0,0,0,0.15)]"
+        );
+        selectedMeals.delete(mealId);
+      } else {
+        // ADD highlight
+        card.classList.add(
+          "border-2",
+          "border-[#3F2EA8]",
+          "shadow-[0_18px_60px_rgba(0,0,0,0.15)]"
+        );
+        selectedMeals.add(mealId);
       }
 
-      function updateSaveButton() {
-        const btn = document.getElementById('saveMealsBtn');
-        if (selectedMeals.size > 0) {
-          btn.disabled = false;
-          btn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-          btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
-        } else {
-          btn.disabled = true;
-          btn.classList.add('bg-gray-300', 'cursor-not-allowed');
-          btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-        }
+      updateSaveButton();
+    }
+
+    function updateSaveButton() {
+      const btn = document.getElementById('saveMealsBtn');
+
+      if (selectedMeals.size > 0) {
+        btn.disabled = false;
+        btn.classList.remove('bg-gray-300', 'cursor-not-allowed', 'opacity-40');
+
+        btn.classList.add('bg-[#3F2EA8]', 'hover:bg-[#2F2180]');
+      } else {
+        btn.disabled = true;
+
+        btn.classList.remove('bg-[#3F2EA8]', 'hover:bg-[#2F2180]');
+        btn.classList.add('bg-gray-300', 'cursor-not-allowed', 'opacity-40');
+      }
+    }
+
+    //  modal for showing more info about the meals
+    function openModal(id) {
+      document.getElementById("modal-" + id).classList.remove("hidden");
+      document.getElementById("modal-" + id).classList.add("flex");
+    }
+
+    function closeModal(id) {
+      document.getElementById("modal-" + id).classList.remove("flex");
+      document.getElementById("modal-" + id).classList.add("hidden");
+    }
+
+    //  modal for saving meals
+    function openCollectionsModal() {
+      document.getElementById("collectionsModal").classList.remove("hidden");
+      document.getElementById("collectionsModal").classList.add("flex");
+    }
+
+    function closeCollectionsModal() {
+      document.getElementById("collectionsModal").classList.remove("flex");
+      document.getElementById("collectionsModal").classList.add("hidden");
+
+      // clear selection state
+      selectedCollections.clear();
+      document.querySelectorAll('#collectionsList > div').forEach(el => {
+        el.classList.remove('bg-blue-100', 'border-blue-500');
+      });
+
+      document.getElementById("confirmSaveBtn").disabled = true;
+    }
+
+    // open modal when Save Meals clicked
+    document.getElementById('saveMealsBtn').addEventListener('click', openCollectionsModal);
+
+    // toggle collection selection (multi-select)
+    function toggleCollectionSelection(name, element) {
+      if (selectedCollections.has(name)) {
+        selectedCollections.delete(name);
+        element.classList.remove('bg-blue-100', 'border-blue-500');
+      } else {
+        selectedCollections.add(name);
+        element.classList.add('bg-blue-100', 'border-blue-500');
       }
 
-//  modal for showing more info about the meals
-      function openModal(id) {
-        document.getElementById("modal-" + id).classList.remove("hidden");
-        document.getElementById("modal-" + id).classList.add("flex");
-      }
+      document.getElementById("confirmSaveBtn").disabled = selectedCollections.size === 0;
+    }
 
-      function closeModal(id) {
-        document.getElementById("modal-" + id).classList.remove("flex");
-        document.getElementById("modal-" + id).classList.add("hidden");
-      }
+    // used to prompt and create a new collection name
 
-//  modal for saving meals
-      function openCollectionsModal() {
-        document.getElementById("collectionsModal").classList.remove("hidden");
-        document.getElementById("collectionsModal").classList.add("flex");
-      }
+    async function createCollectionPrompt() {
+      const name = prompt("Enter a new collection name:");
+      if (!name) return;
 
-      function closeCollectionsModal() {
-        document.getElementById("collectionsModal").classList.remove("flex");
-        document.getElementById("collectionsModal").classList.add("hidden");
-
-        // clear selection state
-        selectedCollections.clear();
-        document.querySelectorAll('#collectionsList > div').forEach(el => {
-          el.classList.remove('bg-blue-100', 'border-blue-500');
+      try {
+        const res = await fetch("{{ url_for('create_collection') }}", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
         });
 
-        document.getElementById("confirmSaveBtn").disabled = true;
-      }
+        const data = await res.json();
 
-      // open modal when Save Meals clicked
-      document.getElementById('saveMealsBtn').addEventListener('click', openCollectionsModal);
-
-      // toggle collection selection (multi-select)
-      function toggleCollectionSelection(name, element) {
-        if (selectedCollections.has(name)) {
-          selectedCollections.delete(name);
-          element.classList.remove('bg-blue-100', 'border-blue-500');
-        } else {
-          selectedCollections.add(name);
-          element.classList.add('bg-blue-100', 'border-blue-500');
+        if (!res.ok) {
+          alert(data.error || "Failed to create collection.");
+          return;
         }
 
-        document.getElementById("confirmSaveBtn").disabled = selectedCollections.size === 0;
-      }
-
-      // used to prompt and create a new collection name
-
-      async function createCollectionPrompt() {
-        const name = prompt("Enter a new collection name:");
-        if (!name) return;
-
-        try {
-          const res = await fetch("{{ url_for('create_collection') }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name })
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            alert(data.error || "Failed to create collection.");
-            return;
-          }
-
-          // Append new collection to UI and auto-select it
-          const list = document.getElementById("collectionsList");
-          const div = document.createElement("div");
-          div.className = "flex justify-between items-center border p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition";
-          div.onclick = () => toggleCollectionSelection(name, div);
-          div.innerHTML = `
+        // Append new collection to UI and auto-select it
+        const list = document.getElementById("collectionsList");
+        const div = document.createElement("div");
+        div.className = "flex justify-between items-center border p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition";
+        div.onclick = () => toggleCollectionSelection(name, div);
+        div.innerHTML = `
             <span class="font-medium text-gray-800">${name}</span>
             <span class="text-gray-600 text-sm">0 items</span>
           `;
-          list.appendChild(div);
+        list.appendChild(div);
 
-          // auto-select the newly created collection
-          selectedCollections.add(name);
-          div.classList.add('bg-blue-100', 'border-blue-500');
-          document.getElementById("confirmSaveBtn").disabled = false;
+        // auto-select the newly created collection
+        selectedCollections.add(name);
+        div.classList.add('bg-blue-100', 'border-blue-500');
+        document.getElementById("confirmSaveBtn").disabled = false;
 
-          // Optionally show message returned from backend
-          if (data.message) {
-            alert(data.message);
-          } else {
-            alert("Collection created!");
-          }
-        } catch (err) {
-          console.error(err);
-          alert("An error occurred while creating the collection.");
+        // Optionally show message returned from backend
+        if (data.message) {
+          alert(data.message);
+        } else {
+          alert("Collection created!");
         }
+      } catch (err) {
+        console.error(err);
+        alert("An error occurred while creating the collection.");
       }
+    }
 
     //   used to save meals to the backend db
 
-      async function confirmSaveMeals() {
-        if (selectedMeals.size === 0 || selectedCollections.size === 0) return;
+    async function confirmSaveMeals() {
+      if (selectedMeals.size === 0 || selectedCollections.size === 0) return;
 
-        try {
-          const res = await fetch("{{ url_for('save_meals') }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              meal_ids: Array.from(selectedMeals),
-              collections: Array.from(selectedCollections) // Option A format
-            })
-          });
+      try {
+        const res = await fetch("{{ url_for('save_meals') }}", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            meal_ids: Array.from(selectedMeals),
+            collections: Array.from(selectedCollections) // Option A format
+          })
+        });
 
-          const data = await res.json();
+        const data = await res.json();
 
-          if (!res.ok) {
-            alert(data.error || "Failed to save meals.");
-            return;
-          }
-
-          // Show backend message if provided
-          if (data.message) {
-            alert(data.message);
-          } else {
-            alert("Meals saved!");
-          }
-
-          // Reset UI
-          closeCollectionsModal();
-          selectedMeals.clear();
-          document.querySelectorAll('.border-green-500').forEach(card => {
-            card.classList.remove('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
-          });
-          updateSaveButton();
-        } catch (err) {
-          console.error(err);
-          alert("An error occurred while saving meals.");
+        if (!res.ok) {
+          alert(data.error || "Failed to save meals.");
+          return;
         }
-      }
-    </script>
 
-  </body>
+        // Show backend message if provided
+        if (data.message) {
+          alert(data.message);
+        } else {
+          alert("Meals saved!");
+        }
+
+        // Reset UI
+        closeCollectionsModal();
+        selectedMeals.clear();
+        document.querySelectorAll('.border-green-500').forEach(card => {
+          card.classList.remove('border-4', 'border-green-500', 'shadow-[0_0_20px_rgba(34,197,94,0.7)]');
+        });
+        updateSaveButton();
+      } catch (err) {
+        console.error(err);
+        alert("An error occurred while saving meals.");
+      }
+    }
+  </script>
+
+</body>
+
 </html>

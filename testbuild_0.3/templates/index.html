@@ -1,135 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
 
-  <body class="bg-[#fff5da] flex flex-col min-h-screen">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-    <!-- Header -->
-    <header class="w-full flex flex-wrap items-center justify-between px-4 sm:px-8 py-4 text-gray-800 text-lg font-medium">
-      <!-- Left: logo + nav -->
-      <div class="flex flex-wrap items-center gap-6">
-        <!-- Logo -->
-        <a href="{{ url_for('index') }}" class="flex items-center">
-          <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
-               alt="Prepify Logo"
-               class="h-12 w-auto">
-        </a>
+<body class="bg-[#fff5da] flex flex-col min-h-screen">
 
-        <!-- Nav -->
-        <nav>
-          <ul class="flex flex-wrap gap-6 text-sm sm:text-base">
-            <li>
-              <a href="{{ url_for('get_started') }}"
-                 class="border-b-2 border-transparent hover:border-gray-800 pb-1">
-                Get Started
-              </a>
-            </li>
-            <li>
-              <a href="{{ url_for('shopping_list') }}"
-                 class="border-b-2 border-transparent hover:border-gray-800 pb-1">
-                Shopping List
-              </a>
-            </li>
-            <li>
-              <a href="{{ url_for('calendar') }}"
-                 class="border-b-2 border-transparent hover:border-gray-800 pb-1">
-                 Calendar
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </div>
+  <!-- Header -->
+  <header class="w-full flex flex-wrap items-center justify-between 
+               px-4 sm:px-8 py-4 text-gray-800 text-lg font-medium 
+               bg-[#FFF1CF] shadow-sm">
+    <!-- Left: logo + nav -->
+    <div class="flex flex-wrap items-center gap-6">
+      <!-- Logo -->
+      <a href="{{ url_for('index') }}" class="flex items-center">
+        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo" class="h-12 w-auto">
+      </a>
 
-      <!-- Right: auth links -->
-      <div class="flex items-center gap-6 text-sm sm:text-base mt-4 sm:mt-0">
-        <a href="{{ url_for('login') }}"
-           class="border-b-2 border-transparent hover:border-gray-800 pb-1">
-          Log In
-        </a>
-        <a href="{{ url_for('signup') }}"
-           class="border-b-2 border-transparent hover:border-gray-800 pb-1">
-          Sign Up
-        </a>
-      </div>
-    </header>
-
-    <main class="flex-1">
-
-      <!-- HERO SECTION -->
-      <section class="bg-[#fff5da] py-16">
-        <div class="max-w-5xl mx-auto px-4 text-center">
-          <h1
-            class="font-black text-[#233723] leading-tight
-                   text-4xl sm:text-5xl md:text-6xl lg:text-7xl"
-          >
-            Simple<br />Meal Planning
-          </h1>
-
-          <a href="{{ url_for('get_started') }}">
-            <button
-              class="mt-10 inline-flex items-center justify-center rounded-full
-                     bg-[#68814c] px-8 sm:px-10 py-3 text-base sm:text-xl font-semibold
-                     text-white shadow-lg hover:bg-blue-600 transition duration-300"
-            >
+      <!-- Nav -->
+      <nav>
+        <ul class="flex flex-wrap gap-6 text-sm sm:text-base">
+          <li>
+            <a href="{{ url_for('get_started') }}" class="border-b-2 border-transparent hover:border-gray-800 pb-1">
               Get Started
-            </button>
-          </a>
-        </div>
-      </section>
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('shopping_list') }}" class="border-b-2 border-transparent hover:border-gray-800 pb-1">
+              Shopping List
+            </a>
+          </li>
+          <li>
+            <a href="{{ url_for('calendar') }}" class="border-b-2 border-transparent hover:border-gray-800 pb-1">
+              Calendar
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
 
-      <!-- THREE-COLUMN FEATURES SECTION -->
-      <section class="bg-[#233723] text-[#fff5da] py-16">
-        <div
-          class="max-w-5xl mx-auto px-4
-                 grid grid-cols-1 md:grid-cols-3 gap-10 text-center"
-        >
-          <!-- Column 1 -->
-          <div>
-            <h2 class="font-semibold text-xl mb-4">Simplify</h2>
-            <p class="text-base sm:text-lg leading-relaxed">
-              Prepify simplifies weekly food prep by generating recipes
-              and a complete grocery list automatically.
-            </p>
-          </div>
+    <!-- Right: auth links -->
+    <div class="flex items-center gap-6 text-sm sm:text-base mt-4 sm:mt-0">
+      <a href="{{ url_for('login') }}" class="border-b-2 border-transparent hover:border-gray-800 pb-1">
+        Log In
+      </a>
+      <a href="{{ url_for('signup') }}" class="border-b-2 border-transparent hover:border-gray-800 pb-1">
+        Sign Up
+      </a>
+    </div>
+  </header>
 
-          <!-- Column 2 -->
-          <div>
-            <h2 class="font-semibold text-xl mb-4">Customize</h2>
-            <p class="text-base sm:text-lg leading-relaxed">
-              A smart meal-planning platform that creates personalized recipes
-              based on your dietary and wellness goals.
-            </p>
-          </div>
+  <main class="flex-1">
 
-          <!-- Column 3 -->
-          <div>
-            <h2 class="font-semibold text-xl mb-4">Save</h2>
-            <p class="text-base sm:text-lg leading-relaxed">
-              Built-in budgeting tools help you save money while grocery shopping
-              for healthy ingredients.
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
+    <!-- HERO SECTION -->
+    <section class="bg-[#fff5da] py-16">
+      <div class="max-w-5xl mx-auto px-4 text-center">
+        <h1 class="font-black text-[#233723] leading-tight
+                   text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
+          Simple<br />Meal Planning
+        </h1>
 
-    <!-- Footer -->
-    <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-4 sm:px-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div class="flex flex-col space-y-1">
-        <span>Contact Support</span>
-        <span>(702) 555-1234</span>
-        <span>support@prepify.com</span>
+        <a href="{{ url_for('get_started') }}">
+          <button class="mt-10 inline-flex items-center justify-center rounded-full
+                     bg-[#68814c] px-8 sm:px-10 py-3 text-base sm:text-xl font-semibold
+                     text-white shadow-lg hover:bg-blue-600 transition duration-300">
+            Get Started
+          </button>
+        </a>
       </div>
+    </section>
 
-      <div class="text-center sm:w-1/3">
-        <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
+    <!-- THREE-COLUMN FEATURES SECTION -->
+    <section class="bg-[#233723] text-[#fff5da] py-16">
+      <div class="max-w-5xl mx-auto px-4
+                 grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
+        <!-- Column 1 -->
+        <div>
+          <h2 class="font-semibold text-xl mb-4">Simplify</h2>
+          <p class="text-base sm:text-lg leading-relaxed">
+            Prepify simplifies weekly food prep by generating recipes
+            and a complete grocery list automatically.
+          </p>
+        </div>
+
+        <!-- Column 2 -->
+        <div>
+          <h2 class="font-semibold text-xl mb-4">Customize</h2>
+          <p class="text-base sm:text-lg leading-relaxed">
+            A smart meal-planning platform that creates personalized recipes
+            based on your dietary and wellness goals.
+          </p>
+        </div>
+
+        <!-- Column 3 -->
+        <div>
+          <h2 class="font-semibold text-xl mb-4">Save</h2>
+          <p class="text-base sm:text-lg leading-relaxed">
+            Built-in budgeting tools help you save money while grocery shopping
+            for healthy ingredients.
+          </p>
+        </div>
       </div>
-    </footer>
+    </section>
+  </main>
 
-  </body>
+  <!-- Footer -->
+  <footer
+    class="bg-[#0E0E0E] text-gray-200 py-6 px-4 sm:px-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="flex flex-col space-y-1">
+      <span>Contact Support</span>
+      <span>(702) 555-1234</span>
+      <span>support@prepify.com</span>
+    </div>
+
+    <div class="text-center sm:w-1/3">
+      <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+
 </html>
