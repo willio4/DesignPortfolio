@@ -1,67 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Prepify – Get Started</title>
-    <!-- Tailwind CSS CDN -->
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Your custom CSS for nav underline -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
 </head>
-<body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <!-- Header -->
-    <header class="flex justify-between items-center py-4 px-4 sm:px-8">
-        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo" class="h-12">
-        <div class="flex space-x-4">
-            <a href="{{ url_for('login') }}">
-                <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
-                    Log In
-                </button>
-            </a>
-            <a href="{{ url_for('signup') }}">
-                <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
-                    Sign Up
-                </button>
-            </a>
-        </div>
-    </header>
+<body class="bg-[#fff5da] flex flex-col min-h-screen">
 
-    <!-- Navigation -->
-    <nav class="px-4 sm:px-8">
-        <ul class="flex flex-wrap justify-center gap-2 text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-2 shadow-inner shadow-gray-400">
-            <li>
-                <a href="{{ url_for('index') }}"
-                   class="flex justify-center py-2 px-4 text-sm sm:text-base text-gray-700 hover:text-green-600 transition">
-                    Home
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('get_started') }}"
-                   class="flex justify-center py-2 px-4 text-sm sm:text-base font-bold bg-gradient-to-b from-white to-gray-200 rounded-full shadow-[0_4px_8px_rgba(0,0,0,0.2)] text-green-400">
-                    Get Started
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('shopping_list') }}"
-                   class="flex justify-center py-2 px-4 text-sm sm:text-base text-gray-700 hover:text-green-600 transition">
-                    Shopping List
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('calendar') }}"
-                   class="flex justify-center py-2 px-4 text-sm sm:text-base text-gray-700 hover:text-green-600 transition">
-                    Calendar
-                </a>
-            </li>
-            {# Uncomment if/when you add this route #}
-            {# <li>
-                <a href="{{ url_for('show_feed') }}"
-                   class="flex justify-center py-2 px-4 text-sm sm:text-base text-gray-700 hover:text-green-600 transition">
-                    Feed
-                </a>
-            </li> #}
-        </ul>
-    </nav>
+<header class="w-full flex items-center justify-between px-8 py-4 bg-[#fff5da]">
+
+    <!-- LEFT: Logo + Navigation -->
+    <div class="flex items-center gap-10">
+        <!-- Logo -->
+        <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
+                 alt="Prepify Logo"
+                 class="h-12 cursor-pointer">
+        </a>
+
+        <!-- Navigation -->
+        <nav class="flex gap-8 text-lg font-medium text-gray-900">
+            <a href="{{ url_for('get_started') }}" class="nav-link">Get Started</a>
+            <a href="{{ url_for('shopping_list') }}" class="nav-link">Shopping List</a>
+            <a href="{{ url_for('calendar') }}" class="nav-link">Calendar</a>
+        </nav>
+    </div>
+
+    <!-- RIGHT: Modern Log In / Sign Up -->
+    <div class="flex space-x-3">
+        <a href="{{ url_for('login') }}"
+           class="px-5 py-2 rounded-full border border-gray-800 text-gray-900 
+                  bg-white shadow-sm hover:bg-gray-200 transition font-medium">
+            Log In
+        </a>
+
+        <a href="{{ url_for('signup') }}"
+           class="px-5 py-2 rounded-full text-white 
+                  bg-indigo-500 hover:bg-indigo-600 transition font-medium shadow">
+            Sign Up
+        </a>
+    </div>
+
+</header>
 
     <!-- Main content -->
     <main class="flex-grow flex items-center justify-center px-4">
