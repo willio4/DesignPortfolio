@@ -9,24 +9,23 @@
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Your custom CSS (for .nav-link underline, etc.) -->
+  <!-- Custom CSS (for nav underline) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
 </head>
 
 <body class="bg-[#fff5da] flex flex-col min-h-screen">
 
-  <!-- Top bar / header -->
+  <!-- HEADER -->
   <header class="w-full flex items-center justify-between px-8 py-4 bg-[#FFF1CF] shadow-sm">
 
-    <!-- LEFT: Logo + nav -->
+    <!-- LEFT: Logo + Navigation -->
     <div class="flex items-center gap-10">
-      <!-- Logo (clicks to landing page) -->
       <a href="{{ url_for('index') }}">
-        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
-          class="h-12 cursor-pointer">
+        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
+             alt="Prepify Logo"
+             class="h-12 cursor-pointer">
       </a>
 
-      <!-- Navigation links -->
       <nav class="flex gap-8 text-lg font-medium text-gray-900">
         <a href="{{ url_for('get_started') }}" class="nav-link">Get Started</a>
         <a href="{{ url_for('shopping_list') }}" class="nav-link">Shopping List</a>
@@ -34,14 +33,16 @@
       </nav>
     </div>
 
-    <!-- RIGHT: Log In / Sign Up buttons -->
+    <!-- RIGHT: Auth buttons -->
     <div class="flex space-x-3">
-      <a href="{{ url_for('login') }}" class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
+      <a href="{{ url_for('login') }}"
+         class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
                 bg-white shadow-sm hover:bg-gray-200 transition font-medium">
         Log In
       </a>
 
-      <a href="{{ url_for('signup') }}" class="px-5 py-2 rounded-full text-white
+      <a href="{{ url_for('signup') }}"
+         class="px-5 py-2 rounded-full text-white
                 bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
         Sign Up
       </a>
@@ -49,15 +50,33 @@
 
   </header>
 
+
+  <!-- MAIN CONTENT WRAPPER -->
+  <main class="flex-grow flex items-start justify-center px-4 py-10">
+
+    <!-- This white card protects images and content from the background color -->
+    <div class="w-full max-w-4xl bg-white rounded-3xl shadow-xl shadow-indigo-300/30 p-6">
+
+      <!-- PLACE SHOPPING LIST CONTENT HERE -->
+      {% block shopping_list_content %}
+        <!-- Example placeholder -->
+        <h1 class="text-2xl font-semibold text-gray-800 mb-4">Your Shopping List</h1>
+        <!-- Your JS-generated content or image will appear clean here -->
+      {% endblock %}
+
+    </div>
+
+  </main>
+
+
+  <!-- FOOTER -->
   <footer class="mt-auto bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center">
-    <!-- Left side: contact info -->
     <div class="flex flex-col space-y-1">
       <span>Contact Support</span>
       <span>(702) 555-1234</span>
       <span>support@prepify.com</span>
     </div>
 
-    <!-- Right side: copyright -->
     <div class="text-center w-1/3">
       <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
     </div>
