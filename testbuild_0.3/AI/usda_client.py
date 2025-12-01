@@ -20,8 +20,7 @@ class USDAFoodDataClient:
     _DEFAULT_DATA_TYPES: Sequence[str] = (
         "Foundation",
         "SR Legacy",
-        "Survey (FNDDS)",
-        "Branded",
+        "Survey (FNDDS)"
     )
 
     def _post(self, endpoint: str, payload: Dict) -> Dict:

@@ -88,24 +88,33 @@ def generate_prompt(merged_constraints: dict | None = None,
           1. Generate {num_breakfast} breakfast, {num_lunch} lunch, and {num_dinner} dinner recipes.
           2. Set mealType correctly for each meal.
           3. Each meal should have a unique name and a list of ingredients.
-          4. Provide clear, step-by-step cooking instructions. Each instruction should be
-          placed on its own line and numbered sequentially.
-          5. Each ingredient entry MUST include an explicit weight in both grams and ounces, formatted like "2 chicken breasts (300 g | 10.6 oz)" or "1 cup spinach (30 g | 1.1 oz)".
-              Always keep the familiar kitchen measure (cups, tablespoons, slices, etc.) before the parentheses so cooks can follow the recipe naturally.
-              If you cannot determine the weight, regenerate the meal before responding.
-          6. Example ingredient array format (for clarity):
+             4. Provide clear, step-by-step cooking instructions. Each instruction should be
+             placed on its own line and numbered sequentially.
+             5. Tool usage (MANDATORY): before finalizing any ingredient, call the "lookupIngredient"
+                 function with {{"ingredient": "<plain term>"}}. Use the returned serving_size_g and macros
+                 to scale the ingredient amount you plan to use. If a lookup fails, pick a different ingredient.
+                 You must never invent nutrition data—derive grams/oz and calories strictly from the tool.
+                         6. Calorie planning discipline (MANDATORY): do not draft names, instructions, or macro totals until
+                                you already have lookup data for every ingredient in the meal. First gather all facts, compute the
+                                scaled calories/protein/carbs/fats so you know the numbers, then write the recipe. If any ingredient
+                                lacks lookup data, replace it or keep calling the tool until you have the macros.
+                         7. Each ingredient entry MUST include an explicit weight in both grams and ounces, formatted like
+                 "2 chicken breasts (300 g | 10.6 oz)" or "1 cup spinach (30 g | 1.1 oz)". Always keep the familiar
+                 kitchen measure (cups, tablespoons, slices, etc.) before the parentheses so cooks can follow the recipe naturally.
+                 If you cannot determine the weight, regenerate the meal before responding.
+                         8. Example ingredient array format (for clarity):
               ["2 slices whole grain bread (60 g | 2.1 oz)", "1 ripe avocado (136 g | 4.8 oz)", "1/2 cup cooked quinoa (92 g | 3.2 oz)", "1 tbsp olive oil (14 g | 0.5 oz)"]
-          7. Ensure nutritional values (calories, carbs, fats, protein) are realistic and appropriate for the meal type.
-          8. Meals should be easy to prepare with common ingredients.
-          9. {constraint_text}
-          10. {banned_rule}
-          11. Avoid repetition in meal names and ingredient lists across all meals.
-          12. Prioritize variety: where multiple recipes of the same mealType are requested, ensure each one differs from the others by at least two major ingredients or by cuisine/style (e.g., one Mediterranean, one Asian, one Tex-Mex).
-          13. Try to vary primary proteins, grains, vegetables, and dominant flavors across meals to maximize diversity.
-          14. If possible, limit overlap of the top 3 ingredients between any two meals.
-          15. JSON only, no extra text.
-          16. When supporting ingredient facts are provided, ensure recipes stay consistent with their nutrition guidance.
-          17. Do not return a meal unless every ingredient lists grams and ounces exactly as described above.
+                         9. Ensure nutritional values (calories, carbs, fats, protein) are the exact scaled sum of the
+                 lookupIngredient payloads for the ingredients you include. Do not round until the final totals.
+                         10. {constraint_text}
+                         11. {banned_rule}
+                         12. Avoid repetition in meal names and ingredient lists across all meals.
+                         13. Prioritize variety: where multiple recipes of the same mealType are requested, ensure each one differs from the others by at least two major ingredients or by cuisine/style (e.g., one Mediterranean, one Asian, one Tex-Mex).
+                         14. Try to vary primary proteins, grains, vegetables, and dominant flavors across meals to maximize diversity.
+                         15. If possible, limit overlap of the top 3 ingredients between any two meals.
+                         16. JSON only, no extra text.
+                         17. When supporting ingredient facts are provided, ensure recipes stay consistent with their nutrition guidance.
+                         18. Do not return a meal unless every ingredient lists grams and ounces exactly as described above and the macros match the tool data.
     """).strip()
 
     if facts_block:

@@ -33,6 +33,7 @@ from AI.retriever import (
     StubIngredientRetriever,
     USDAIngredientRetriever,
 )
+from AI.retrieval_contract import IngredientFact
 from AI.usda_client import USDAFoodDataClient
 
 # Routes
@@ -48,6 +49,7 @@ app.secret_key = 'your-secret-key'
 logging.basicConfig(level=logging.DEBUG)
 _GRAM_UNITS = {'g', 'gram', 'grams'}
 _OZ_UNITS = {'oz', 'ounce', 'ounces'}
+_GRAMS_PER_OUNCE = 28.3495
 _WEIGHT_PATTERN = re.compile(r'(?P<value>\d+(?:\.\d+)?)\s*(?P<unit>g|gram|grams|oz|ounce|ounces)\b', re.IGNORECASE)
 
 _STOPWORDS = {
@@ -105,7 +107,7 @@ def _extract_weight_details(text: str | None) -> tuple[float | None, bool, bool]
             grams_from_grams = value
         elif unit in _OZ_UNITS:
             has_ounces = True
-            grams_from_ounces = value * 28.3495
+            grams_from_ounces = value * _GRAMS_PER_OUNCE
 
     grams = grams_from_grams
     if grams is None and grams_from_ounces is not None:
@@ -144,7 +146,7 @@ def _parse_ingredient_weight(ingredient) -> tuple[float | None, bool, bool, str]
                 oz_val = float(ingredient['weight_oz'])
                 has_ounces = True
                 if grams is None:
-                    grams = oz_val * 28.3495
+                    grams = oz_val * _GRAMS_PER_OUNCE
             except (TypeError, ValueError):
                 pass
     else:
@@ -180,18 +182,89 @@ def _normalize_term(name: str) -> str:
     return ' '.join(tokens[:4]).strip()
 
 
-def apply_usda_macros(meals: list[dict]) -> None:
+def _term_tokens(term: str) -> set[str]:
+    normalized = _normalize_term(term)
+    base_tokens = [tok for tok in normalized.split() if tok]
+    tokens: set[str] = set()
+    for tok in base_tokens:
+        tokens.add(tok)
+        if len(tok) > 3 and tok.endswith('es'):
+            tokens.add(tok[:-2])
+        elif len(tok) > 2 and tok.endswith('s'):
+            tokens.add(tok[:-1])
+    return tokens
+
+
+def _best_cached_fact(term: str, fact_cache: dict[str, IngredientFact]) -> IngredientFact | None:
+    if not fact_cache:
+        return None
+
+    direct = fact_cache.get(term)
+    if direct:
+        return direct
+
+    term_tokens = _term_tokens(term)
+    if not term_tokens:
+        return None
+
+    normalized = ' '.join(sorted(term_tokens))
+    direct_norm = fact_cache.get(normalized)
+    if direct_norm:
+        return direct_norm
+
+    best = None
+    best_overlap = 0
+    for key, fact in fact_cache.items():
+        key_tokens = _term_tokens(key)
+        if not key_tokens:
+            continue
+        overlap = len(term_tokens & key_tokens)
+        if overlap > best_overlap:
+            best = fact
+            best_overlap = overlap
+    return best if best_overlap else None
+
+
+def _missing_calorie_terms(ingredients, fact_cache: dict[str, IngredientFact] | None) -> list[str]:
+    missing: list[str] = []
+    if not ingredients:
+        return missing
+
+    for ingredient in ingredients:
+        quantity, unit, name = _extract_ingredient_parts(ingredient)
+        if unit != 'g' or quantity is None:
+            continue
+
+        term = _normalize_term(name)
+        if not term or term in _CONDIMENT_TERMS:
+            continue
+
+        fact = _best_cached_fact(term, fact_cache or {})
+        if not fact:
+            missing.append(name or term)
+
+    return missing
+
+
+def apply_usda_macros(meals: list[dict], fact_cache: dict[str, IngredientFact] | None = None) -> None:
     if not meals or INGREDIENT_RETRIEVER is None:
         return
 
     cache: dict[str, object | None] = {}
+    precomputed = {k: v for k, v in (fact_cache or {}).items() if v}
+    if precomputed:
+        for key, fact in list(precomputed.items()):
+            norm = _normalize_term(key)
+            if norm and norm not in precomputed:
+                precomputed[norm] = fact
 
     for meal in meals:
         totals = {'calories': 0.0, 'protein': 0.0, 'carbs': 0.0, 'fats': 0.0}
         matched = False
         contributions: list[dict[str, float | str]] = []
 
-        for ingredient in meal.get('ingredients') or []:
+        ingredients_list = meal.get('ingredients') or []
+        for idx, ingredient in enumerate(ingredients_list):
             quantity, unit, name = _extract_ingredient_parts(ingredient)
             if unit != 'g' or quantity is None:
                 continue
@@ -200,7 +273,13 @@ def apply_usda_macros(meals: list[dict]) -> None:
             if not term or term in _CONDIMENT_TERMS:
                 continue
 
-            if term not in cache:
+            fact = cache.get(term)
+            if fact is None:
+                fact = _best_cached_fact(term, precomputed)
+                if fact:
+                    cache[term] = fact
+
+            if fact is None:
                 try:
                     batch = INGREDIENT_RETRIEVER.fetch([term])
                 except Exception:
@@ -208,8 +287,8 @@ def apply_usda_macros(meals: list[dict]) -> None:
                     cache[term] = None
                     continue
                 cache[term] = batch.facts[0] if batch.facts else None
+                fact = cache[term]
 
-            fact = cache[term]
             if not fact:
                 continue
 
@@ -227,24 +306,37 @@ def apply_usda_macros(meals: list[dict]) -> None:
             totals['carbs'] += carbs
             totals['fats'] += fats
 
+            rounded_cal = round(cal, 1)
             contributions.append({
                 'ingredient': term,
                 'grams': round(quantity, 1),
-                'calories': round(cal, 1),
+                'calories': rounded_cal,
             })
+
+            logging.debug(
+                'Ingredient %s contributes %.1f kcal from %.1f g (serving %.1f g)',
+                term,
+                rounded_cal,
+                round(quantity, 1),
+                serving_size
+            )
+
+            if isinstance(ingredient, dict):
+                ingredient['calories'] = rounded_cal
+            else:
+                existing = ingredients_list[idx]
+                if isinstance(existing, str) and 'kcal' not in existing.lower():
+                    ingredients_list[idx] = f"{existing} [{rounded_cal} kcal]"
 
         if matched:
             meal['calories'] = int(round(totals['calories']))
             meal['protein'] = int(round(totals['protein']))
             meal['carbs'] = int(round(totals['carbs']))
             meal['fats'] = int(round(totals['fats']))
-
-            logging.debug(
-                'USDA breakdown for %s: total=%s kcal contributions=%s',
-                meal.get('name'),
-                meal.get('calories'),
-                contributions,
-            )
+            meal['_usda_contributions'] = contributions
+            meal['_usda_macro_source'] = 'cached_lookup' if fact_cache else 'live_lookup'
+        else:
+            meal['_usda_macro_source'] = 'unverified'
 
 # Initialize DB with app
 db.init_app(app)
@@ -400,6 +492,56 @@ def startMealPlan():
         except Exception:
             logging.exception("Ingredient retrieval failed")
 
+    tool_cache: dict[str, dict] = {}
+    tool_fact_cache: dict[str, IngredientFact] = {}
+
+    def _lookup_ingredient_tool(function_name: str, args: dict) -> dict:
+        if function_name != 'lookupIngredient':
+            return {"ok": False, "error": f"unsupported_tool:{function_name}"}
+
+        term = str(args.get('ingredient') or '').strip()
+        if not term:
+            return {"ok": False, "error": "ingredient_required"}
+
+        cache_key = term.lower()
+        if cache_key in tool_cache:
+            return tool_cache[cache_key]
+
+        try:
+            batch = INGREDIENT_RETRIEVER.fetch([term])
+        except Exception as exc:
+            logging.exception("lookupIngredient failed for %s", term)
+            result = {"ok": False, "ingredient": term, "error": "lookup_failed"}
+        else:
+            fact = batch.facts[0] if batch and batch.facts else None
+            if not fact:
+                result = {"ok": False, "ingredient": term, "error": "not_found"}
+                if batch and batch.warnings:
+                    result["warnings"] = batch.warnings
+            else:
+                fact_payload = {
+                    "canonical_name": fact.canonical_name,
+                    "source_id": fact.source_id,
+                    "summary": fact.summary,
+                    "serving_size_g": fact.nutrition.serving_size_g,
+                    "serving_size_oz": round(fact.nutrition.serving_size_g / _GRAMS_PER_OUNCE, 4),
+                    "calories": fact.nutrition.calories,
+                    "protein_g": fact.nutrition.protein_g,
+                    "carbs_g": fact.nutrition.carbs_g,
+                    "fats_g": fact.nutrition.fats_g,
+                    "tags": fact.tags,
+                }
+                if batch and batch.warnings:
+                    fact_payload["warnings"] = batch.warnings
+                result = {"ok": True, "ingredient": term, "fact": fact_payload}
+                tool_fact_cache[cache_key] = fact
+                normalized_term = _normalize_term(term)
+                if normalized_term:
+                    tool_fact_cache.setdefault(normalized_term, fact)
+
+        tool_cache[cache_key] = result
+        return result
+
     # Generate the prompt and log it
     prompt = generate_prompt(merged_prefs, retrieval_batch=retrieval_batch)
     logging.debug(f"Generated prompt: {prompt}")
@@ -433,7 +575,7 @@ def startMealPlan():
     data: dict = {"meals": []}
 
     while True:
-        raw_data = call_model(prompt)
+        raw_data = call_model(prompt, tool_executor=_lookup_ingredient_tool)
         if not isinstance(raw_data, dict):
             logging.warning('Model returned invalid payload (attempt %s): %r', attempt + 1, raw_data)
             raw_data = {}
@@ -451,6 +593,7 @@ def startMealPlan():
 
         cleaned: list[dict] = []
         dropped_for_weight = 0
+        dropped_for_calorie = 0
         for m in meals:
             if not isinstance(m, dict):
                 logging.warning('Skipping non-dict meal: %r', m)
@@ -494,6 +637,16 @@ def startMealPlan():
                 logging.warning('Dropping %s because it contains banned ingredient "%s" (matched term "%s")', name, offending, banned_term)
                 continue
 
+            missing_calorie_terms = _missing_calorie_terms(new_ings, tool_fact_cache)
+            if missing_calorie_terms:
+                logging.warning(
+                    'Dropping %s because calorie data is missing for: %s',
+                    name,
+                    ", ".join(missing_calorie_terms)
+                )
+                dropped_for_calorie += 1
+                continue
+
             instr = m.get('instructions')
             if instr is None:
                 m['instructions'] = []
@@ -527,9 +680,10 @@ def startMealPlan():
         data['meals'] = meals
 
         need_retry = False
-        if not meals and dropped_for_weight and attempt < (MAX_MODEL_ATTEMPTS - 1):
+        if not meals and (dropped_for_weight or dropped_for_calorie) and attempt < (MAX_MODEL_ATTEMPTS - 1):
             logging.warning(
-                'All meals rejected for missing ingredient weights; retrying attempt %d/%d',
+                'All meals rejected for %s; retrying attempt %d/%d',
+                'missing weights' if dropped_for_weight else 'missing calorie lookups',
                 attempt + 1, MAX_MODEL_ATTEMPTS
             )
             need_retry = True
@@ -557,12 +711,25 @@ def startMealPlan():
     for i in range(len(meals)):
         meals[i]['id'] = ids[i]
 
-    data['meals'] = meals
+    # keep what the model said (for transparency if you want to display it)
+    for m in meals:
+        m['_model_calories'] = m.get('calories', 0)
+        m['_model_protein']  = m.get('protein', 0)
+        m['_model_carbs']    = m.get('carbs', 0)
+        m['_model_fats']     = m.get('fats', 0)
 
+    # overwrite macros with verified USDA totals
     try:
-        apply_usda_macros(meals)
+        apply_usda_macros(meals, fact_cache=tool_fact_cache)
     except Exception:
         logging.exception('Failed to overwrite macros with USDA data')
+
+    # tag source (e.g., 'live_lookup' or 'cached_lookup')
+    for m in meals:
+        m['_macro_source'] = m.get('_usda_macro_source', 'unverified')
+
+    # commit the updated meals back into the payload passed to the template
+    data['meals'] = meals
 
     # save if logged in
     try:
@@ -571,11 +738,8 @@ def startMealPlan():
     except Exception:
         logging.exception('Failed to save new meals')
 
-    if uid:
-        collections = getUserMeals(uid)
-    else:
-        collections = []
-    return render_template("results.html", data=data,collections=collections) # pass data to ui
+    collections = getUserMeals(uid) if uid else []
+    return render_template("results.html", data=data, collections=collections)
 
 
 if __name__ == "__main__":
