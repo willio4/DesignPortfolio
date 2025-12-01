@@ -679,6 +679,15 @@ def startMealPlan():
 
         data['meals'] = meals
 
+                # --- overwrite macros from USDA facts (single, authoritative pass) ---
+        try:
+            apply_usda_macros(meals, fact_cache=tool_fact_cache)
+            for m in meals:
+                m['_macro_source'] = m.get('_usda_macro_source', 'usda')
+        except Exception:
+            logging.exception("Failed to overwrite macros with USDA data")
+
+
         need_retry = False
         if not meals and (dropped_for_weight or dropped_for_calorie) and attempt < (MAX_MODEL_ATTEMPTS - 1):
             logging.warning(

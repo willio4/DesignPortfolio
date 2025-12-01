@@ -40,6 +40,7 @@ class IngredientFact:
     nutrition: NutritionBreakdown
     confidence: float = 1.0
     tags: List[str] = field(default_factory=list)
+    source_serving_size_g: float | None = None
 
     def to_prompt_fragment(self) -> str:
         tag_text = f" ({', '.join(self.tags)})" if self.tags else ""

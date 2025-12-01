@@ -33,6 +33,8 @@ class USDAFoodDataClient:
         resp.raise_for_status()
         return resp.json()
 
+# ... imports / dataclass header unchanged ...
+
     def search_foods(
         self,
         query: str,
@@ -40,7 +42,6 @@ class USDAFoodDataClient:
         page_size: int = 5,
         data_types: Sequence[str] | None = None,
     ) -> List[Dict]:
-        """Search for foods matching `query` and return raw items."""
         if not query:
             return []
 
@@ -48,7 +49,7 @@ class USDAFoodDataClient:
             "query": query,
             "pageSize": page_size,
             "requireAllWords": True,
-            "dataType": list(data_types or self._DEFAULT_DATA_TYPES),
+            "dataType": list(data_types or self._DEFAULT_DATA_TYPES),  # <— honor caller
         }
 
         try:
@@ -65,3 +66,4 @@ class USDAFoodDataClient:
             logger.debug("Unexpected USDA payload for '%s': %s", query, data)
             return []
         return foods
+
