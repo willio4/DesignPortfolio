@@ -828,11 +828,9 @@ def startMealPlan():
                         new_ings.append(ig.strip())
             m['ingredients'] = new_ings
 
+            # Allow missing weights — USDA will fill in later
             missing_weight = next((ig for ig in new_ings if not _has_explicit_weight(ig)), None)
-            if missing_weight is not None:
-                logging.warning('Dropping %s because ingredient lacks explicit g/oz weight: %r', name, missing_weight)
-                dropped_for_weight += 1
-                continue
+
 
             banned_term, offending = _find_banned_hit(new_ings)
             if banned_term:
