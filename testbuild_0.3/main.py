@@ -1,6 +1,7 @@
 # load environment variables first
 from __future__ import annotations
 
+import ast
 import json
 import os
 from typing import Any, Mapping, Optional
@@ -265,7 +266,25 @@ def _select_variety_terms(existing_terms: list[str], desired_counts: Mapping[str
     return auto_terms, preset.get('label'), True
 
 
-
+def _deserialize_list(value):
+    if value in (None, ''):
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        for loader in (json.loads, ast.literal_eval):
+            try:
+                parsed = loader(text)
+            except Exception:
+                continue
+            if isinstance(parsed, list):
+                return parsed
+            return [parsed]
+        return [text]
+    return [value]
 def _init_retriever() -> StubIngredientRetriever | USDAIngredientRetriever:
     choice = (os.getenv("INGREDIENT_RETRIEVER") or "stub").strip().lower()
     if choice == "usda":
@@ -771,50 +790,43 @@ def get_started():
 
 @app.route("/shopping_list")
 def shopping_list():
-    uid=session.get('user_id')
-    mealObjs=[]
-    colObjs={}
-    meals=[]
+    uid = session.get('user_id')
+    mealObjs: list[Meal] = []
+    colObjs: dict[str, MealCollection] = {}
 
-    # check if user logged in 
     if uid:
-        #get user meals
-        # and get meals saved in collectioms
-        userMeals=getAllMeals(uid)
-        colMeals=getCollectionMeals(uid)
-        # if there are any meals
-        if len(userMeals)!=0:
-            for id,mealType,mealName,mealInstr,mealIngr,carb,fat,pro,cals in zip(userMeals['meal_id'],userMeals['meal_type'],userMeals['recipe_name'],userMeals['instructions'],userMeals['ingredients'],userMeals['carbs'],userMeals['fats'],userMeals['protein'],userMeals['calories']):
-                # create a new meal object
-                currMeal=Meal(mealType,mealName,mealIngr,cals,mealInstr,carb,fat,pro)
-                # save that meal object
-                mealObjs.append(currMeal)
-                # check if we have any collections
-                if len(colMeals)>0:
-                    # if so get the collections for this meal
-                    mealCol=colMeals[colMeals['meal_id']==id]
-                    # if this meal is saved to any collection
-                    if len(mealCol)>0:
-                        # for each collection its saved to
-                        for colName in mealCol['collection_name']:
-                            # create new collection object
-                            if colName not in colObjs:
-                                colObjs[colName]=MealCollection([],colName)
-                            # assocaite the meal object with the colleciton 
-                            colObjs[colName].meals.append(currMeal)
+        saved_meals = getAllMeals(uid) or []
+        collection_links = getCollectionMeals(uid) or []
 
-                else:
-                    colObjs={}
+        meal_lookup: dict[str, Meal] = {}
+        for record in saved_meals:
+            ingredients = _deserialize_list(record.ingredients)
+            instructions = _deserialize_list(record.instructions)
+            currMeal = Meal(
+                record.meal_type,
+                record.recipe_name,
+                ingredients,
+                record.calories or 0,
+                instructions,
+                record.carbs or 0,
+                record.fats or 0,
+                record.protein or 0,
+            )
+            setattr(currMeal, 'id', record.meal_id)
+            mealObjs.append(currMeal)
+            meal_lookup[record.meal_id] = currMeal
 
-        else:
-            mealObjs=[]
-            colObjs={}
+        for link in collection_links:
+            collection = colObjs.setdefault(link.collection_name, MealCollection([], link.collection_name))
+            meal_obj = meal_lookup.get(link.meal_id)
+            if meal_obj and meal_obj not in collection.meals:
+                collection.meals.append(meal_obj)
+
+        session['shopping_meal_ids'] = [str(getattr(meal, 'id')) for meal in mealObjs if getattr(meal, 'id', None)]
     else:
-        mealsObjs=[]
-        colObjs={}
-    session['mealObjs']=[x.__dict__ for x in mealObjs]
-    
-    return render_template("shopping_list.html",meals=mealObjs,cols=list(colObjs.values()))
+        session.pop('shopping_meal_ids', None)
+
+    return render_template("shopping_list.html", meals=mealObjs, cols=list(colObjs.values()))
 
 @app.route("/calendar")
 def calendar():
@@ -842,35 +854,8 @@ def user_meals():
         return [value]
 
     if uid:
-<<<<<<< HEAD
-        #get user meals
-        # and get meals saved in collectioms
-        userMeals=getAllMeals(uid)
-        colMeals=getCollectionMeals(uid)
-        # if there are any meals
-        if userMeals:
-            for id,mealType,mealName,mealInstr,mealIngr,carb,fat,pro,cals in zip(userMeals['meal_id'],userMeals['meal_type'],userMeals['recipe_name'],userMeals['instructions'],userMeals['ingredients'],userMeals['carbs'],userMeals['fats'],userMeals['protein'],userMeals['calories']):
-                # create a new meal object
-                currMeal=Meal(mealType,mealName,mealIngr,cals,mealInstr,carb,fat,pro)
-                # save that meal object
-                mealObjs.append(currMeal)
-                # check if we have any collections
-                if len(colMeals)>0:
-                    # if so get the collections for this meal
-                    mealCol=colMeals[colMeals['meal_id']==id]
-                    # if this meal is saved to any collection
-                    if len(mealCol)>0:
-                        # for each collection its saved to
-                        for colName in mealCol['collection_name']:
-                            # create new collection object
-                            if colName not in colObjs:
-                                colObjs[colName]=MealCollection([],colName)
-                            # assocaite the meal object with the colleciton 
-                            colObjs[colName].meals.append(currMeal)
-=======
         saved_meals = getAllMeals(uid) or []
         collection_links = getCollectionMeals(uid) or []
->>>>>>> 886bb8003b9e701e8fbbab29f93d34dc6bf8e2d2
 
         meal_lookup: dict[str, Meal] = {}
         for record in saved_meals:
@@ -1322,15 +1307,11 @@ def startMealPlan():
         logging.exception('generatemealIDs failed')
         ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
 
-<<<<<<< HEAD
-
-=======
     for i in range(len(meals)):
         if i < len(ids):
             meals[i]['id'] = ids[i]
         else:
             meals[i]['id'] = meals[i].get('id') or f"{uid or 0}_{i+1}"
->>>>>>> 886bb8003b9e701e8fbbab29f93d34dc6bf8e2d2
 
     # keep what the model said (for transparency if you want to display it)
     for m in meals:
@@ -1386,11 +1367,6 @@ def startMealPlan():
             for meal in meals:
                 mealsIgrs=[]
                 mealsUnits=[]
-<<<<<<< HEAD
-                for i in meal['ingredients']:
-                    mealsIgrs.append(i['quantity'])
-                    mealsUnits.append(i['unit'])
-=======
                 for ingredient in meal.get('ingredients', []):
                     if isinstance(ingredient, dict):
                         mealsIgrs.append(ingredient.get('quantity'))
@@ -1398,7 +1374,6 @@ def startMealPlan():
                     else:
                         mealsIgrs.append(None)
                         mealsUnits.append(None)
->>>>>>> 886bb8003b9e701e8fbbab29f93d34dc6bf8e2d2
                 ingrids.append(mealsIgrs)
                 units.append(mealsUnits)
     # for i in range(len(meals)):
@@ -1408,17 +1383,6 @@ def startMealPlan():
                 logging.exception('generatemealIDs failed')
                 ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
 
-<<<<<<< HEAD
-
-            c=0
-            for m in meals:
-                m['id']=ids[c]
-                c+=1
-            print("MEALS",meals)
-        # meals[i]['id'] = ids[i]
-            print('meal',data)
-=======
->>>>>>> 886bb8003b9e701e8fbbab29f93d34dc6bf8e2d2
             saveNewMeals(uid, data,units,ingrids)
     except Exception:
         logging.exception('Failed to save new meals')
@@ -1428,35 +1392,77 @@ def startMealPlan():
 
 @app.route("/build_shopping_list", methods=["POST"])
 def build_shopping_list():
-    selected = request.form.getlist("selected_meals")
-    print("Selected meals:", selected)
-    ingredients={}
-    for meal in session['mealObjs']:
-        print("INGRIDS",meal)
-        print("quants")
-        active=False
-        for ingrdn in meal['ingredients'].split(","):
-                
-            ingrdn=ingrdn.replace("<[","").replace("'","")#.replace(":","")
-            ingrdn=ingrdn.split(":")
-            print(ingrdn)
-            
-            if "name" in ingrdn[0]:
-                if ingrdn[1].strip() not in ingredients:
-                    ingredients[ingrdn[1].strip()]=0
-                active=ingrdn[1].strip()
-            if "quantity" in ingrdn[0]:
-                if"None" not in ingrdn[1]:
-                    ingredients[active]+=float(ingrdn[1])
+    selected_ids = {value.strip() for value in request.form.getlist("selected_meals") if value.strip()}
+    uid = session.get('user_id')
+    allowed_ids = {str(mid) for mid in (session.get('shopping_meal_ids') or [])}
+
+    def _coerce_float(value):
+        try:
+            if value in (None, ""):
+                return None
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    aggregated: dict[tuple[str, str], dict[str, float | str]] = {}
+    uncounted: dict[str, int] = {}
+
+    if uid:
+        saved_meals = getAllMeals(uid) or []
+        for record in saved_meals:
+            meal_id = str(record.meal_id)
+            if not meal_id:
+                continue
+            if selected_ids:
+                if meal_id not in selected_ids and record.recipe_name not in selected_ids:
+                    continue
+            elif allowed_ids and meal_id not in allowed_ids:
+                continue
+
+            for entry in _deserialize_list(record.ingredients):
+                if isinstance(entry, dict):
+                    name = (
+                        entry.get('name')
+                        or entry.get('ingredient')
+                        or entry.get('item')
+                        or entry.get('raw')
+                    )
+                    qty = _coerce_float(entry.get('quantity') or entry.get('qty') or entry.get('amount'))
+                    unit = (entry.get('unit') or entry.get('units') or '').strip()
                 else:
-                    ingredients[active]+=1 
-            
+                    name = str(entry).strip()
+                    qty = None
+                    unit = ''
 
-            # pass
+                if not name:
+                    continue
 
-    # for ingridient in 
-    # Do something with them...
-    return render_template("shopping_list_result.html", items=list(zip(list(ingredients.keys()),list(ingredients.values()))))
+                if qty is None:
+                    uncounted[name] = uncounted.get(name, 0) + 1
+                    continue
+
+                key = (name.strip().lower(), unit.lower())
+                bucket = aggregated.setdefault(key, {
+                    'name': name.strip(),
+                    'unit': unit,
+                    'quantity': 0.0,
+                })
+                bucket['quantity'] = float(bucket['quantity']) + qty
+
+    items: list[tuple[str, str]] = []
+    for entry in aggregated.values():
+        qty = entry['quantity']
+        unit = entry['unit']
+        display = f"{qty:g} {unit}".strip()
+        items.append((entry['name'], display or f"{qty:g}"))
+
+    for name, count in uncounted.items():
+        label = f"x{count}" if count > 1 else "as needed"
+        items.append((name, label))
+
+    items.sort(key=lambda pair: pair[0].lower())
+
+    return render_template("shopping_list_result.html", items=items)
 
 
 if __name__ == "__main__":
