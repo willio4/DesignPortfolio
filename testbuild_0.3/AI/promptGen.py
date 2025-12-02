@@ -20,13 +20,12 @@ except ImportError:  # script execution fallback
 # - ingredients are objects with explicit weights
 # - macros are 0; backend overwrites using USDA + weights
 SCHEMA = (
-    '{"meals":[{'
-      '"mealType":"breakfast|lunch|dinner",'
-      '"name":"string",'
-      '"ingredients":[{"name":"string","weight_g":0,"weight_oz":0,"quantity":0,"unit":"string","note":"string"}],'
-      '"calories":0,"carbs":0,"fats":0,"protein":0,'
-      '"instructions":["string"]'
-    '}]}'
+        '{"meals":[{'
+            '"mealType":"breakfast|lunch|dinner",'
+            '"name":"string",'
+            '"ingredients":[{"name":"string","weight_g":0,"note":"string"}],'
+            '"instructions":["string"]'
+        '}]}'
 )
 
 def safe_int(value, default=0, non_negative=True):
@@ -85,28 +84,25 @@ def generate_prompt(
 
     body = dedent(f"""
         You generate creative meal recipes.
-        Do NOT estimate nutrition totals yourself—our backend will compute accurate calories and macros using USDA and the weights you provide.
+        Do NOT estimate nutrition totals yourself—our backend computes calories and macros from the ingredient weights.
 
         Return ONLY valid JSON using this schema:
         {SCHEMA}
 
         Make exactly {num_breakfast} breakfast, {num_lunch} lunch, and {num_dinner} dinner recipes.
 
-        Hard requirements:
-        1) Ingredient entries MUST be objects with explicit weights:
-           - "name": plain ingredient name (e.g., "chicken breast, cooked, skinless")
-           - "weight_g": number (grams, REQUIRED)
-           - "weight_oz": number (ounces, OPTIONAL; backend converts if missing)
-           - "quantity": number (OPTIONAL; for display, not used in math)
-           - "unit": string (OPTIONAL; e.g., "cup", "tbsp")
-           - "note": string (OPTIONAL; brief prep note)
-        2) Before finalizing ingredients, call the tool:
+          Hard requirements:
+          1) Ingredient entries MUST be objects with explicit grams:
+              - "name": plain ingredient name (e.g., "chicken breast, cooked, skinless")
+              - "weight_g": number (grams, REQUIRED)
+              - "note": string (OPTIONAL; brief prep or sourcing note)
+              (no nutrition totals or other keys; backend derives everything else)
+          2) Before finalizing ingredients, call the tool:
            lookupIngredient({{"ingredient":"<plain term>"}})
            Use tool results ONLY to confirm the ingredient is sensible and commonly available.
            If a lookup fails, replace the ingredient with a similar one and proceed. Do NOT output tool payloads.
-        3) Set "calories","carbs","fats","protein" to 0 for every meal. The backend overwrites these.
-        4) Instructions must be a list of concise, numbered steps (strings). Keep them cook-friendly.
-        5) JSON only: no prose outside the JSON, no comments, no trailing commas.
+          3) Instructions must be a list of concise, numbered steps (strings). Keep them cook-friendly.
+          4) JSON only: no prose outside the JSON, no comments, no trailing commas.
 
         {calorie_lines}Quality rules:
         - Be creative: vary cuisines, proteins, grains, and dominant flavors across meals.
