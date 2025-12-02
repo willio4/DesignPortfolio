@@ -82,7 +82,6 @@
           <span class="font-medium">Calories:</span> {{ r.calories|round(0) }} |
           C {{ r.carbs|round(0) }}g • F {{ r.fats|round(0) }}g • P {{ r.protein|round(0) }}g
           {% if r._calorie_warning %}
-          <span class="block text-xs text-amber-600 mt-1">Calorie goal miss: {{ r._calorie_warning }}</span>
           {% endif %}
         </p>
 
@@ -148,7 +147,6 @@
             <span class="font-medium">Calories:</span> {{ r.calories|round(0) }} |
             C {{ r.carbs|round(0) }}g • F {{ r.fats|round(0) }}g • P {{ r.protein|round(0) }}g
             {% if r._calorie_warning %}
-            <span class="block text-xs text-amber-600 mt-1">Calorie goal miss: {{ r._calorie_warning }}</span>
             {% endif %}
           </p>
           <h3 class="text-gray-700 font-medium mb-2">Ingredients</h3>
