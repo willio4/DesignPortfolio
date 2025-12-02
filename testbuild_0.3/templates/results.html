@@ -87,32 +87,54 @@
         </p>
 
         <h3 class="text-gray-700 font-medium mb-1">Ingredients</h3>
-        <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
-          {% for ing in r.ingredients %}
-          {% if ing is mapping %}
+{# helper: pick the nicest human-readable amount #}
+{% macro best_amt(ing) -%}
+  {%- if ing.display_amount -%}
+    {{ ing.display_amount }}
+  {%- elif ing.quantity_display and ing.unit -%}
+    {{ ing.quantity_display }} {{ ing.unit }}
+  {%- elif ing.display_weight -%}
+    {{ ing.display_weight }}
+  {%- elif ing.quantity_display -%}
+    {{ ing.quantity_display }}
+  {%- elif ing.quantity is not none and ing.unit -%}
+    {{ ing.quantity }} {{ ing.unit }}
+  {%- elif ing.weight_g is defined and ing.weight_g not in (None, '') -%}
+    {{ ing.weight_g|float|round(1) }} g
+  {%- else -%}
+    {# no amount #}
+  {%- endif -%}
+{%- endmacro %}
+
+      <ul>
+      {% for ing in r.ingredients %}
+        {% if ing is mapping %}
+          {% set amt = best_amt(ing) %}
           <li>
-            <span class="font-semibold">
-              {% if ing.quantity_display %}
-              {{ ing.quantity_display }}
-              {% elif ing.quantity is not none %}
-              {{ ing.quantity }}
-              {% elif ing.weight_g is defined and ing.weight_g not in (None, '') %}
-              {{ ing.weight_g|float|round(1) }} g
-              {% if ing.weight_oz is defined and ing.weight_oz not in (None, '') %}
-              ({{ ing.weight_oz|float|round(2) }} oz)
-              {% endif %}
-              {% endif %}{% if ing.unit and (ing.quantity_display or ing.quantity is not none) %} {{ ing.unit }}{% endif %}
-            </span>
+            {% if amt %}
+              <span class="font-semibold">{{ amt }}</span>&nbsp;
+            {% endif %}
             <span>{{ ing.name }}</span>
-            {% if ing.estimated_calories is not none %}
-            <span class="text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
+            {% if ing.note %}<span class="text-gray-500"> — {{ ing.note }}</span>{% endif %}
+            {% set kcal = None %}
+            {% if ing.get('estimated_calories') is not none %}
+              {% set kcal = ing.get('estimated_calories') %}
+            {% elif ing.get('calories') is not none %}
+              {% set kcal = ing.get('calories') %}
+            {% elif ing.get('_calories') is not none %}
+              {% set kcal = ing.get('_calories') %}
+            {% elif ing.get('_usda_contribution') %}
+              {% set kcal = ing.get('_usda_contribution').get('calories') %}
+            {% endif %}
+            {% if kcal is not none %}
+              <span class="text-sm text-gray-500"> ({{ kcal|float|round(0) }} kcal)</span>
             {% endif %}
           </li>
-          {% else %}
+        {% else %}
           <li>{{ ing }}</li>
-          {% endif %}
-          {% endfor %}
-        </ul>
+        {% endif %}
+      {% endfor %}
+      </ul>
       </div>
 
       <!-- Meal Detail Modal -->
@@ -135,16 +157,20 @@
             <li>
               {% if ing is mapping %}
               <span class="font-semibold">
-                {% if ing.quantity_display %}
-                {{ ing.quantity_display }}
+                {% if ing.display_amount %}
+                {{ ing.display_amount }}
+                {% elif ing.quantity_display %}
+                {{ ing.quantity_display }}{% if ing.unit %} {{ ing.unit }}{% endif %}
                 {% elif ing.quantity is not none %}
-                {{ ing.quantity }}
+                {{ ing.quantity }}{% if ing.unit %} {{ ing.unit }}{% endif %}
+                {% elif ing.display_weight %}
+                {{ ing.display_weight }}
                 {% elif ing.weight_g is defined and ing.weight_g not in (None, '') %}
                 {{ ing.weight_g|float|round(1) }} g
                 {% if ing.weight_oz is defined and ing.weight_oz not in (None, '') %}
                 ({{ ing.weight_oz|float|round(2) }} oz)
                 {% endif %}
-                {% endif %}{% if ing.unit and (ing.quantity_display or ing.quantity is not none) %} {{ ing.unit }}{% endif %}
+                {% endif %}
               </span>
               <span>{{ ing.name }}</span>
               {% else %}

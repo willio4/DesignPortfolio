@@ -3,13 +3,13 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Prepify – Shopping List</title>
+  <title>Prepify – Your Meals</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Custom CSS (for nav underline) -->
+  <!-- Custom CSS (for .nav-link underline, etc.) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
 </head>
 
@@ -21,9 +21,8 @@
     <!-- LEFT: Logo + Navigation -->
     <div class="flex items-center gap-10">
       <a href="{{ url_for('index') }}">
-        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
-             alt="Prepify Logo"
-             class="h-12 cursor-pointer">
+        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
+          class="h-12 cursor-pointer">
       </a>
 
       <nav class="flex gap-8 text-lg font-medium text-gray-900">
@@ -31,20 +30,17 @@
         <a href="{{ url_for('shopping_list') }}" class="nav-link">Shopping List</a>
         <a href="{{ url_for('calendar') }}" class="nav-link">Calendar</a>
         <a href="{{ url_for('user_meals') }}" class="nav-link">Your Meals</a>
-
       </nav>
     </div>
 
     <!-- RIGHT: Auth buttons -->
     <div class="flex space-x-3">
-      <a href="{{ url_for('login') }}"
-         class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
+      <a href="{{ url_for('login') }}" class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
                 bg-white shadow-sm hover:bg-gray-200 transition font-medium">
         Log In
       </a>
 
-      <a href="{{ url_for('signup') }}"
-         class="px-5 py-2 rounded-full text-white
+      <a href="{{ url_for('signup') }}" class="px-5 py-2 rounded-full text-white
                 bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
         Sign Up
       </a>
@@ -52,14 +48,81 @@
 
   </header>
 
+  <!-- MAIN CONTENT -->
+  <main class="flex-grow px-4 py-10 flex justify-center">
+    <div class="w-full max-w-6xl">
 
-  <!-- MAIN CONTENT WRAPPER -->
-  <main class="flex-grow flex items-start justify-center px-4 py-10">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">
+        Your Saved Meals
+      </h1>
+      <p class="text-sm text-gray-600 mb-8 text-center">
+        Browse meals you’ve saved from your meal plans, organized by collection.
+      </p>
 
+      {% if collections %}
+      <div class="space-y-8">
+        {% for collection in collections %}
+        <section class="bg-white/70 rounded-3xl shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">
+              {{ collection.name }}
+            </h2>
+            {% if collection.meals %}
+            <span class="text-sm text-gray-500">
+              {{ collection.meals|length }} meal{{ collection.meals|length != 1 and 's' or '' }}
+            </span>
+            {% endif %}
+          </div>
 
+          {% if collection.meals %}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for m in collection.meals %}
+            <article class="bg-white rounded-2xl shadow-md p-5">
+              <h3 class="text-lg font-semibold text-gray-800 mb-1">
+                {{ m.name }}
+              </h3>
 
+              <p class="text-sm text-gray-500 mb-3">
+                {% if m.mealType %}
+                {{ m.mealType|capitalize }}
+                {% endif %}
+                {% if m.calories is not none %}
+                {% if m.mealType %} • {% endif %}
+                {{ m.calories|round(0) }} kcal
+                {% endif %}
+              </p>
+
+              {% if m.ingredients %}
+              <h4 class="text-sm font-medium text-gray-700 mb-1">Ingredients</h4>
+              <ul class="list-disc list-inside text-xs text-gray-600 space-y-0.5 max-h-32 overflow-y-auto">
+                {% for ing in m.ingredients %}
+                {% if ing is mapping %}
+                <li>{{ ing.name }}</li>
+                {% else %}
+                <li>{{ ing }}</li>
+                {% endif %}
+                {% endfor %}
+              </ul>
+              {% endif %}
+            </article>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-sm text-gray-500">
+            No meals saved in this collection yet.
+          </p>
+          {% endif %}
+        </section>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-gray-600 text-center mt-10">
+        You haven’t saved any meals yet. Generate a meal plan and save your favorites to see them here.
+      </p>
+      {% endif %}
+
+    </div>
   </main>
-
 
   <!-- FOOTER -->
   <footer class="mt-auto bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center">

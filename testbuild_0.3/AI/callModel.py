@@ -123,7 +123,7 @@ def call_model(
     prompt: str,
     *,
     tool_executor: Optional[Callable[[str, Dict[str, Any]], Dict[str, Any]]] = None,
-    max_tokens: int = 900,
+    max_tokens: int = 1200,
 ) -> dict:
     """Call the model via chat-completions when tools are provided; fall back to Responses API otherwise."""
 
