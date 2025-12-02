@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
-from flask import Flask, jsonify, request, render_template,session
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 import logging
 import re
 from sqlalchemy import text
@@ -764,8 +764,7 @@ def shopping_list():
 def calendar():
     return render_template("calendar.html")
 
-# route for showing meals a user has generated and their collections
-@app.route("/user_meals",methods=['GET','POST'])
+@app.route("/user_meals", methods=["GET"], endpoint="user_meals")
 def user_meals():
     uid = session.get('user_id')
     meals: list[Meal] = []
