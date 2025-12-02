@@ -4,51 +4,74 @@
       <meta charset="UTF-8" name="viewport" content="width=device-width">
       <title>Home</title>
       <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
   </head>
   <body style="background-color: #fff5da;">
       <!-- Header-->
-      <header>
-          <!-- Nav Bar -->
-          <nav>
-              <!-- SMALL SCREENS ONLY -->
-              <div class="md:hidden flex px-3 py-3 justify-between items-center">
-                  <!-- Logo-->
-                  <a href="{{url_for('index')}}">
-                      <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
-                          class="w-20 h-auto">
-                  </a>
-                  <!-- Links -->
-                  <details class="text-right relative z-50">
-                      <summary class="list-none"><span>Menu</span></summary>
-                      <ul class="flex flex-col bg-[#233723] gap-4 px-4 py-1 text-white absolute right-0">
-                          <li><a href="{{ url_for('login') }}">Login</a></li>
-                          <li><a href="{{ url_for('get_started') }}">Get Started</a></li>
-                          <li><a href="{{ url_for('shopping_list') }}">Sopping List</a></li>
-                          <li><a href="{{ url_for('calendar') }}">Calendar</a></li>
-                      </ul>
-                  </details>
-              </div>
-              <!-- LARGE SCREENS ONLY -->
-              <div class="hidden md:flex px-8 py-3 justify-between items-center">
-                  <!-- Logo-->
-                  <a href="{{url_for('index')}}">
-                      <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
-                          class="w-[7vw] h-auto">
-                  </a>
-                  <!-- Links -->
-                  <ul class="flex gap-4 text-lg 2xl:text-[1vw] 2xl:gap-[4vw] font-medium">
-                      <li><a href="{{ url_for('get_started') }}">Get Started</a></li>
-                      <li><a href="{{ url_for('shopping_list') }}">Shopping List</a></li>
-                      <li><a href="{{ url_for('calendar') }}">Calendar</a></li>
-                  </ul>
-                  <!-- Login -->
-                  <div class="flex gap-4 text-lg 2xl:text-[1vw] font-medium">
-                      <a href="{{ url_for('signup') }}">Sign Up</a>
-                      <a href="{{ url_for('login') }}">Login</a>
-                  </div>
-              </div>
-          </nav>
-      </header>
+<header>
+  <nav>
+
+    <!-- SMALL SCREENS ONLY -->
+    <div class="md:hidden flex px-3 py-3 justify-between items-center bg-[#FFF1CF] shadow-sm">
+      <!-- Logo -->
+      <a href="{{ url_for('index') }}">
+        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
+             class="w-20 h-auto">
+      </a>
+
+      <!-- Mobile Menu -->
+      <details class="text-right relative z-50">
+        <summary class="list-none cursor-pointer"><span>Menu</span></summary>
+
+        <ul class="flex flex-col bg-[#233723] gap-4 px-4 py-2 text-white absolute right-0 mt-2 rounded-lg shadow-lg">
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+          <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
+          <li><a href="{{ url_for('get_started') }}">Get Started</a></li>
+          <li><a href="{{ url_for('shopping_list') }}">Shopping List</a></li>
+          <li><a href="{{ url_for('calendar') }}">Calendar</a></li>
+          <li><a href="{{ url_for('user_meals') }}">Your Meals</a></li>
+        </ul>
+
+      </details>
+    </div>
+
+    <!-- LARGE SCREENS ONLY -->
+    <div class="hidden md:flex px-8 py-4 justify-between items-center bg-[#FFF1CF] shadow-sm">
+
+      <!-- LEFT SIDE: Logo + Nav Links closer together -->
+      <div class="flex items-center gap-8">
+        <!-- Logo -->
+        <a href="{{ url_for('index') }}">
+          <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
+               class="h-12 cursor-pointer">
+        </a>
+
+        <!-- Navigation Links -->
+        <ul class="flex gap-6 text-lg font-medium text-gray-900">
+          <li><a href="{{ url_for('get_started') }}" class="nav-link underline-hover">Get Started</a></li>
+          <li><a href="{{ url_for('shopping_list') }}" class="nav-link underline-hover">Shopping List</a></li>
+          <li><a href="{{ url_for('calendar') }}" class="nav-link underline-hover">Calendar</a></li>
+          <li><a href="{{ url_for('user_meals') }}" class="nav-link underline-hover">Your Meals</a></li>
+        </ul>
+      </div>
+
+      <!-- Auth Buttons -->
+      <div class="flex space-x-3">
+        <a href="{{ url_for('login') }}" class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
+              bg-white shadow-sm hover:bg-gray-200 transition font-medium">
+          Login
+        </a>
+
+        <a href="{{ url_for('signup') }}" class="px-5 py-2 rounded-full text-white
+              bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
+          Sign Up
+        </a>
+      </div>
+
+    </div>
+
+  </nav>
+</header>
       <!-- Section 1 -->
       <section class="h-[40vh] md:h-[60vw] 2xl:h-[35vw]">
           <div class="flex flex-col w-full h-full items-center justify-center text-center gap-8 2xl:gap-[7vw]">
