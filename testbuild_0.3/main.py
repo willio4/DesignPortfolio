@@ -699,6 +699,18 @@ def _ensure_generated_recipes_calories_column() -> None:
         logging.exception('Failed to ensure generated_recipes.calories column')
 
 
+def _ensure_collections_primary_key() -> None:
+    """Allow multiple collections per user by enforcing composite primary key."""
+    try:
+        db.session.execute(text("ALTER TABLE collections DROP CONSTRAINT IF EXISTS collections_pkey"))
+        db.session.execute(text(
+            "ALTER TABLE collections ADD CONSTRAINT collections_pkey PRIMARY KEY (user_id, collection_name)"
+        ))
+        db.session.commit()
+    except Exception:
+        logging.exception('Failed to enforce collections composite primary key')
+
+
 with app.app_context():
     # db.session.remove() # Uncomment this if you want to delete all data each time you run
     # db.drop_all()       # Uncomment this if you want to delete all data each time you run
@@ -706,6 +718,7 @@ with app.app_context():
         db.create_all()  # Ensure required tables (collections, etc.) exist before requests
         _ensure_password_hash_column()
         _ensure_generated_recipes_calories_column()
+        _ensure_collections_primary_key()
     except Exception:
         logging.exception('Database initialization failed')
 
@@ -1238,7 +1251,10 @@ def startMealPlan():
         ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
 
     for i in range(len(meals)):
-        meals[i]['id'] = ids[i]
+        if i < len(ids):
+            meals[i]['id'] = ids[i]
+        else:
+            meals[i]['id'] = meals[i].get('id') or f"{uid or 0}_{i+1}"
 
     # keep what the model said (for transparency if you want to display it)
     for m in meals:
@@ -1294,12 +1310,15 @@ def startMealPlan():
             for meal in meals:
                 mealsIgrs=[]
                 mealsUnits=[]
-                for i in meal.ingredients:
-                    mealsIgrs.append(i.quantity)
-                    mealsUnits.append(i.unit)
+                for ingredient in meal.get('ingredients', []):
+                    if isinstance(ingredient, dict):
+                        mealsIgrs.append(ingredient.get('quantity'))
+                        mealsUnits.append(ingredient.get('unit'))
+                    else:
+                        mealsIgrs.append(None)
+                        mealsUnits.append(None)
                 ingrids.append(mealsIgrs)
                 units.append(mealsUnits)
-
 
             saveNewMeals(uid, data,units,ingrids)
     except Exception:

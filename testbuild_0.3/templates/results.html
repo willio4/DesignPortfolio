@@ -116,10 +116,18 @@
             {% endif %}
             <span>{{ ing.name }}</span>
             {% if ing.note %}<span class="text-gray-500"> — {{ ing.note }}</span>{% endif %}
-            {% if ing.estimated_calories is not none %}
-              <span class="text-sm text-gray-500"> ({{ ing.estimated_calories }} kcal)</span>
-            {% elif ing.calories is not none %}
-              <span class="text-sm text-gray-500"> ({{ ing.calories|round(0) }} kcal)</span>
+            {% set kcal = None %}
+            {% if ing.get('estimated_calories') is not none %}
+              {% set kcal = ing.get('estimated_calories') %}
+            {% elif ing.get('calories') is not none %}
+              {% set kcal = ing.get('calories') %}
+            {% elif ing.get('_calories') is not none %}
+              {% set kcal = ing.get('_calories') %}
+            {% elif ing.get('_usda_contribution') %}
+              {% set kcal = ing.get('_usda_contribution').get('calories') %}
+            {% endif %}
+            {% if kcal is not none %}
+              <span class="text-sm text-gray-500"> ({{ kcal|float|round(0) }} kcal)</span>
             {% endif %}
           </li>
         {% else %}
