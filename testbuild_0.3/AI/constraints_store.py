@@ -9,13 +9,54 @@ This is intentionally conservative and safe to add incrementally.
 from __future__ import annotations
 import json
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List
 import builtins
 
 FILE = os.path.join(os.path.dirname(__file__), "constraints.json")
 
 # Define the allowed values and bounds for our constraints here
-ALLOWED_DIET = {"none", "vegetarian", "vegan", "pescatarian", "gluten-free", "keto", "omnivore"}
+ALLOWED_DIET = {
+    "none",
+    "omnivore",
+    "vegetarian",
+    "vegan",
+    "pescatarian",
+    "gluten-free",
+    "keto",
+    "paleo",
+    "low-carb",
+    "dairy-free",
+    "kosher",
+}
+
+# Base diet-to-banned ingredient mapping (kept intentionally short and generic)
+_MEATS = {"beef", "pork", "ham", "bacon", "sausage", "chicken", "turkey", "duck", "lamb", "veal"}
+_PORK_PRODUCTS = {"pork", "ham", "bacon", "prosciutto", "pepperoni", "salami", "chorizo", "pancetta"}
+_SHELLFISH = {"shrimp", "lobster", "crab", "clam", "clams", "mussel", "mussels", "oyster", "oysters", "scallop", "scallops"}
+_SEAFOOD = _SHELLFISH | {"fish", "salmon", "tuna", "anchovy", "anchovies", "sardine", "sardines"}
+_DAIRY = {"milk", "cheese", "butter", "cream", "yogurt", "whey", "casein", "ghee", "half-and-half"}
+_EGGS = {"egg", "eggs"}
+_HONEY = {"honey"}
+_GLUTEN_GRAINS = {"wheat", "barley", "rye", "spelt", "farro", "semolina", "triticale", "couscous", "breadcrumbs", "flour", "seitan"}
+_HIGH_CARBS = {"sugar", "brown sugar", "maple syrup", "agave", "rice", "quinoa", "corn", "beans", "lentils", "potato", "potatoes", "bread", "pasta", "oats", "tortilla", "bagel", "cereal"}
+_LEGUMES = {"beans", "lentils", "peas", "peanuts", "peanut butter", "soy", "soybeans", "tofu", "tempeh", "edamame", "chickpeas"}
+_REFINED_SWEETS = {"white sugar", "brown sugar", "candy", "soda", "dessert", "cake", "cookies", "donut", "pastry"}
+_STARCHY_VEG = {"potato", "potatoes", "sweet potato", "yams", "cassava", "plantain", "parsnip", "beet"}
+_NON_KOSHER_FISH = {"catfish", "eel", "shark", "octopus", "squid"}
+
+_DIET_BANNED_INGREDIENTS = {
+    "none": set(),
+    "omnivore": set(),
+    "vegetarian": _MEATS | _SEAFOOD | {"gelatin", "lard", "fish sauce", "anchovy paste"},
+    "vegan": _MEATS | _SEAFOOD | _DAIRY | _EGGS | _HONEY | {"gelatin", "lard", "fish sauce", "anchovy paste"},
+    "pescatarian": _MEATS | {"gelatin", "lard"},
+    "gluten-free": _GLUTEN_GRAINS,
+    "keto": _HIGH_CARBS,
+    "low-carb": _HIGH_CARBS | _REFINED_SWEETS | _STARCHY_VEG,
+    "paleo": _GLUTEN_GRAINS | _LEGUMES | _DAIRY | _REFINED_SWEETS | {"corn syrup", "processed sugar", "processed oil", "soy sauce", "tofu", "tempeh", "peanut butter"},
+    "dairy-free": _DAIRY,
+    "kosher": _PORK_PRODUCTS | _SHELLFISH | _NON_KOSHER_FISH | {"gelatin", "lard", "blood sausage"},
+}
 MAX_MEALS = 10
 MIN_MEALS = 0
 
@@ -68,7 +109,7 @@ def _sanitize_value(key: str, value: Any) -> Any:
         except Exception:
             return 0
 
-    if key == "disliked_ingredients":
+    if key in ("disliked_ingredients", "banned_ingredients"):
         # expect list-like or comma separated string
         if isinstance(value, list):
             return [str(x).strip().lower() for x in value if str(x).strip()]
@@ -94,16 +135,10 @@ def validate_constraints(mapping: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 # merge mutiple constraints dicts, the later ones will override previous ones
-def merge_list_values(a: Any, b: Any, c: Any) -> list:
-    """Merge "list-like" values/constraints coming from three sources (global,
-    user, prefs).
-    
-    Accepts lists, comma-separated strings, or None. Will return a deduplicated, 
-    lower-cased list preserving first-seen order.
-    """
-    # iterate the 3 values skipping any falsy values
+def merge_list_values(*values: Any) -> list:
+    """Merge list-like constraint values preserving order and removing dupes."""
     items: list[str] = []
-    for values in (a, b, c):
+    for values in values:
         if not values:
             continue
         if isinstance(values, list):
@@ -122,6 +157,21 @@ def merge_list_values(a: Any, b: Any, c: Any) -> list:
             seen.add(it)
             out.append(it)
     return out
+
+def _dietary_banned_for(diet: str | None) -> List[str]:
+    key = (diet or "none").strip().lower()
+    banned_set = _DIET_BANNED_INGREDIENTS.get(key, builtins.set()) # adjusted to call builtins.set() because of local set() function
+    return sorted(banned_set)
+
+def banned_for_diets(diets: List[str] | None) -> List[str]:
+    """Return the union of banned ingredients for all diets in the list."""
+    if not diets:
+        return []
+    combined = builtins.set()
+    for diet in diets:
+        key = (diet or "none").strip().lower()
+        combined.update(_DIET_BANNED_INGREDIENTS.get(key, ()))
+    return sorted(combined)
 
 def merge_constraints(global_constraints: Dict[str, Any] | None,
                       user_constraints: Dict[str, Any] | None = None,
@@ -144,14 +194,19 @@ def merge_constraints(global_constraints: Dict[str, Any] | None,
 
     # special handling of list-like merging for disliked_ingredients (disliked
     # ingredients is just an example, we can extend this)
-    if (("disliked_ingredients" in global_constraints) or 
-       ("disliked_ingredients" in user_constraints) or
-       ("disliked_ingredients" in prefs)):
-        merged["disliked_ingredients"] = merge_list_values(
-            global_constraints.get("disliked_ingredients"),
-            user_constraints.get("disliked_ingredients"),
-            prefs.get("disliked_ingredients"),
-        )
+    merged["disliked_ingredients"] = merge_list_values(
+        global_constraints.get("disliked_ingredients"),
+        user_constraints.get("disliked_ingredients"),
+        prefs.get("disliked_ingredients"),
+    )
+
+    diet_banned = _dietary_banned_for(merged.get("dietary_restrictions"))
+    merged["banned_ingredients"] = merge_list_values(
+        diet_banned,
+        global_constraints.get("banned_ingredients"),
+        user_constraints.get("banned_ingredients"),
+        prefs.get("banned_ingredients"),
+    )
 
     # sanitize everything before returning
     return validate_constraints(merged)

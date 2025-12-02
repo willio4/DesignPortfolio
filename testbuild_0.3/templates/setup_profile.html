@@ -5,105 +5,155 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
 
-  <body class="bg-white">
+  <body class="bg-[#fff5da] flex flex-col min-h-screen">
 
-    <header class="flex justify-between items-center py-4 px-8 shadow-lg">
-      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="h-[5rem]">
+    <!-- Top header bar -->
+    <header class="w-full flex items-center px-8 py-4 bg-[#FFF1CF] shadow-sm">
+      <a href="{{ url_for('index') }}">
+        <img
+          src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
+          alt="Prepify Logo"
+          class="h-14 cursor-pointer"
+        >
+      </a>
     </header>
 
-    <h1 class="text-center mt-10 font-semibold font-mono text-2xl">Create Your Profile</h1>
+    <!-- Main content -->
+    <main class="flex-grow flex items-center justify-center px-4">
+      <form
+        action="{{ url_for('setup_profile', user_id=user_id) }}"
+        method="POST"
+        class="mx-auto my-10 bg-white rounded-3xl border border-[#e9e1c6]
+            shadow-[0_18px_60px_rgba(0,0,0,0.15)]
+            p-8 w-full max-w-2xl">
+        <h1 class="text-center mb-6 font-semibold font-mono text-2xl text-gray-900">
+          Create Your Profile
+        </h1>
 
-<form action="{{ url_for('setup_profile', user_id=user_id) }}" method="POST" class="max-w-md mx-auto mt-12 border shadow-[0_8px_20px_rgba(50,168,50,0.4)] rounded-xl px-8 py-10">
-  
-  <!-- Name -->
-  <div class="mb-4">
-    <label for="f_name" class="block text-sm font-medium text-black">First Name:</label>
-    <input id="f_name" name="f_name" required autocomplete="given-name"
-           class="block w-full rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"/>
-  </div>
+        <!-- Name -->
+        <div class="mb-4">
+          <label for="f_name" class="block text-sm font-medium text-black">First Name:</label>
+          <input
+            id="f_name"
+            name="f_name"
+            required
+            autocomplete="given-name"
+            class="block w-full rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"
+          />
+        </div>
 
-  <div class="mb-4">
-    <label for="l_name" class="block text-sm font-medium text-black">Last Name:</label>
-    <input id="l_name" name="l_name" required autocomplete="family-name"
-           class="block w-full rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"/>
-  </div>
+        <div class="mb-4">
+          <label for="l_name" class="block text-sm font-medium text-black">Last Name:</label>
+          <input
+            id="l_name"
+            name="l_name"
+            required
+            autocomplete="family-name"
+            class="block w-full rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"
+          />
+        </div>
 
-  <!-- Weight -->
-  <div class="mb-4">
-    <label for="weight_lbs" class="block text-sm font-medium text-black">Weight (lbs):</label>
-    <input id="weight_lbs" name="weight_lbs" type="number" required
-           class="block w-full rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"/>
-  </div>
+        <!-- Weight -->
+        <div class="mb-4">
+          <label for="weight_lbs" class="block text-sm font-medium text-black">Weight (lbs):</label>
+          <input
+            id="weight_lbs"
+            name="weight_lbs"
+            type="number"
+            required
+            class="block w-full rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"
+          />
+        </div>
 
-  <!-- Height -->
-  <div class="mb-4">
-    <label class="block text-sm font-medium text-black">Height:</label>
-    <div class="flex gap-2">
-      <input id="height_ft" name="height_ft" type="number" placeholder="ft" required
-             class="block w-1/2 rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"/>
-      <input id="height_in" name="height_in" type="number" placeholder="in" required
-             class="block w-1/2 rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"/>
-    </div>
-  </div>
+        <!-- Height -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-black">Height:</label>
+          <div class="flex gap-2">
+            <input
+              id="height_ft"
+              name="height_ft"
+              type="number"
+              placeholder="ft"
+              required
+              class="block w-1/2 rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"
+            />
+            <input
+              id="height_in"
+              name="height_in"
+              type="number"
+              placeholder="in"
+              required
+              class="block w-1/2 rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"
+            />
+          </div>
+        </div>
 
-  <!-- Age -->
-  <div class="mb-4">
-    <label for="age" class="block text-sm font-medium text-black">Age:</label>
-    <input id="age" name="age" type="number" required
-           class="block w-full rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"/>
-  </div>
+        <!-- Age -->
+        <div class="mb-4">
+          <label for="age" class="block text-sm font-medium text-black">Age:</label>
+          <input
+            id="age"
+            name="age"
+            type="number"
+            required
+            class="block w-full rounded-md bg-black/5 px-3 py-2 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm"
+          />
+        </div>
 
-  <!-- Sex -->
-  <div class="mb-6">
-    <label for="sex" class="block text-sm font-medium text-black">Sex:</label>
-    <select id="sex" name="sex" required
-            class="w-full border border-black rounded-md px-3 py-2 text-base text-black focus:outline-2 focus:outline-indigo-500 sm:text-sm">
-      <option value="" disabled selected hidden>Select an option</option>
-      <option value="M">Male</option>
-      <option value="F">Female</option>
-    </select>
-  </div>
+        <!-- Sex -->
+        <div class="mb-6">
+          <label for="sex" class="block text-sm font-medium text-black">Sex:</label>
+          <select
+            id="sex"
+            name="sex"
+            required
+            class="w-full border border-black rounded-md px-3 py-2 text-base text-black focus:outline-2 focus:outline-indigo-500 sm:text-sm"
+          >
+            <option value="" disabled selected hidden>Select an option</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
 
-  <!-- Goal -->
-  <div class="mb-6">
-    <label for="goal" class="block text-sm font-medium text-black">Goal:</label>
-    <select id="goal" name="goal" required
-            class=" w-full border border-black rounded-md bg-black/5 px-3 py-2 text-base text-black focus:outline-2 focus:outline-indigo-500 sm:text-sm">
-      <option value="" disabled selected hidden>Select an option</option>
-      <option value="maintain">Maintain Weight</option>
-      <option value="lose">Lose Weight</option>
-      <option value="gain">Gain Weight</option>
-    </select>
-  </div>
+        <!-- Goal -->
+        <div class="mb-6">
+          <label for="goal" class="block text-sm font-medium text-black">Goal:</label>
+          <select
+            id="goal"
+            name="goal"
+            required
+            class="w-full border border-black rounded-md bg-black/5 px-3 py-2 text-base text-black focus:outline-2 focus:outline-indigo-500 sm:text-sm"
+          >
+            <option value="" disabled selected hidden>Select an option</option>
+            <option value="maintain">Maintain Weight</option>
+            <option value="lose">Lose Weight</option>
+            <option value="gain">Gain Weight</option>
+          </select>
+        </div>
 
-  <!-- Submit Button -->
-  <div class="text-center">
-    <button type="submit"
-            class="rounded-md bg-indigo-500 px-20 py-3 text-sm font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-      Complete Account Setup
-    </button>
-  </div>
+        <!-- Submit Button -->
+        <div class="text-center">
+          <button
+            type="submit"
+            class="w-full bg-[#3F2EA8] hover:bg-[#2F2180] text-white font-semibold py-3 rounded-lg transition"
+          >
+            Complete Account Setup
+          </button>
+        </div>
+      </form>
+    </main>
 
-</form>
-
-
+    <!-- Footer pinned to bottom -->
+    <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center">
+      <div class="flex flex-col space-y-1">
+        <span>Contact Support</span>
+        <span>(702) 555-1234</span>
+        <span>support@prepify.com</span>
+      </div>
+      <div class="text-center w-1/3">
+        <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
+      </div>
+    </footer>
 
   </body>
-
-  <footer class="mt-[150px] bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center">
-    <!-- Left side: contact info -->
-    <div class="flex flex-col space-y-1">
-      <span>Contact Support</span>
-      <span>(702) 555-1234</span>
-      <span>support@prepify.com</span>
-    </div>
-  
-    <!-- Right side: copyright -->
-    <div class="text-center w-1/3">
-      <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
-    </div>
-  </footer>
-
-
-
 </html>

@@ -21,7 +21,12 @@ class Meal:
         self.carbs = carbs                  ## Macronutrients
         self.fats = fats                    ##
         self.protein = protein              ##
-        
+        self.collections=[]
+
+    
+
+    def add_to_collection(self,name):
+        self.collections.append(name)                         
     # Neatly displays the name, ingredients and instructions of meal object
     def display_meal(self):
         print()

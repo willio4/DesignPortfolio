@@ -19,8 +19,7 @@ class UserModel(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-
+    
 def register_auth_routes(app):
     @app.route('/signup', methods=['GET', 'POST'])
     def signup():
@@ -29,41 +28,94 @@ def register_auth_routes(app):
             email = request.form['email']
             password = request.form['password']
             
-            # Check if user already exists
+            # ---- 1) Check for existing user by email (your original logic) ----
             existing_user = UserModel.query.filter_by(email=email).first()
             if existing_user:
-                # check if user completed signup by querying user_profiles table based on id (foregin key)
+                # Check if user completed signup by querying user_profiles table
+                completed_signUp = UserProfile.query.filter_by(user_id=existing_user.id).first()
 
-                completed_signUp=UserProfile.query.filter_by(user_id=existing_user.id).first()
-                # if not compelted signup then take to signup page
                 if completed_signUp:
-                    return "ERROR User already exists with this email"  # Replace with flash message later
-                elif username!=existing_user.username:
-                    # check if the user entered an existing email with a different username but hasnt completed sign up,
-                    # can cause error where user finishes signup but username is not updated
-                        return "ERROR Existing Signup Process Found with your email but with a different username \n to continue sign up retry with your original username: {existing_user.username}"
-                # else allow user to continue sign up
-                else:   
-                    # redirect to prevent a database error uploading same user twice
-                    session['user_id']=existing_user.id
-                    return redirect(url_for('setup_profile'))
+                    # Existing account fully set up
+                    return "ERROR User already exists with this email"  # TODO: replace with flash later
 
-            # Create user instance
+                elif username != existing_user.username:
+                    # Email matches an unfinished signup, but username is different
+                    return (
+                        f"ERROR Existing signup process found with your email but "
+                        f"with a different username. To continue sign up, retry with "
+                        f"your original username: {existing_user.username}"
+                    )
+
+                # Same email + same username, signup not completed yet → resume
+                session['user_id'] = existing_user.id
+                return redirect(url_for('setup_profile'))
+
+            # ---- 2) NEW: Check for existing user by username ----
+            existing_username = UserModel.query.filter_by(username=username).first()
+            if existing_username:
+                # Someone else already took this username (even if email is different)
+                return "ERROR User already exists with this username"  # TODO: flash instead
+
+            # ---- 3) Create user instance ----
             new_user = UserModel(username=username, email=email)
             new_user.set_password(password)
 
             db.session.add(new_user)
             db.session.commit()
 
-            # ✅ Store user_id in session for later use
+            # Store user_id in session for profile setup
             session['user_id'] = new_user.id
-            
+
             # Redirect to profile setup
             return redirect(url_for('setup_profile'))
         
+        # GET → render signup page
         return render_template('signup.html')
-    
 
+#
+# def register_auth_routes(app):
+#     @app.route('/signup', methods=['GET', 'POST'])
+#     def signup():
+#         if request.method == 'POST':
+#             username = request.form['username']
+#             email = request.form['email']
+#             password = request.form['password']
+            
+#             # Check if user already exists
+#             existing_user = UserModel.query.filter_by(email=email).first()
+#             if existing_user:
+#                 # check if user completed signup by querying user_profiles table based on id (foregin key)
+
+#                 completed_signUp=UserProfile.query.filter_by(user_id=existing_user.id).first()
+#                 # if not compelted signup then take to signup page
+#                 if completed_signUp:
+#                     return "ERROR User already exists with this email"  # Replace with flash message later
+#                 elif username!=existing_user.username:
+#                     # check if the user entered an existing email with a different username but hasnt completed sign up,
+#                     # can cause error where user finishes signup but username is not updated
+#                         return "ERROR Existing Signup Process Found with your email but with a different username \n to continue sign up retry with your original username: {existing_user.username}"
+#                 # else allow user to continue sign up
+#                 else:   
+#                     # redirect to prevent a database error uploading same user twice
+#                     session['user_id']=existing_user.id
+#                     return redirect(url_for('setup_profile'))
+
+#             # Create user instance
+#             new_user = UserModel(username=username, email=email)
+#             new_user.set_password(password)
+
+#             db.session.add(new_user)
+#             db.session.commit()
+
+#             # ✅ Store user_id in session for later use
+#             session['user_id'] = new_user.id
+            
+#             # Redirect to profile setup
+#             return redirect(url_for('setup_profile'))
+        
+#         return render_template('signup.html')
+    
+#
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':

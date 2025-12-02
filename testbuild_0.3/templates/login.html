@@ -1,59 +1,114 @@
 <!DOCTYPE html>
-<html class="h-full bg-white">
+<html>
 <head>
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
-  <button onclick="history.back()" class="relative inline-flex items-center justify-center p-0.5 mt-1 mx-1 mb-2 me-2 overflow-hidden text-sm font-medium text-black rounded-lg">
-      <span class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
-          ↩ Back
-      </span>
-  </button>
+<body class="bg-[#fff5da] bg-[radial-gradient(circle_at_top_left,rgba(0,0,0,0.04),transparent)] min-h-screen flex flex-col">
 
-  <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-      <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="mx-auto"/>
-      </div>
+  <!-- TOP LEFT LOGO -->
+  <header class="p-4">
+    <a href="{{ url_for('index') }}" class="inline-block">
+      <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
+           alt="Prepify Logo"
+           class="h-12 cursor-pointer">
+    </a>
+  </header>
 
-      <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm border shadow-lg rounded-xl p-6 transform transition-transform duration-300 hover:-translate-y-2">
-  <form action="{{ url_for('login') }}" method="POST" class="space-y-6">
-          <h2 class="text-center text-2xl font-bold text-black">Sign in to your account</h2>
-          <div>
-            <label for="email" class="block text-sm leading-6 font-medium text-black">Email address:</label>
-            <div class="mt-2">
-              <input id="email" type="email" name="email" required autocomplete="email"
-                     class="block w-full rounded-md bg-black/5 px-3 py-1.5 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm leading-6"/>
-            </div>
-          </div>
+  <!-- CENTERED LOGIN CARD -->
+  <main class="flex flex-1 items-center justify-center px-4 sm:px-6 py-6">
+    <div class="bg-white rounded-3xl border border-[#e9e1c6]
+                shadow-[0_18px_60px_rgba(0,0,0,0.15)]
+                p-8 sm:p-10 w-full max-w-md">
 
-          <div>
-            <div class="flex items-center justify-between">
-              <label for="password" class="block text-sm leading-6 font-medium text-black">Password:</label>
-              <div class="text-sm">
-                <a href="#" class="font-semibold text-indigo-400 hover:text-indigo-300">Forgot password?</a>
-              </div>
-            </div>
-            <div class="mt-2">
-              <input id="password" type="password" name="password" required autocomplete="current-password"
-                     class="block w-full rounded-md bg-black/5 px-3 py-1.5 text-base text-black placeholder:text-gray-500 focus:outline-2 focus:outline-indigo-500 sm:text-sm leading-6"/>
-            </div>
-          </div>
+      <!-- LOGO + TAGLINE -->
+      <a href="{{ url_for('index') }}" class="flex justify-center mb-4">
+        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
+             alt="Prepify Logo"
+             class="h-16 cursor-pointer">
+      </a>
+      <p class="text-center text-sm text-gray-500 mb-6">
+        Meal planning made simple and stress-free.
+      </p>
 
-          <div>
-            <button type="submit"
-                    class="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm leading-6 font-semibold text-white hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-              Sign in
-            </button>
-          </div>
-        </form>
-
-        <p class="mt-10 text-center text-sm leading-6 text-gray-400">
-          Not a member?
-          <a href="{{ url_for('signup') }}" class="font-semibold text-indigo-400 hover:text-indigo-300">Create an account</a>
+      <!-- WELCOME TEXT -->
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">
+          Welcome back
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">
+          Sign in to access your saved plans and grocery lists.
         </p>
       </div>
-  </div>
+
+      <!-- DIVIDER REMOVED SINCE SOCIAL LOGIN REMOVED -->
+
+      <!-- LOGIN FORM -->
+      <form action="{{ url_for('login') }}" method="POST" class="space-y-5">
+
+        <!-- EMAIL -->
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-800">
+            Email address
+          </label>
+          <input id="email"
+                 type="email"
+                 name="email"
+                 autocomplete="email"
+                 required
+                 class="mt-1 w-full rounded-md bg-gray-100 px-3 py-2 text-sm
+                        text-gray-900 placeholder:text-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <!-- PASSWORD -->
+        <div>
+          <div class="flex items-center justify-between">
+            <label for="password" class="block text-sm font-medium text-gray-800">
+              Password
+            </label>
+            <a href="#" class="text-xs font-semibold text-indigo-500 hover:text-indigo-400">
+              Forgot password?
+            </a>
+          </div>
+
+          <input id="password"
+                 type="password"
+                 name="password"
+                 autocomplete="current-password"
+                 required
+                 class="mt-1 w-full rounded-md bg-gray-100 px-3 py-2 text-sm
+                        text-gray-900 placeholder:text-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <!-- SUBMIT BUTTON -->
+        <button type="submit"
+                class="mt-2 w-full rounded-md bg-indigo-500 px-3 py-2 text-sm
+                       font-semibold text-white shadow-sm
+                       hover:bg-indigo-400 focus:outline-none
+                       focus:ring-2 focus:ring-indigo-500">
+          Sign in
+        </button>
+      </form>
+
+      <!-- SIGNUP LINK -->
+      <p class="mt-6 text-center text-sm text-gray-500">
+        Not a member?
+        <a href="{{ url_for('signup') }}"
+           class="font-semibold text-indigo-500 hover:text-indigo-400">
+          Create an account
+        </a>
+      </p>
+
+      <!-- MICRO FOOTER -->
+      <p class="mt-4 text-center text-[11px] text-gray-400">
+        © 2025 Prepify · Meal planning made simple.
+      </p>
+
+    </div>
+  </main>
+
 </body>
 </html>

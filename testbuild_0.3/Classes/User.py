@@ -1,9 +1,3 @@
-"""User helper used by the testbuild (cleaned, dataclass-based).
-
-        This module provides a small, well-tested User model with serialization and
-        methods useful for prompt generation (BMR, BMI, calorie targets, etc.).
-        """
-
 from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 
@@ -108,8 +102,34 @@ class User:
         return self.calculateBMR() * factor
 
     def calorieTargetByGoal(self, activity: str = "moderate") -> float:
-        tdee = self.dailyCalories(activity)
         g = (self.goal or "").lower()
+        s = (self.sex or "").strip().lower()  # normalize
+
+        # Explicit neutral-gender cases
+        neutral_options = {"gender neutral", "prefer not to say"}
+
+        # Neutral diet option: fixed 2000 calories/day baseline
+        if s in neutral_options:
+            base = 2000.0
+            if g == "maintain":
+                return base
+            if g == "lose":
+                return max(0.0, base - 500)
+            if g == "gain":
+                return base + 500
+            return base
+
+        # Normal male/female flow
+        if s in ("m", "male"):
+            sex_normalized = "M"
+        elif s in ("f", "female"):
+            sex_normalized = "F"
+        else:
+            # Unknown or unsupported → fallback to TDEE calculation using average BMR
+            sex_normalized = None
+
+        tdee = self.dailyCalories(activity)
+
         if g == "maintain":
             return tdee
         if g == "lose":
@@ -117,7 +137,7 @@ class User:
         if g == "gain":
             return tdee + 500
         return tdee
-
+    
     # compatibility helper similar to old code
     def UserData(self) -> Dict[str, Any]:
         return {
@@ -137,6 +157,13 @@ class User:
         bmi = self.calculateBMI()
         tdee = self.dailyCalories(activity)
         target = self.calorieTargetByGoal(activity)
+        s = (self.sex or "").strip().lower()
+
+        neutral_options = {"gender neutral", "prefer not to say"}
+        neutral_note = ""
+        if s in neutral_options:
+            neutral_note = " A neutral 2000 kcal/day plan was applied because the user selected a gender-neutral option."
+
         return (
             f"User: {self.name}, {self.sex}, {self.age} years old. "
             f"Height: {self.height_ft} ft {self.height_in} in. "
@@ -145,6 +172,7 @@ class User:
             f"BMR: {self.calculateBMR():.0f} kcal/day. "
             f"Maintenance calories (TDEE): {tdee:.0f} kcal/day. "
             f"Recommended daily calories for goal: {target:.0f} kcal/day."
+            f"{neutral_note}"
         )
 
     # convenience getters/setters (small compatibility layer)

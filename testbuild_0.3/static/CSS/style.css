@@ -12,3 +12,24 @@
 @media (min-width: 900px) {
 	.results-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
 }
+
+/* Navigation hover underline */
+.nav-link {
+    position: relative;
+    padding-bottom: 4px; /* space for underline */
+}
+
+.nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0%;
+    height: 2px;
+    background-color: #233723; /* dark green */
+    transition: width 0.25s ease-in-out;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}

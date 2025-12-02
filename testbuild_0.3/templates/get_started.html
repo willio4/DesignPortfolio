@@ -1,322 +1,302 @@
-
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Flask Multi-Input Example</title>
-    <!-- Tailwind CSS CDN -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prepify – Get Started</title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Your custom CSS for nav underline -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='CSS/style.css') }}">
 </head>
-<body class="bg-gray-100 flex flex-col min-h-screen">
-<!-- Main input component for meal generation inputs -->
 
+<body class="bg-[#fff5da] flex flex-col min-h-screen">
 
-      <header class="flex justify-between items-center py-4 px-8">
-        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Prepify Logo" class="h-12">
-        <div class="flex space-x-4">
-            <a href="{{ url_for('login') }}">
-                <button class="px-4 py-2 bg-white text-black border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-gray-100 transition">
-                    Log In
-                </button>
+    <header class="w-full flex items-center justify-between px-8 py-4 bg-[#FFF1CF] shadow-sm">
+
+        <!-- LEFT: Logo + Navigation -->
+        <div class="flex items-center gap-10">
+
+            <!-- Logo -->
+            <a href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
+                    class="h-12 cursor-pointer">
             </a>
-            <a href="{{ url_for('signup') }}">
-                <button class="px-4 py-2 bg-blue-500 text-white border border-black shadow-[2px_2px_0px_0px_black] rounded-lg hover:bg-green-600 transition">
-                    Sign Up
-                </button>
-            </a>
+
+            <!-- Navigation -->
+            <nav class="flex gap-8 text-lg font-medium text-gray-900">
+                <a href="{{ url_for('get_started') }}" class="nav-link">Get Started</a>
+                <a href="{{ url_for('shopping_list') }}" class="nav-link">Shopping List</a>
+                <a href="{{ url_for('calendar') }}" class="nav-link">Calendar</a>
+                <a href="{{ url_for('user_meals') }}" class="nav-link">Your Meals</a>
+
+            </nav>
         </div>
+
+        <!-- RIGHT: Modern Log In / Sign Up -->
+        <div class="flex space-x-3">
+            <a href="{{ url_for('login') }}" class="px-5 py-2 rounded-full border border-gray-800 text-gray-900 
+                  bg-white shadow-sm hover:bg-gray-200 transition font-medium">
+                Log In
+            </a>
+
+            <a href="{{ url_for('signup') }}" class="px-5 py-2 rounded-full text-white 
+          bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
+                Sign Up
+            </a>
+
     </header>
 
-        <ul class="grid grid-flow-col text-center bg-gradient-to-b from-[#f0f0f0] to-[#d6d6d6] rounded-full p-1 shadow-inner shadow-gray-400">
-            <li>
-              <a href="{{ url_for('index') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition ">
-                 Home
-              </a>
-            </li>
-            <li>
-              <a href="{{ url_for('get_started') }}" 
-                 class="flex justify-center font-bold  bg-gradient-to-b from-white to-gray-200 rounded-full shadow-[0_4px_8px_rgba(0,0,0,0.2)] text-green-400 py-4 px-6">
-                 Get Started
-              </a>
-            </li>
-            <li>
-              <a href="{{ url_for('shopping_list') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
-                 Shopping List
-              </a>
-            </li>
-            <li>
-              <a href="{{ url_for('calendar') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
-                 Calendar
-              </a>
-            </li>
-            <!-- <li>
-              <a href="{{ url_for('show_feed') }}" 
-                 class="flex justify-center py-4 px-6 text-gray-700 hover:text-green-600 transition">
-                 Feed
-              </a>
-            </li> -->
-          </ul>
-<main class="flex-grow flex items-center justify-center">
-<div class=" my-8 bg-white rounded-3xl shadow-xl shadow-indigo-300/50 p-8 w-full max-w-3xl">
-  <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">
-    Generate New Meals
-  </h1>
+    <!-- Main content -->
+    <main class="flex-grow flex items-center justify-center px-4">
+        <div class="mx-auto my-8 bg-white rounded-3xl shadow-xl shadow-indigo-300/50 p-4 sm:p-8 w-full max-w-3xl">
+            <h1 class="font-bold text-center mb-6 text-gray-800 text-2xl sm:text-3xl">
+                Generate New Meals
+            </h1>
 
-        <!-- inputut foprm -->
-        <form id='form' action = "/startMealPlan" method="POST" class="space-y-4">
-            <!-- n breakfasts -->
-            <div>
-                <label for="num1" class="block text-sm font-medium text-gray-700"># of Breakfasts</label>
-                <input type="number" name="num1" required
-                       class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200  focus:ring-indigo-500">
-            </div>
-
-            <!-- n lunches -->
-            <div>
-                <label for="num2" class="block text-sm font-medium text-gray-700"># of Lunches</label>
-                <input type="number" name="num2" required
-                       class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200  focus:ring-indigo-500">
-            </div>
-
-            <!-- n dinners -->
-            <div>
-                <label for="num3" class="block text-sm font-medium text-gray-700"># of Dinners</label>
-                <input type="number" name="num3" required
-                       class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
-            </div>
-
-           <!-- budget -->
-            <div>
-                <label for="num4" class="block text-sm font-medium text-gray-700">Budget (USD)</label>
-                <input type="number" name="num4" 
-                       class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
-            </div>
-
-        <!-- Weight & Height Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-                <label for="weight" class="block text-sm font-medium text-gray-700">Weight (lbs)</label>
-                <input type="number" name="weight" id="weight" 
-                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200  focus:ring-indigo-500">
-            </div>
-            <div>
-                <label for="height" class="block text-sm font-medium text-gray-700">Height (in)</label>
-                <input type="number" name="height" id="height" 
-                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
-            </div>
-            </div>
-
-            <!-- Gender & Age Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-                <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
-                <select name="gender" id="gender"
-                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">Select gender</option>
-                <option>Male</option>
-                <option>Female</option>
-                <option>Non-binary</option>
-                <option>Prefer not to say</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
-                <input type="number" name="age" id="age" min="1"
-                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200  focus:ring-indigo-500">
-            </div>
-
-            </div>
-
-            <!-- Activity Level & Goal Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-                <label for="activity" class="block text-sm font-medium text-gray-700">Activity Level</label>
-                <select id="activity" name="activity"
-                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">Select activity level</option>
-                <option>Sedentary (little or no exercise)</option>
-                <option>Lightly active (1–3 days/week)</option>
-                <option>Moderately active (3–5 days/week)</option>
-                <option>Very active (6–7 days/week)</option>
-                <option>Extra active (physical job or intense training)</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="goal" class="block text-sm font-medium text-gray-700">Goal</label>
-                <select id="goal" name="goal"
-                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">Select goal</option>
-                <option>Lose Weight</option>
-                <option>Maintain Weight</option>
-                <option>Gain Muscle</option>
-                </select>
-            </div>
-            </div>
-
-            
-            <!-- Dietary Preferences (Multi-select) -->
-            <div>
-            <label for="dietary" class="block text-sm font-medium text-gray-700">Dietary Preferences</label>
-            <select id="dietary" name="dietary" multiple
-                    class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-32">
-                <option>Vegetarian</option>
-                <option>Vegan</option>
-                <option>Keto</option>
-                <option>Paleo</option>
-                <option>Low-Carb</option>
-                <option>Gluten-Free</option>
-                <option>Dairy-Free</option>
-            </select>
-            <p class="text-xs text-gray-500 mt-1">Hold Ctrl (Windows) or Cmd (Mac) to select multiple options.</p>
-            </div>
-
-            <!-- Restrictions -->
-            <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Ingredient Restrictions</label>
-            <div id="restrictionsList" class="space-y-2">
-                <div class="flex gap-2">
-                <input type="text" name="restrictions[]" placeholder="e.g., peanuts"
-                        class="flex-1 rounded-lg border-gray-300 shadow-sm  bg-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+            <!-- Input form -->
+            <form id="mealForm" action="/startMealPlan" method="POST" class="space-y-4">
+                <!-- # of breakfasts -->
+                <div>
+                    <label for="num1" class="block text-sm font-medium text-gray-700"># of Breakfasts</label>
+                    <input type="number" name="num1" id="num1" required
+                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
                 </div>
-            </div>
-            <button type="button" id="addRestrictionBtn"
-                    class="mt-3 w-full py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition">
-                + Add another restriction
-            </button>
-            </div>
 
-            <!-- Favorite Ingredients -->
-            <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Favorite Ingredients</label>
-            <div id="favoritesList" class="space-y-2">
-                <div class="flex gap-2">
-                <input type="text" name="favorites[]" placeholder="e.g., chicken breast"
-                        class="flex-1 rounded-lg border-gray-300 shadow-sm bg-gray-200  focus:border-indigo-500 focus:ring-indigo-500">
+                <!-- # of lunches -->
+                <div>
+                    <label for="num2" class="block text-sm font-medium text-gray-700"># of Lunches</label>
+                    <input type="number" name="num2" id="num2" required
+                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
                 </div>
-            </div>
-            <button type="button" id="addFavoriteBtn"
-                    class="mt-3 w-full py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition">
-                + Add another favorite ingredient
-            </button>
-            </div>
-            <!-- check box for adding calroie restrictions -->
-            <div class="flex items-center space-x-2 mt-6">
-                <input id="calorieCheck" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                <label for="calorieCheck" class="text-sm font-medium text-gray-700">Add Calorie Goal</label>
-            </div>
 
-            <!-- hidden section that appears if above is checked -->
-            <div id="calorieSection" class="hidden mt-4 space-y-3 border border-gray-300 rounded-xl p-4 bg-gray-50">
-                <!-- area for holding calorie goals -->
-                <div id="calorieRows" class="space-y-3">
-                    <!-- first row-->
-                    <div class="flex flex-wrap items-center gap-3 calorie-row">
-                        <!-- greater than less than and roughly equlivalent to operator -->
-                        <select name="calorie_operator[]" class="w-40 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option>About</option>
-                            <option>At least</option>
-                            <option>Under</option>
+                <!-- # of dinners -->
+                <div>
+                    <label for="num3" class="block text-sm font-medium text-gray-700"># of Dinners</label>
+                    <input type="number" name="num3" id="num3" required
+                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
+                </div>
+
+                <!-- Budget -->
+                <div>
+                    <label for="num4" class="block text-sm font-medium text-gray-700">Budget (USD)</label>
+                    <input type="number" name="num4" id="num4"
+                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
+                </div>
+
+                <!-- Weight & Height row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="weight" class="block text-sm font-medium text-gray-700">Weight (lbs)</label>
+                        <input type="number" name="weight" id="weight"
+                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="height" class="block text-sm font-medium text-gray-700">Height (in)</label>
+                        <input type="number" name="height" id="height"
+                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Gender & Age row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                        <select name="gender" id="gender"
+                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Select gender</option>
+                            <option>Male</option>
+                            <option>Female</option>
+                            <option>Non-binary</option>
+                            <option>Prefer not to say</option>
                         </select>
-                        <!--  num calories integer input -->
-                        <input type="number" name="calorie_value[]" placeholder="Number of calories"
-                               class="w-44 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
 
-                        <label class="text-sm text-gray-700">calories for</label>
-                        <!-- mapping calorie to the set of meals -->
-                        <select name="calorie_target[]" class="w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            <option>each meal</option>
-                            <option>all meals</option>
-                            <option>each lunch</option>
-                            <option>all lunches</option>
-                            <option>each breakfast</option>
-                            <option>all breakfasts</option>
-                            <option>each dinner</option>
-                            <option>all dinners</option>
+                    <div>
+                        <label for="age" class="block text-sm font-medium text-gray-700">Age</label>
+                        <input type="number" name="age" id="age" min="1"
+                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 bg-gray-200 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Activity & Goal row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="activity" class="block text-sm font-medium text-gray-700">Activity Level</label>
+                        <select id="activity" name="activity"
+                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Select activity level</option>
+                            <option>Sedentary (little or no exercise)</option>
+                            <option>Lightly active (1–3 days/week)</option>
+                            <option>Moderately active (3–5 days/week)</option>
+                            <option>Very active (6–7 days/week)</option>
+                            <option>Extra active (physical job or intense training)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="goal" class="block text-sm font-medium text-gray-700">Goal</label>
+                        <select id="goal" name="goal"
+                            class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Select goal</option>
+                            <option>Lose Weight</option>
+                            <option>Maintain Weight</option>
+                            <option>Gain Muscle</option>
                         </select>
                     </div>
                 </div>
-                
-                <!-- button to add another calorie rule -->
-                <button type="button" id="addGoalBtn"
+
+                <!-- Dietary preferences -->
+                <div>
+                    <label for="dietary" class="block text-sm font-medium text-gray-700">Dietary Preferences</label>
+                    <select id="dietary" name="dietary" multiple
+                        class="mt-1 w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 h-32">
+                        <option>Vegetarian</option>
+                        <option>Vegan</option>
+                        <option>Keto</option>
+                        <option>Paleo</option>
+                        <option>Low-Carb</option>
+                        <option>Gluten-Free</option>
+                        <option>Dairy-Free</option>
+                        <option>Kosher</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Hold Ctrl (Windows) or Cmd (Mac) to select multiple options.
+                    </p>
+                </div>
+
+                <!-- Restrictions -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ingredient Restrictions</label>
+                    <div id="restrictionsList" class="space-y-2">
+                        <div class="flex gap-2">
+                            <input type="text" name="restrictions[]" placeholder="e.g., peanuts"
+                                class="flex-1 rounded-lg border-gray-300 shadow-sm bg-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <button type="button" id="addRestrictionBtn"
+                        class="w-full bg-[#3F2EA8] hover:bg-[#2F2180] text-white font-semibold py-3 rounded-lg transition">
+                        + Add another restriction
+                    </button>
+                </div>
+
+                <!-- Favorite ingredients -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Favorite Ingredients</label>
+                    <div id="favoritesList" class="space-y-2">
+                        <div class="flex gap-2">
+                            <input type="text" name="favorites[]" placeholder="e.g., chicken breast"
+                                class="flex-1 rounded-lg border-gray-300 shadow-sm bg-gray-200 focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <button type="button" id="addFavoriteBtn"
+                        class="w-full bg-[#3F2EA8] hover:bg-[#2F2180] text-white font-semibold py-3 rounded-lg transition">
+                        + Add another favorite ingredient
+                    </button>
+                </div>
+
+                <!-- Calorie goals checkbox -->
+                <div class="flex items-center space-x-2 mt-6">
+                    <input id="calorieCheck" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                    <label for="calorieCheck" class="text-sm font-medium text-gray-700">Add Calorie Goal</label>
+                </div>
+
+                <!-- Calorie goals section -->
+                <div id="calorieSection" class="hidden mt-4 space-y-3 border border-gray-300 rounded-xl p-4 bg-gray-50">
+                    <div id="calorieRows" class="space-y-3">
+                        <div class="flex flex-wrap items-center gap-3 calorie-row">
+                            <select name="calorie_operator[]"
+                                class="w-40 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option>About</option>
+                                <option>At least</option>
+                                <option>Under</option>
+                            </select>
+
+                            <input type="number" name="calorie_value[]" placeholder="Number of calories"
+                                class="w-44 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+
+                            <label class="text-sm text-gray-700">calories for</label>
+
+                            <select name="calorie_target[]"
+                                class="w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option>each meal</option>
+                                <option>all meals</option>
+                                <option>each lunch</option>
+                                <option>all lunches</option>
+                                <option>each breakfast</option>
+                                <option>all breakfasts</option>
+                                <option>each dinner</option>
+                                <option>all dinners</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" id="addGoalBtn"
                         class="mt-3 w-full py-2 px-4 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition">
-                    + Add another calorie goal
-                </button>
-            </div>
+                        + Add another calorie goal
+                    </button>
+                </div>
 
-            <!-- Generate the meals -->
-            <button type="submit"
-                    class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 mt-6">
+                <!-- Submit -->
+                <button type="submit"
+                    class="w-full bg-[#3F2EA8] hover:bg-[#2F2180] text-white font-semibold py-3 rounded-lg transition">
                     Generate Meals
-            </button>
-        
+                </button>
+            </form>
+        </div>
+    </main>
 
-   
+    <!-- Footer -->
+    <footer
+        class="bg-[#0E0E0E] text-gray-200 py-6 px-4 sm:px-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-5">
+        <div class="flex flex-col space-y-1">
+            <span>Contact Support</span>
+            <span>(702) 555-1234</span>
+            <span>support@prepify.com</span>
+        </div>
+        <div class="text-center sm:w-1/3">
+            <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
+        </div>
+    </footer>
 
-
-  </form>
-</div>
-</main>
-          <footer class="bg-[#0E0E0E] text-gray-200 py-6 px-12 flex justify-between items-center mt-5">
-            <!-- Left side: contact info -->
-            <div class="flex flex-col space-y-1">
-              <span>Contact Support</span>
-              <span>(702) 555-1234</span>
-              <span>support@prepify.com</span>
-            </div>
-          
-            <!-- Right side: copyright -->
-            <div class="text-center w-1/3">
-              <p class="text-sm">&copy; 2025 Prepify. All rights reserved.</p>
-            </div>
-          </footer>
-          
-    </body>
-<!-- JS for dynamic fields -->
-<script>
-
-
-    
+    <!-- JS for dynamic fields -->
+    <script>
         const check = document.getElementById('calorieCheck');
         const section = document.getElementById('calorieSection');
         const addGoalBtn = document.getElementById('addGoalBtn');
         const calorieRows = document.getElementById('calorieRows');
 
-  document.getElementById('addRestrictionBtn').addEventListener('click', () => {
-    const container = document.getElementById('restrictionsList');
-    const input = document.createElement('div');
-    input.classList.add('flex', 'gap-2');
-    input.innerHTML = `
-      <input type="text" name="restrictions[]" placeholder="e.g., peanuts"
-        class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-    `;
-    container.appendChild(input);
-  });
-       
-  document.getElementById('addFavoriteBtn').addEventListener('click', () => {
-    const container = document.getElementById('favoritesList');
-    const input = document.createElement('div');
-    input.classList.add('flex', 'gap-2');
-    input.innerHTML = `
-      <input type="text" name="favorites[]" placeholder="e.g., chicken"
-        class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-    `;
-    container.appendChild(input);
-  });
+        document.getElementById('addRestrictionBtn').addEventListener('click', () => {
+            const container = document.getElementById('restrictionsList');
+            const input = document.createElement('div');
+            input.classList.add('flex', 'gap-2');
+            input.innerHTML = `
+                <input type="text" name="restrictions[]" placeholder="e.g., peanuts"
+                    class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            `;
+            container.appendChild(input);
+        });
 
+        document.getElementById('addFavoriteBtn').addEventListener('click', () => {
+            const container = document.getElementById('favoritesList');
+            const input = document.createElement('div');
+            input.classList.add('flex', 'gap-2');
+            input.innerHTML = `
+                <input type="text" name="favorites[]" placeholder="e.g., chicken"
+                    class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            `;
+            container.appendChild(input);
+        });
 
-
-
-        // shpw hidden section with use of not operator
+        // Show/hide calorie section
         check.addEventListener('change', () => {
             section.classList.toggle('hidden', !check.checked);
         });
 
-        // infintely add new calorie rules
+        // Add new calorie rule rows
         addGoalBtn.addEventListener('click', () => {
             const newRow = document.createElement('div');
             newRow.className = 'flex flex-wrap items-center gap-3 calorie-row';
@@ -348,21 +328,12 @@
             calorieRows.appendChild(newRow);
         });
 
-
-
-      document
-        .getElementById("mealForm")
-        .addEventListener("submit", function () {
-
-
+        // Placeholder submit handler (optional)
+        document.getElementById("mealForm").addEventListener("submit", function () {
+            // you can add front-end validation or analytics here if needed
         });
-
-
     </script>
 
-
-
-
 </body>
-</html>
 
+</html>

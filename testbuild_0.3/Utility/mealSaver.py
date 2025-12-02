@@ -22,6 +22,9 @@ class SavedRecipe(db.Model):
     fats=db.Column(db.Integer,nullable=True)
     protein=db.Column(db.Integer,nullable=True)
     created_on = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    ingredient_amounts=db.Column(db.Text,nullable=True)
+    ingredient_units=db.Column(db.Text,nullable=True)
+    calories=db.Column(db.Integer,nullable=True)
 
 
 
@@ -39,7 +42,7 @@ class MealCollections(db.Model):
     # Foreign key to existing users table
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
-    collection_name=db.Column(db.String(200),db.ForeignKey('collections.collection_name'),nullable=False)
+    collection_name=db.Column(db.String(200),nullable=False)
 
 
 
@@ -51,7 +54,10 @@ class CollectionInfo(db.Model):
     collection_name=db.Column(db.String(200),nullable=False)
     collection_image=db.Column(db.Text,nullable=True)
 
-
+def getCollectionMeals(userID):
+    colQ=f'''select * from collection_meals where user_id="{userID}"'''
+    df=pd.read_sql(colQ,db.engine)
+    return df
 # returns all collections for a given user
 def getCollections(userID):
     queryCollections=f'''
@@ -100,6 +106,10 @@ def getUserMeals(userID):
     return mealCollections
 
 
+def getAllMeals(userID):
+    q2=f'''select * from generated_meals where user_id="{userID}'''
+    allMeals=pd.read_sql(q2,db.engine)
+    return allMeals
 
 # adds new meal to a collection if it hasnt been already
 def addMealToCollection(userID,collectionName,mealID):
@@ -145,10 +155,10 @@ def generatemealIDs(userID,nRecipes):
 
 
 # function to add newly generated meals to database
-def saveNewMeals(userID,newMeals):
+def saveNewMeals(userID,newMeals,units,quants):
     # print("MEALS",newMeals)
     # upload each meal to the database
-    for meal in newMeals["meals"]:
+    for meal,u,q in zip(newMeals["meals"],units,quants):
 
 
         # Tess: Commented this out for now to fix the nested f-string error ↓
@@ -158,20 +168,20 @@ def saveNewMeals(userID,newMeals):
 
         newMeal=SavedRecipe(user_id=userID,meal_id=meal["id"],recipe_name=meal["name"],meal_type=meal["mealType"],
         instructions=f"{meal['instructions']}",ingredients=f"{meal['ingredients']}",carbs=meal["carbs"],
-        fats=meal["fats"],protein=meal["protein"])
+        fats=meal["fats"],protein=meal["protein"],ingredient_amounts=f"{q}",ingredient_units=f"{u}",calories=meal['calories'])
 
                 # create new meal object (use .get and avoid nested f-strings)
-        newMeal = SavedRecipe(
-            user_id=userID,
-            meal_id=meal.get("id"),
-            recipe_name=meal.get("name"),
-            meal_type=meal.get("mealType"),
-            instructions=str(meal.get("instructions")) if meal.get("instructions") is not None else None,
-            ingredients=str(meal.get("ingredients")) if meal.get("ingredients") is not None else None,
-            carbs=meal.get("carbs"),
-            fats=meal.get("fats"),
-            protein=meal.get("protein"),
-        )
+        # newMeal = SavedRecipe(
+        #     user_id=userID,
+        #     meal_id=meal.get("id"),
+        #     recipe_name=meal.get("name"),
+        #     meal_type=meal.get("mealType"),
+        #     instructions=str(meal.get("instructions")) if meal.get("instructions") is not None else None,
+        #     ingredients=str(meal.get("ingredients")) if meal.get("ingredients") is not None else None,
+        #     carbs=meal.get("carbs"),
+        #     fats=meal.get("fats"),
+        #     protein=meal.get("protein"),
+        # )
 
         db.session.add(newMeal)
         db.session.commit()
