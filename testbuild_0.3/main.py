@@ -549,7 +549,50 @@ def get_started():
 
 @app.route("/shopping_list")
 def shopping_list():
-    return render_template("shopping_list.html")
+    uid=session.get('user_id')
+    mealObjs=[]
+    colObjs={}
+    meals=[]
+
+    # check if user logged in 
+    if uid:
+        #get user meals
+        # and get meals saved in collectioms
+        userMeals=getAllMeals(uid)
+        colMeals=getCollectionMeals(uid)
+        # if there are any meals
+        if len(userMeals)!=0:
+            for id,mealType,mealName,mealInstr,mealIngr,carb,fat,pro,cals in zip(userMeals['meal_id'],userMeals['meal_type'],userMeals['recipe_name'],userMeals['instructions'],userMeals['ingredients'],userMeals['carbs'],userMeals['fats'],userMeals['protein'],userMeals['calories']):
+                # create a new meal object
+                currMeal=Meal(mealType,mealName,mealIngr,cals,mealInstr,carb,fat,pro)
+                # save that meal object
+                mealObjs.append(currMeal)
+                # check if we have any collections
+                if len(colMeals)>0:
+                    # if so get the collections for this meal
+                    mealCol=colMeals[colMeals['meal_id']==id]
+                    # if this meal is saved to any collection
+                    if len(mealCol)>0:
+                        # for each collection its saved to
+                        for colName in mealCol['collection_name']:
+                            # create new collection object
+                            if colName not in colObjs:
+                                colObjs[colName]=MealCollection([],colName)
+                            # assocaite the meal object with the colleciton 
+                            colObjs[colName].meals.append(currMeal)
+
+                else:
+                    colObjs={}
+
+        else:
+            mealObjs=[]
+            colObjs={}
+    else:
+        mealsObjs=[]
+        colObjs={}
+    session['mealObjs']=[x.__dict__ for x in mealObjs]
+    
+    return render_template("shopping_list.html",meals=mealObjs,cols=list(colObjs.values()))
 
 @app.route("/calendar")
 def calendar():
@@ -569,7 +612,7 @@ def user_meals():
         colMeals=getCollectionMeals(uid)
         # if there are any meals
         if userMeals:
-            for id,mealType,mealName,mealInstr,mealIngr,carb,fat,pro,cals in zip(userMeals['meal_id'],userMeals['meal_type'],userMeal['recipe_name'],userMeal['instructions'],userMeal['ingredients'],userMeal['carbs'],userMeal['fats'],userMeal['protein'],userMeal['calories']):
+            for id,mealType,mealName,mealInstr,mealIngr,carb,fat,pro,cals in zip(userMeals['meal_id'],userMeals['meal_type'],userMeals['recipe_name'],userMeals['instructions'],userMeals['ingredients'],userMeals['carbs'],userMeals['fats'],userMeals['protein'],userMeals['calories']):
                 # create a new meal object
                 currMeal=Meal(mealType,mealName,mealIngr,cals,mealInstr,carb,fat,pro)
                 # save that meal object
@@ -603,6 +646,8 @@ def user_meals():
     # each meal is a meal object
     # each collection is a collection object containing lists of meal objects
     return render_template("user_meals.html",meals=meals,collections=colInfo)
+
+
 
 # main function 
 # use for testing
@@ -944,8 +989,7 @@ def startMealPlan():
         logging.exception('generatemealIDs failed')
         ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
 
-    for i in range(len(meals)):
-        meals[i]['id'] = ids[i]
+
 
     # keep what the model said (for transparency if you want to display it)
     for m in meals:
@@ -991,7 +1035,7 @@ def startMealPlan():
 
 
     # save if logged in
-
+    print(meals)
     try:
 
         if uid and meals:
@@ -1001,19 +1045,64 @@ def startMealPlan():
             for meal in meals:
                 mealsIgrs=[]
                 mealsUnits=[]
-                for i in meal.ingredients:
-                    mealsIgrs.append(i.quantity)
-                    mealsUnits.append(i.unit)
+                for i in meal['ingredients']:
+                    mealsIgrs.append(i['quantity'])
+                    mealsUnits.append(i['unit'])
                 ingrids.append(mealsIgrs)
                 units.append(mealsUnits)
+    # for i in range(len(meals)):
+            try:
+                ids = generatemealIDs(uid, len(meals)) if isinstance(meals, list) else []
+            except Exception:
+                logging.exception('generatemealIDs failed')
+                ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
 
 
+            c=0
+            for m in meals:
+                m['id']=ids[c]
+                c+=1
+            print("MEALS",meals)
+        # meals[i]['id'] = ids[i]
+            print('meal',data)
             saveNewMeals(uid, data,units,ingrids)
     except Exception:
         logging.exception('Failed to save new meals')
 
     collections = getUserMeals(uid) if uid else []
     return render_template("results.html", data=data, collections=collections)
+
+@app.route("/build_shopping_list", methods=["POST"])
+def build_shopping_list():
+    selected = request.form.getlist("selected_meals")
+    print("Selected meals:", selected)
+    ingredients={}
+    for meal in session['mealObjs']:
+        print("INGRIDS",meal)
+        print("quants")
+        active=False
+        for ingrdn in meal['ingredients'].split(","):
+                
+            ingrdn=ingrdn.replace("<[","").replace("'","")#.replace(":","")
+            ingrdn=ingrdn.split(":")
+            print(ingrdn)
+            
+            if "name" in ingrdn[0]:
+                if ingrdn[1].strip() not in ingredients:
+                    ingredients[ingrdn[1].strip()]=0
+                active=ingrdn[1].strip()
+            if "quantity" in ingrdn[0]:
+                if"None" not in ingrdn[1]:
+                    ingredients[active]+=float(ingrdn[1])
+                else:
+                    ingredients[active]+=1 
+            
+
+            # pass
+
+    # for ingridient in 
+    # Do something with them...
+    return render_template("shopping_list_result.html", items=list(zip(list(ingredients.keys()),list(ingredients.values()))))
 
 
 if __name__ == "__main__":

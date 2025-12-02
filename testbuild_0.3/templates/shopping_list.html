@@ -34,6 +34,8 @@
                           <li><a href="{{ url_for('get_started') }}">Get Started</a></li>
                           <li><a href="{{ url_for('shopping_list') }}">Sopping List</a></li>
                           <li><a href="{{ url_for('calendar') }}">Calendar</a></li>
+                          <li><a href="{{ url_for('user_meals') }}" class="nav-link">Your Meals</a></li>
+
                       </ul>
                   </details>
               </div>
@@ -66,13 +68,99 @@
     <!-- This white card protects images and content from the background color -->
     <div class="w-full max-w-4xl bg-white rounded-3xl shadow-xl shadow-indigo-300/30 p-6">
 
-      <!-- PLACE SHOPPING LIST CONTENT HERE -->
-      {% block shopping_list_content %}
-        <!-- Example placeholder -->
-        <h1 class="text-2xl font-semibold text-gray-800 mb-4">Your Shopping List</h1>
-        <!-- Your JS-generated content or image will appear clean here -->
-      {% endblock %}
+<h1 class="text-2xl font-semibold text-gray-800 mb-6">Select Meals to Generate a Shopping List</h1>
 
+<!-- View Toggle Buttons -->
+<div class="flex justify-center gap-4 mb-6">
+    <button type="button" id="toggleCollections"
+        class="px-4 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">
+        Collections View
+    </button>
+
+    <button type="button" id="toggleAll"
+        class="px-4 py-2 bg-gray-300 text-black rounded-lg shadow hover:bg-gray-400 transition">
+        All Meals View
+    </button>
+</div>
+
+<form action="{{ url_for('build_shopping_list') }}" method="POST">
+
+    <!-- COLLECTION VIEW -->
+    <div id="collectionView" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+        {% for col in cols %}
+            {% for meal in col.meals %}
+            <label class="cursor-pointer mealTile">
+                <input type="checkbox" name="selected_meals" value="{{ meal.name }}" class="peer hidden">
+
+                <div class="p-4 bg-gray-100 rounded-xl shadow 
+                            peer-checked:bg-green-200 peer-checked:ring-2 peer-checked:ring-green-600
+                            transition">
+                <h3 class="text-lg font-semibold">{{ meal.name }}</h3>
+                <p class="text-gray-600 text-sm">{{ meal.calories }} calories</p>
+                </div>
+            </label>
+            {% endfor %}
+        {% endfor %}
+
+    </div>
+
+    <!-- ALL MEALS VIEW (hidden by default) -->
+    <div id="allMealsView" class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+
+        {% for meal in meals %}
+        <label class="cursor-pointer mealTile">
+            <input type="checkbox" name="selected_meals" value="{{ meal.name }}" class="peer hidden">
+
+            <div class="p-4 bg-gray-100 rounded-xl shadow 
+                        peer-checked:bg-green-200 peer-checked:ring-2 peer-checked:ring-green-600
+                        transition">
+                <h3 class="text-lg font-semibold">{{ meal.name }}</h3>
+                <p class="text-gray-600 text-sm">{{ meal.calories }} calories</p>
+            </div>
+        </label>
+        {% endfor %}
+
+    </div>
+
+    <!-- Submit Button -->
+    <div class="mt-6 text-center">
+        <button type="submit"
+          class="px-6 py-3 bg-green-600 text-white font-semibold rounded-xl shadow hover:bg-green-700 transition">
+          Create Shopping List
+        </button>
+    </div>
+
+</form>
+
+<!-- JS for toggling views -->
+<script>
+    const collectionBtn = document.getElementById('toggleCollections');
+    const allBtn = document.getElementById('toggleAll');
+    const collectionView = document.getElementById('collectionView');
+    const allMealsView = document.getElementById('allMealsView');
+
+    collectionBtn.onclick = () => {
+        collectionView.classList.remove('hidden');
+        allMealsView.classList.add('hidden');
+        collectionBtn.classList.add('bg-green-600', 'text-white');
+        collectionBtn.classList.remove('bg-gray-300', 'text-black');
+        allBtn.classList.add('bg-gray-300', 'text-black');
+        allBtn.classList.remove('bg-green-600', 'text-white');
+    };
+
+    allBtn.onclick = () => {
+        allMealsView.classList.remove('hidden');
+        collectionView.classList.add('hidden');
+        allBtn.classList.add('bg-green-600', 'text-white');
+        allBtn.classList.remove('bg-gray-300', 'text-black');
+        collectionBtn.classList.add('bg-gray-300', 'text-black');
+        collectionBtn.classList.remove('bg-green-600', 'text-white');
+    };
+</script>
+
+
+      
     </div>
 
   </main>

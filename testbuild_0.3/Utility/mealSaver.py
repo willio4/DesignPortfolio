@@ -144,7 +144,7 @@ def getAllMeals(userID):
     # Same story here—param binding or bust on the managed Postgres instance.
     q2 = text("""
         select *
-        from generated_meals
+        from generated_recipes
         where user_id = :user_id
     """)
     allMeals = pd.read_sql(q2, db.engine, params={"user_id": userID})
@@ -163,6 +163,7 @@ def addMealToCollection(userID,collectionName,mealID):
     
     db.session.add(meal2Add)
     db.session.commit()
+    db.session.close()
     return True
 
 
@@ -178,6 +179,7 @@ def createNewCollection(userID,collectionName):
     newCollectionm = CollectionInfo(user_id=userID,collection_name=collectionName)
     db.session.add(newCollectionm)
     db.session.commit()
+    db.session.close()
     return True
 
 # used to generate unique recipe Ids to help with saviing meals in the front end
@@ -224,6 +226,7 @@ def saveNewMeals(userID,newMeals,units,quants):
 
         db.session.add(newMeal)
         db.session.commit()
+        db.session.close()
 
 
 

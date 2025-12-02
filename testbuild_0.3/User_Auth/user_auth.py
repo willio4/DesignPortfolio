@@ -30,6 +30,7 @@ def register_auth_routes(app):
             password = request.form['password']
             
             # ---- 1) Check for existing user by email (your original logic) ----
+            # db.session.add(UserModel)
             existing_user = UserModel.query.filter_by(email=email).first()
             if existing_user:
                 # Check if user completed signup by querying user_profiles table
@@ -63,6 +64,7 @@ def register_auth_routes(app):
 
             db.session.add(new_user)
             db.session.commit()
+            # db.session.close()
 
             # Store user_id in session for profile setup
             session['user_id'] = new_user.id
@@ -122,7 +124,7 @@ def register_auth_routes(app):
         if request.method == 'POST':
             email = request.form['email']
             password = request.form['password']
-
+            
             user = UserModel.query.filter_by(email=email).first()
             if user and user.check_password(password):
                 # ✅ Store user_id in session for later use
@@ -162,6 +164,7 @@ def register_auth_routes(app):
 
             db.session.add(profile)
             db.session.commit()
+            # db.session.close()
 
             # # ✅ Clear session after setup if you want to log them in again later
             # session.pop('user_id', None)
