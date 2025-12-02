@@ -139,12 +139,9 @@ def getUserMeals(userID):
 
 
 def getAllMeals(userID):
-    # Legacy raw SQL (pre-Postgres fix):
-    # q2 = f'''select * from generated_meals where user_id="{userID}'''
-    # Same story here—param binding or bust on the managed Postgres instance.
     q2 = text("""
         select *
-        from generated_meals
+        from generated_recipes
         where user_id = :user_id
     """)
     allMeals = pd.read_sql(q2, db.engine, params={"user_id": userID})

@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, jsonify, request, render_template,session
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 import logging
 import re
 from sqlalchemy import text
@@ -555,54 +555,121 @@ def shopping_list():
 def calendar():
     return render_template("calendar.html")
 
-# route for showing meals a user has generated and their collections
-@app.route("/user_meals",methods=['GET','POST'])
+@app.route("/user_meals", methods=["GET"], endpoint="user_meals")
 def user_meals():
-    uid=session.get('user_id')
-    mealObjs=[]
-    colObjs={}
-    # check if user logged in 
-    if uid:
-        #get user meals
-        # and get meals saved in collectioms
-        userMeals=getAllMeals(uid)
-        colMeals=getCollectionMeals(uid)
-        # if there are any meals
-        if userMeals:
-            for id,mealType,mealName,mealInstr,mealIngr,carb,fat,pro,cals in zip(userMeals['meal_id'],userMeals['meal_type'],userMeal['recipe_name'],userMeal['instructions'],userMeal['ingredients'],userMeal['carbs'],userMeal['fats'],userMeal['protein'],userMeal['calories']):
-                # create a new meal object
-                currMeal=Meal(mealType,mealName,mealIngr,cals,mealInstr,carb,fat,pro)
-                # save that meal object
-                mealObjs.append(currMeal)
-                # check if we have any collections
-                if len(colMeals)>0:
-                    # if so get the collections for this meal
-                    mealCol=colMeals[colMeals['meal_id']==id]
-                    # if this meal is saved to any collection
-                    if len(mealCol)>0:
-                        # for each collection its saved to
-                        for colName in mealCol['collection_name']:
-                            # create new collection object
-                            if colName not in colObjs:
-                                colObjs[colName]=MealCollection([],colName)
-                            # assocaite the meal object with the colleciton 
-                            colObjs[colName].meals.append(currMeal)
+    uid = session.get("user_id")
 
-                else:
-                    colInfo=[]
+    # If user is not logged in, send them to login
+    if not uid:
+        return redirect(url_for("login"))
 
-        else:
-            meals=[]
-            colInfo=[]
-    else:
-        meals=[]
-        colInfo=[]
+    # Get all meals and collection mappings for this user
+    userMeals = getAllMeals(uid)          # DataFrame of all saved meals
+    colMeals = getCollectionMeals(uid)    # DataFrame of meal_id <-> collection_name
+
+    meals = []          # list of Meal objects
+    colObjs = {}        # { collection_name: MealCollection }
+
+    # If the user has any meals saved
+    if userMeals is not None and len(userMeals) > 0:
+        for (
+            meal_id,
+            mealType,
+            mealName,
+            mealInstr,
+            mealIngr,
+            carb,
+            fat,
+            pro,
+            cals,
+        ) in zip(
+            userMeals["meal_id"],
+            userMeals["meal_type"],
+            userMeals["recipe_name"],
+            userMeals["instructions"],
+            userMeals["ingredients"],
+            userMeals["carbs"],
+            userMeals["fats"],
+            userMeals["protein"],
+            userMeals["calories"],
+        ):
+            # Create a Meal object
+            currMeal = Meal(mealType, mealName, mealIngr, cals, mealInstr, carb, fat, pro)
+            meals.append(currMeal)
+
+            # If we have any collections, attach this meal to the right ones
+            if colMeals is not None and len(colMeals) > 0:
+                # rows for this specific meal_id
+                mealCol = colMeals[colMeals["meal_id"] == meal_id]
+
+                if len(mealCol) > 0:
+                    for colName in mealCol["collection_name"]:
+                        # Create the MealCollection object if it doesn't exist yet
+                        if colName not in colObjs:
+                            colObjs[colName] = MealCollection([], colName)
+
+                        # Add this meal to that collection
+                        colObjs[colName].meals.append(currMeal)
+
+    # Convert dict -> list so Jinja can iterate over collections
+    colInfo = list(colObjs.values())
+
+    # Template only really needs `collections`, but passing meals too is harmless
+    return render_template(
+        "user_meals.html",
+        meals=meals,
+        collections=colInfo,
+    )
+
+# # route for showing meals a user has generated and their collections
+# @app.route("/user_meals",methods=['GET','POST'])
+# def user_meals():
+#     uid=session.get('user_id')
+#     mealObjs=[]
+#     colObjs={}
+#     # check if user logged in 
+#     if uid:
+#         #get user meals
+#         # and get meals saved in collectioms
+#         userMeals=getAllMeals(uid)
+#         colMeals=getCollectionMeals(uid)
+#         # if there are any meals
+#         if userMeals:
+#             for id,mealType,mealName,mealInstr,mealIngr,carb,fat,pro,cals in zip(userMeals['meal_id'],userMeals['meal_type'],userMeal['recipe_name'],userMeal['instructions'],userMeal['ingredients'],userMeal['carbs'],userMeal['fats'],userMeal['protein'],userMeal['calories']):
+#                 # create a new meal object
+#                 currMeal=Meal(mealType,mealName,mealIngr,cals,mealInstr,carb,fat,pro)
+#                 # save that meal object
+#                 mealObjs.append(currMeal)
+#                 # check if we have any collections
+#                 if len(colMeals)>0:
+#                     # if so get the collections for this meal
+#                     mealCol=colMeals[colMeals['meal_id']==id]
+#                     # if this meal is saved to any collection
+#                     if len(mealCol)>0:
+#                         # for each collection its saved to
+#                         for colName in mealCol['collection_name']:
+#                             # create new collection object
+#                             if colName not in colObjs:
+#                                 colObjs[colName]=MealCollection([],colName)
+#                             # assocaite the meal object with the colleciton 
+#                             colObjs[colName].meals.append(currMeal)
+
+#                 else:
+#                     colInfo=[]
+
+#         else:
+#             meals=[]
+#             colInfo=[]
+#     else:
+#         meals=[]
+#         colInfo=[]
 
 
     # pass the meals and the collections
     # each meal is a meal object
     # each collection is a collection object containing lists of meal objects
-    return render_template("user_meals.html",meals=meals,collections=colInfo)
+
+#    return render_template("user_meals.html",meals=meals,collections=colInfo)
 
 # main function 
 # use for testing
