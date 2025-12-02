@@ -25,8 +25,6 @@
                           <li><a href="{{ url_for('get_started') }}">Get Started</a></li>
                           <li><a href="{{ url_for('shopping_list') }}">Sopping List</a></li>
                           <li><a href="{{ url_for('calendar') }}">Calendar</a></li>
-                        <a href="{{ url_for('user_meals') }}" class="nav-link">Your Meals</a>
-
                       </ul>
                   </details>
               </div>
@@ -52,17 +50,17 @@
           </nav>
       </header>
       <!-- Section 1 -->
-      <section class="h-[40vh] md:h-[50vw]">
-          <div class="flex flex-col w-full h-full items-center justify-center text-center gap-8">
+      <section class="h-[40vh] md:h-[60vw] 2xl:h-[40vw]">
+          <div class="flex flex-col w-full h-full items-center justify-center text-center gap-8 2xl:gap-[8vw]">
               <h1 class="lg:hidden text-6xl md:text-[10vw] text-[#233723] font-black">Simple<br>Meal<br>Planning</h1>
-              <h1 class="hidden lg:block text-6xl md:text-[10vw] text-[#233723] font-black">Simple<br>Meal Planning</h1>
+              <h1 class="hidden lg:block text-6xl md:text-[10vw] 2xl:text-[9vw] text-[#233723] font-black">Simple<br>Meal Planning</h1>
               <a href="{{ url_for('get_started') }}"
               class="bg-[#68814c] md:text-[2vw] text-white font-semibold py-3 px-8
               rounded-full shadow-lg hover:bg-blue-600 transition duration-300">Get Started</a>
           </div>
       </section>
       <!-- Section 2 -->
-      <section class="bg-[#233723] md:h-[40vw]">
+      <section class="bg-[#233723] md:h-[50vw]">
           <div class="flex flex-col w-full h-full px-8 py-6 md:px-16 md:py-12 items-center justify-center text-center gap-4 md:gap-[6vw] text-white">
               <h1 class="text-3xl md:text-[5vw] font-medium">What is Prepify?</h1>
                   <div class="flex flex-col md:flex-row lg:gap-2">
