@@ -8,6 +8,56 @@ from typing import Any, Dict, List, Optional
 
 GRAMS_PER_OUNCE = 28.3495
 
+# lightweight map of gram-to-measure conversions for friendly display
+_HUMAN_MEASURE_HINTS = [
+    {
+        "singular": "cup",
+        "plural": "cups",
+        "grams": 240.0,
+        "min_qty": 0.25,
+        "max_qty": 6,
+        "tolerance": 0.08,
+        "format": "fraction",
+        "fraction_denominators": [2, 3, 4, 8],
+        "fraction_tolerance": 0.08,
+        "fallback_step": 0.25,
+        "decimal_places": 2,
+    },
+    {
+        "singular": "tbsp",
+        "plural": "tbsp",
+        "grams": 15.0,
+        "min_qty": 0.25,
+        "max_qty": 24,
+        "tolerance": 0.08,
+        "format": "decimal",
+        "step": 0.25,
+        "decimal_places": 2,
+    },
+    {
+        "singular": "tsp",
+        "plural": "tsp",
+        "grams": 5.0,
+        "min_qty": 0.25,
+        "max_qty": 48,
+        "tolerance": 0.08,
+        "format": "decimal",
+        "step": 0.25,
+        "decimal_places": 2,
+    },
+    {
+        "singular": "oz",
+        "plural": "oz",
+        "grams": GRAMS_PER_OUNCE,
+        "min_qty": 0.25,
+        "max_qty": 32,
+        "tolerance": 0.05,
+        "format": "decimal",
+        "step": 0.25,
+        "decimal_places": 2,
+    },
+]
+
 # conservative defaults for countable items when no quantity is present
 _DEFAULT_COUNT_QTY = {
     'egg': 1,
@@ -54,6 +104,67 @@ def format_fraction(qty: Optional[float], max_denominator: int = 8) -> Optional[
         return f"{whole} {rem}/{den}"
     return f"{num}/{den}"
 
+
+def _quantize(value: float, step: float) -> float:
+    if step <= 0:
+        return value
+    return round(value / step) * step
+
+
+def _format_decimal(value: float, places: int) -> str:
+    places = max(0, places)
+    text = f"{value:.{places}f}" if places else f"{round(value):d}"
+    if "." in text:
+        text = text.rstrip('0').rstrip('.')
+    return text or "0"
+
+
+def _format_fraction_limited(value: float, denominators: List[int], tol: float) -> Optional[tuple[float, str]]:
+    denominators = [d for d in denominators if d > 0]
+    if not denominators:
+        return None
+    whole = math.floor(value + 1e-9)
+    remainder = value - whole
+    if remainder <= tol:
+        text = str(whole) if whole else "0"
+        return float(whole), text
+
+    for den in denominators:
+        num = round(remainder * den)
+        if num == 0:
+            continue
+        if num == den:
+            whole += 1
+            remainder = 0.0
+            return float(whole), str(whole)
+        approx = num / den
+        if abs(remainder - approx) <= tol:
+            total = whole + approx
+            if whole:
+                return total, f"{whole} {num}/{den}"
+            return total, f"{num}/{den}"
+    return None
+
+
+def _friendly_quantity_for_hint(qty: float, hint: Dict[str, Any]) -> Optional[tuple[float, str]]:
+    fmt = (hint.get("format") or "decimal").lower()
+    if fmt == "fraction":
+        denominators = hint.get("fraction_denominators") or [2, 3, 4, 8]
+        frac_tol = hint.get("fraction_tolerance", 0.03)
+        frac = _format_fraction_limited(qty, denominators, frac_tol)
+        if frac:
+            return frac
+        # fallback to decimal if no acceptable fraction was found
+        fmt = "decimal"
+
+    if fmt == "decimal":
+        step = hint.get("step") or hint.get("fallback_step") or 0.25
+        places = hint.get("decimal_places", 2)
+        quantized = _quantize(qty, step)
+        return quantized, _format_decimal(quantized, places)
+
+    return None
+
 # regex used to parse the ingredient strings
 # pattern to match 
 _ING_RE = re.compile(
@@ -78,6 +189,38 @@ def _fmt_weight_pair(weight_g: Optional[float], weight_oz: Optional[float]) -> O
     if oz is not None:
         parts.append(f"{oz:.1f} oz")
     return " | ".join(parts) if parts else None
+
+
+def _best_display_amount(weight_g: Optional[float], weight_oz: Optional[float]) -> Optional[str]:
+    grams = None
+    try:
+        if weight_g not in (None, ""):
+            grams = float(weight_g)
+    except (TypeError, ValueError):
+        grams = None
+    if grams is None and weight_oz not in (None, ""):
+        try:
+            grams = float(weight_oz) * GRAMS_PER_OUNCE
+        except (TypeError, ValueError):
+            grams = None
+    if grams is None or grams <= 0:
+        return None
+
+    for hint in _HUMAN_MEASURE_HINTS:
+        qty = grams / hint['grams']
+        if qty < hint['min_qty'] or qty > hint['max_qty']:
+            continue
+        friendly = _friendly_quantity_for_hint(qty, hint)
+        if not friendly:
+            continue
+        friendly_qty, qty_text = friendly
+        if not qty_text:
+            continue
+        if not math.isclose(qty, friendly_qty, rel_tol=0.0, abs_tol=hint['tolerance']):
+            continue
+        unit = hint['singular'] if math.isclose(friendly_qty, 1.0, rel_tol=1e-3) else hint['plural']
+        return f"{qty_text} {unit}"
+    return None
 
 # This
 def normalize_ingredient(ing: Any) -> Dict[str, Any]:
@@ -109,7 +252,9 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
                 out["weight_oz"] = float(weight_oz)
         except Exception:
             pass
-        out["display_weight"] = _fmt_weight_pair(out.get("weight_g"), out.get("weight_oz"))
+        weight_pair = (out.get("weight_g"), out.get("weight_oz"))
+        out["display_weight"] = _fmt_weight_pair(*weight_pair)
+        out["display_amount"] = _best_display_amount(*weight_pair)
         return out
 
     s = str(ing).strip()
@@ -200,7 +345,9 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
             result["weight_g"] = weight_g
         if weight_oz is not None:
             result["weight_oz"] = weight_oz
-        result["display_weight"] = _fmt_weight_pair(result.get("weight_g"), result.get("weight_oz"))
+        weight_pair = (result.get("weight_g"), result.get("weight_oz"))
+        result["display_weight"] = _fmt_weight_pair(*weight_pair)
+        result["display_amount"] = _best_display_amount(*weight_pair)
         return result
     # fallback: try to extract any leading quantity/fraction more permissively
     fallback_qty_re = re.compile(r"(?P<qty>(?:\d+\s+\d+/\d+|\d+/\d+|\d+\.\d+|\d+))")
@@ -251,7 +398,9 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
             result["weight_g"] = weight_g
         if weight_oz is not None:
             result["weight_oz"] = weight_oz
-        result["display_weight"] = _fmt_weight_pair(result.get("weight_g"), result.get("weight_oz"))
+        weight_pair = (result.get("weight_g"), result.get("weight_oz"))
+        result["display_weight"] = _fmt_weight_pair(*weight_pair)
+        result["display_amount"] = _best_display_amount(*weight_pair)
         return result
 
     # final fallback: sanitize the raw string before returning
@@ -270,7 +419,9 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
         fallback["weight_g"] = weight_g
     if weight_oz is not None:
         fallback["weight_oz"] = weight_oz
-    fallback["display_weight"] = _fmt_weight_pair(fallback.get("weight_g"), fallback.get("weight_oz"))
+    weight_pair = (fallback.get("weight_g"), fallback.get("weight_oz"))
+    fallback["display_weight"] = _fmt_weight_pair(*weight_pair)
+    fallback["display_amount"] = _best_display_amount(*weight_pair)
     return fallback
 
 
