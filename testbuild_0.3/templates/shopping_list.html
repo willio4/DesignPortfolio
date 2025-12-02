@@ -16,70 +16,66 @@
 <body class="bg-[#fff5da] flex flex-col min-h-screen">
 
   <!-- Header-->
-<header>
-  <nav>
+  <header>
+    <nav>
 
-    <!-- SMALL SCREENS ONLY -->
-    <div class="md:hidden flex px-3 py-3 justify-between items-center bg-[#FFF1CF] shadow-sm">
-      <!-- Logo -->
-      <a href="{{ url_for('index') }}">
-        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
-             alt="Prepify Logo"
-             class="w-20 h-auto">
-      </a>
-
-      <!-- Mobile Menu -->
-      <details class="text-right relative z-50">
-        <summary class="list-none cursor-pointer"><span>Menu</span></summary>
-
-        <ul class="flex flex-col bg-[#233723] gap-4 px-4 py-2 text-white absolute right-0 mt-2 rounded-lg shadow-lg">
-          <li><a href="{{ url_for('login') }}">Login</a></li>
-          <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
-          <li><a href="{{ url_for('get_started') }}">Get Started</a></li>
-          <li><a href="{{ url_for('shopping_list') }}">Shopping List</a></li>
-          <li><a href="{{ url_for('calendar') }}">Calendar</a></li>
-          <li><a href="{{ url_for('user_meals') }}">Your Meals</a></li>
-        </ul>
-
-      </details>
-    </div>
-
-    <!-- LARGE SCREENS ONLY -->
-    <div class="hidden md:flex px-8 py-4 justify-between items-center bg-[#FFF1CF] shadow-sm">
-
-      <!-- Logo -->
-      <a href="{{ url_for('index') }}">
-        <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}"
-             alt="Prepify Logo"
-             class="h-12 cursor-pointer">
-      </a>
-
-      <!-- Nav Links -->
-      <ul class="flex gap-8 text-lg font-medium text-gray-900">
-        <li><a href="{{ url_for('get_started') }}" class="nav-link">Get Started</a></li>
-        <li><a href="{{ url_for('shopping_list') }}" class="nav-link">Shopping List</a></li>
-        <li><a href="{{ url_for('calendar') }}" class="nav-link">Calendar</a></li>
-        <li><a href="{{ url_for('user_meals') }}" class="nav-link">Your Meals</a></li>
-      </ul>
-
-      <!-- Auth Buttons -->
-      <div class="flex space-x-3">
-        <a href="{{ url_for('login') }}"
-           class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
-                  bg-white shadow-sm hover:bg-gray-200 transition font-medium">
-          Login
+      <!-- SMALL SCREENS ONLY -->
+      <div class="md:hidden flex px-3 py-3 justify-between items-center bg-[#FFF1CF] shadow-sm">
+        <!-- Logo -->
+        <a href="{{ url_for('index') }}">
+          <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo" class="w-20 h-auto">
         </a>
 
-        <a href="{{ url_for('signup') }}"
-           class="px-5 py-2 rounded-full text-white
-                  bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
-          Sign Up
-        </a>
+        <!-- Mobile Menu -->
+        <details class="text-right relative z-50">
+          <summary class="list-none cursor-pointer"><span>Menu</span></summary>
+
+          <ul class="flex flex-col bg-[#233723] gap-4 px-4 py-2 text-white absolute right-0 mt-2 rounded-lg shadow-lg">
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
+            <li><a href="{{ url_for('get_started') }}">Get Started</a></li>
+            <li><a href="{{ url_for('shopping_list') }}">Shopping List</a></li>
+            <li><a href="{{ url_for('calendar') }}">Calendar</a></li>
+            <li><a href="{{ url_for('user_meals') }}">Your Meals</a></li>
+          </ul>
+        </details>
       </div>
-    </div>
 
-  </nav>
-</header>
+      <!-- LARGE SCREENS ONLY -->
+      <div class="hidden md:flex px-8 py-4 items-center bg-[#FFF1CF] shadow-sm">
+
+        <!-- LEFT: Logo + Nav -->
+        <div class="flex items-center gap-10">
+          <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='images/PrepifyLogo2.svg') }}" alt="Prepify Logo"
+              class="h-12 cursor-pointer">
+          </a>
+
+          <ul class="flex gap-6 text-lg font-medium text-gray-900">
+            <li><a href="{{ url_for('get_started') }}" class="nav-link">Get Started</a></li>
+            <li><a href="{{ url_for('shopping_list') }}" class="nav-link">Shopping List</a></li>
+            <li><a href="{{ url_for('calendar') }}" class="nav-link">Calendar</a></li>
+            <li><a href="{{ url_for('user_meals') }}" class="nav-link">Your Meals</a></li>
+          </ul>
+        </div>
+
+        <!-- RIGHT: Auth Buttons -->
+        <div class="ml-auto flex gap-3">
+          <a href="{{ url_for('login') }}" class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
+              bg-white shadow-sm hover:bg-gray-200 transition font-medium">
+            Login
+          </a>
+
+          <a href="{{ url_for('signup') }}" class="px-5 py-2 rounded-full text-white
+              bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
+            Sign Up
+          </a>
+        </div>
+
+      </div>
+
+    </nav>
+  </header>
 
 
   <!-- MAIN CONTENT WRAPPER -->
@@ -90,9 +86,9 @@
 
       <!-- PLACE SHOPPING LIST CONTENT HERE -->
       {% block shopping_list_content %}
-        <!-- Example placeholder -->
-        <h1 class="text-2xl font-semibold text-gray-800 mb-4">Your Shopping List</h1>
-        <!-- Your JS-generated content or image will appear clean here -->
+      <!-- Example placeholder -->
+      <h1 class="text-2xl font-semibold text-gray-800 mb-4">Your Shopping List</h1>
+      <!-- Your JS-generated content or image will appear clean here -->
       {% endblock %}
 
     </div>
