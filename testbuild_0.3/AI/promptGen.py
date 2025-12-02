@@ -55,7 +55,8 @@ def _constraint_text(dietary_restrictions: str, calories: int, banned_items: lis
 def generate_prompt(
     merged_constraints: dict | None = None,
     retrieval_batch: RetrievalBatch | None = None,
-    calorie_rules: list[str] | None = None
+    calorie_rules: list[str] | None = None,
+    variety_context: str | None = None,
 ) -> str:
     """
     Creative recipes; nutrition totals are computed in backend from ingredient weights.
@@ -82,6 +83,16 @@ def generate_prompt(
         bullet_lines = "\n        ".join(f"- {rule}" for rule in calorie_rules)
         calorie_lines = f"Calorie goals (backend-enforced):\n        {bullet_lines}\n\n"
 
+    variety_lines = ""
+    if variety_context:
+        variety_lines = dedent(f"""
+        Variety focus:
+        - {variety_context}
+        - Include at least one composed cooked dish (stew, pasta, grain bowl) and keep cold salads/smoothies to at most one meal.
+        - Rotate the dominant protein or plant-based centerpiece across meals.
+
+        """)
+
     body = dedent(f"""
         You generate creative meal recipes.
         Do NOT estimate nutrition totals yourself—our backend computes calories and macros from the ingredient weights.
@@ -102,9 +113,9 @@ def generate_prompt(
            Use tool results ONLY to confirm the ingredient is sensible and commonly available.
            If a lookup fails, replace the ingredient with a similar one and proceed. Do NOT output tool payloads.
           3) Instructions must be a list of concise, numbered steps (strings). Keep them cook-friendly.
-          4) JSON only: no prose outside the JSON, no comments, no trailing commas.
+                    4) JSON only: no prose outside the JSON, no comments, no trailing commas.
 
-        {calorie_lines}Quality rules:
+                {calorie_lines}{variety_lines}Quality rules:
         - Be creative: vary cuisines, proteins, grains, and dominant flavors across meals.
         - Use 4–10 ingredients per meal. Prefer fresh whole foods; pantry staples ok (beans, tomatoes, broth).
         - Always avoid banned ingredients if any are provided. {constraint_text}
@@ -145,7 +156,8 @@ def build_prompt(
     user_constraints: dict | None = None,
     prefs: dict | None = None,
     retrieval_batch: RetrievalBatch | None = None,
-    calorie_rules: list[str] | None = None
+    calorie_rules: list[str] | None = None,
+    variety_context: str | None = None,
 ) -> str:
     merged = constraints_store.merge_constraints(global_constraints, user_constraints, prefs)
     ufrag = user_to_prompt(user)
@@ -162,7 +174,12 @@ def build_prompt(
             preview += ", ..."
         constraint_lines.append(f"banned: {preview}")
 
-    body = generate_prompt(merged, retrieval_batch=retrieval_batch, calorie_rules=calorie_rules)
+    body = generate_prompt(
+        merged,
+        retrieval_batch=retrieval_batch,
+        calorie_rules=calorie_rules,
+        variety_context=variety_context,
+    )
 
     header = ""
     if ufrag: header += ufrag + "\n"

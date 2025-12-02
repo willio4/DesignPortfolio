@@ -1,9 +1,16 @@
 # load environment variables first
 from __future__ import annotations
 
+import json
 import os
+from typing import Any, Mapping, Optional
+from pathlib import Path
 from dotenv import load_dotenv
+
+# Ensure environment variables are loaded whether the app is launched from the
+# project root or the testbuild directory.
 load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from flask import Flask, jsonify, request, render_template,session
 import logging
@@ -35,7 +42,7 @@ from AI.retriever import (
     StubIngredientRetriever,
     USDAIngredientRetriever,
 )
-from AI.retrieval_contract import IngredientFact
+from AI.retrieval_contract import IngredientFact, RetrievalBatch
 from AI.usda_client import USDAFoodDataClient
 
 # Routes
@@ -86,8 +93,177 @@ _CALORIE_SCOPE_MAP = {
     'all dinners': {'type': 'aggregate', 'meal_type': 'dinner', 'label': 'all dinners'},
 }
 
-_CALORIE_ABOUT_TOLERANCE = 0.12  # ±12%
-_CALORIE_MIN_DELTA = 25  # fallback slack when targets are small
+_CALORIE_ABOUT_TOLERANCE = float(os.getenv("CALORIE_ABOUT_TOLERANCE", "0.20"))  # default ±20%
+_CALORIE_MIN_DELTA = int(os.getenv("CALORIE_MIN_DELTA", "200"))  # fallback slack when targets are small (~±200 kcal)
+
+_AUTO_FAVORITE_LIMIT = 4
+_VARIETY_PRESETS = [
+    {
+        "label": "Mediterranean market bowls with herbs, citrus, and legumes",
+        "terms": ["farro", "kalamata olives", "sumac", "chickpeas"],
+    },
+    {
+        "label": "Latin-inspired roasted meals with smoky sauces",
+        "terms": ["achiote paste", "black beans", "plantain", "chimichurri"],
+    },
+    {
+        "label": "East Asian comfort dishes that balance umami and freshness",
+        "terms": ["gochujang", "shiitake mushrooms", "soba noodles", "bok choy"],
+    },
+    {
+        "label": "Spiced North African stews with grains and bright toppings",
+        "terms": ["harissa", "preserved lemon", "pearl couscous", "chickpeas"],
+    },
+]
+
+
+def _normalize_activity_level(raw: Optional[str]) -> str:
+    if not raw:
+        return "moderate"
+    text = raw.strip().lower()
+    if text in {"sedentary", "light", "moderate", "active", "very active"}:
+        return text
+    if "extra" in text:
+        return "very active"
+    if "very" in text:
+        return "active"
+    if "light" in text or "slightly" in text:
+        return "light"
+    if "sedentary" in text or "little" in text:
+        return "sedentary"
+    if "moderate" in text or "moderately" in text:
+        return "moderate"
+    if "vigorous" in text:
+        return "active"
+    return "moderate"
+
+
+def _normalize_goal(raw: Optional[str]) -> Optional[str]:
+    if not raw:
+        return None
+    text = raw.strip().lower()
+    if "lose" in text:
+        return "lose"
+    if "gain" in text:
+        return "gain"
+    if "maintain" in text or "keep" in text:
+        return "maintain"
+    return text or None
+
+
+def _normalize_sex(raw: Optional[str]) -> Optional[str]:
+    if not raw:
+        return None
+    text = raw.strip().lower()
+    if text.startswith('m'):
+        return 'M'
+    if text.startswith('f'):
+        return 'F'
+    return raw.strip()
+
+
+def _safe_float(value) -> Optional[float]:
+    try:
+        if value in (None, ""):
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(value, default: Optional[int] = None) -> Optional[int]:
+    try:
+        if value in (None, ""):
+            return default
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _user_from_form(form) -> Optional[User]:
+    weight_lbs = _safe_float(form.get('weight') or form.get('weight_lbs'))
+    height_total = _safe_float(form.get('height'))
+    height_ft = height_in = None
+    if height_total is not None and height_total > 0:
+        total_inches = int(round(height_total))
+        height_ft = total_inches // 12
+        height_in = total_inches - height_ft * 12
+    age = _safe_int(form.get('age'))
+    sex = _normalize_sex(form.get('gender') or form.get('sex'))
+    goal = _normalize_goal(form.get('goal'))
+
+    if all(val in (None, "", 0) for val in (weight_lbs, height_ft, height_in, age, goal, sex)):
+        return None
+
+    return User(
+        name=None,
+        weight_lbs=weight_lbs,
+        height_ft=height_ft,
+        height_in=height_in,
+        age=age,
+        sex=sex,
+        goal=goal,
+    )
+
+
+def _safe_count(value, default: int = 0) -> int:
+    try:
+        num = int(value)
+        return max(0, num)
+    except (TypeError, ValueError):
+        return default
+
+
+def _requested_meal_counts(prefs: Mapping[str, Any] | None) -> dict[str, int]:
+    prefs = prefs or {}
+
+    def _value(primary: str, fallback: str | None = None, default: int = 0) -> int:
+        raw = prefs.get(primary)
+        if (raw is None or raw == "") and fallback:
+            raw = prefs.get(fallback)
+        return _safe_count(raw, default=default)
+
+    return {
+        'breakfast': _value('num_breakfast', 'num1'),
+        'lunch': _value('num_lunch', 'num2'),
+        'dinner': _value('num_dinner', 'num3', default=1),
+    }
+
+
+def _dedupe_terms(terms: list[str]) -> list[str]:
+    seen: set[str] = set()
+    output: list[str] = []
+    for term in terms:
+        clean = (term or '').strip()
+        if not clean:
+            continue
+        low = clean.lower()
+        if low in seen:
+            continue
+        seen.add(low)
+        output.append(clean)
+        if len(output) >= _AUTO_FAVORITE_LIMIT:
+            break
+    return output
+
+
+def _select_variety_terms(existing_terms: list[str], desired_counts: Mapping[str, int]) -> tuple[list[str], str | None, bool]:
+    trimmed = _dedupe_terms(existing_terms)
+    if trimmed:
+        return trimmed, None, False
+
+    if not _VARIETY_PRESETS:
+        return [], None, False
+
+    weight = (
+        desired_counts.get('breakfast', 0)
+        + 2 * desired_counts.get('lunch', 0)
+        + 3 * desired_counts.get('dinner', 0)
+    )
+    preset = _VARIETY_PRESETS[weight % len(_VARIETY_PRESETS)]
+    auto_terms = preset.get('terms', [])[:_AUTO_FAVORITE_LIMIT]
+    return auto_terms, preset.get('label'), True
+
 
 
 def _init_retriever() -> StubIngredientRetriever | USDAIngredientRetriever:
@@ -300,13 +476,22 @@ def _calorie_value_violates(rule: dict, calories: float | int | None) -> bool:
     target = rule.get('value') or 0
     operator = rule.get('operator')
     if operator == 'about':
-        tolerance = max(int(round(target * _CALORIE_ABOUT_TOLERANCE)), _CALORIE_MIN_DELTA)
+        tolerance = _calorie_tolerance(target)
         return abs(float(calories) - target) > tolerance
     if operator == 'at_least':
         return float(calories) < target
     if operator == 'under':
         return float(calories) > target
     return False
+
+
+def _calorie_tolerance(target: float | int | None) -> int:
+    if target in (None, 0):
+        return _CALORIE_MIN_DELTA
+    try:
+        return max(int(round(float(target) * _CALORIE_ABOUT_TOLERANCE)), _CALORIE_MIN_DELTA)
+    except (TypeError, ValueError):
+        return _CALORIE_MIN_DELTA
 
 
 def _enforce_calorie_rules(meals: list[dict], calorie_rules: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -491,12 +676,36 @@ def _ensure_password_hash_column(min_length: int = 255) -> None:
         logging.exception('Failed to ensure password_hash column length')
 
 
+def _ensure_generated_recipes_calories_column() -> None:
+    """Add calories column to generated_recipes if Supabase dropped it."""
+    try:
+        exists = db.session.execute(text(
+            """
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'generated_recipes'
+              AND column_name = 'calories'
+            LIMIT 1
+            """
+        )).scalar()
+        if not exists:
+            db.session.execute(text(
+                "ALTER TABLE generated_recipes ADD COLUMN calories INTEGER"
+            ))
+            db.session.commit()
+            logging.info("Added calories column to generated_recipes")
+    except Exception:
+        logging.exception('Failed to ensure generated_recipes.calories column')
+
+
 with app.app_context():
     # db.session.remove() # Uncomment this if you want to delete all data each time you run
     # db.drop_all()       # Uncomment this if you want to delete all data each time you run
     try:
         db.create_all()  # Ensure required tables (collections, etc.) exist before requests
         _ensure_password_hash_column()
+        _ensure_generated_recipes_calories_column()
     except Exception:
         logging.exception('Database initialization failed')
 
@@ -558,51 +767,56 @@ def calendar():
 # route for showing meals a user has generated and their collections
 @app.route("/user_meals",methods=['GET','POST'])
 def user_meals():
-    uid=session.get('user_id')
-    mealObjs=[]
-    colObjs={}
-    # check if user logged in 
+    uid = session.get('user_id')
+    meals: list[Meal] = []
+    collections: list[MealCollection] = []
+
+    def _as_list(value):
+        if value in (None, ''):
+            return []
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return parsed
+                return [parsed]
+            except Exception:
+                return [value]
+        return [value]
+
     if uid:
-        #get user meals
-        # and get meals saved in collectioms
-        userMeals=getAllMeals(uid)
-        colMeals=getCollectionMeals(uid)
-        # if there are any meals
-        if userMeals:
-            for id,mealType,mealName,mealInstr,mealIngr,carb,fat,pro,cals in zip(userMeals['meal_id'],userMeals['meal_type'],userMeal['recipe_name'],userMeal['instructions'],userMeal['ingredients'],userMeal['carbs'],userMeal['fats'],userMeal['protein'],userMeal['calories']):
-                # create a new meal object
-                currMeal=Meal(mealType,mealName,mealIngr,cals,mealInstr,carb,fat,pro)
-                # save that meal object
-                mealObjs.append(currMeal)
-                # check if we have any collections
-                if len(colMeals)>0:
-                    # if so get the collections for this meal
-                    mealCol=colMeals[colMeals['meal_id']==id]
-                    # if this meal is saved to any collection
-                    if len(mealCol)>0:
-                        # for each collection its saved to
-                        for colName in mealCol['collection_name']:
-                            # create new collection object
-                            if colName not in colObjs:
-                                colObjs[colName]=MealCollection([],colName)
-                            # assocaite the meal object with the colleciton 
-                            colObjs[colName].meals.append(currMeal)
+        saved_meals = getAllMeals(uid) or []
+        collection_links = getCollectionMeals(uid) or []
 
-                else:
-                    colInfo=[]
+        meal_lookup: dict[str, Meal] = {}
+        for record in saved_meals:
+            ingredients = _as_list(record.ingredients)
+            instructions = _as_list(record.instructions)
+            curr_meal = Meal(
+                record.meal_type,
+                record.recipe_name,
+                ingredients,
+                record.calories or 0,
+                instructions,
+                record.carbs or 0,
+                record.fats or 0,
+                record.protein or 0,
+            )
+            setattr(curr_meal, 'id', record.meal_id)
+            meals.append(curr_meal)
+            meal_lookup[record.meal_id] = curr_meal
 
-        else:
-            meals=[]
-            colInfo=[]
-    else:
-        meals=[]
-        colInfo=[]
+        collection_map: dict[str, MealCollection] = {}
+        for link in collection_links:
+            collection = collection_map.setdefault(link.collection_name, MealCollection([], link.collection_name))
+            meal_obj = meal_lookup.get(link.meal_id)
+            if meal_obj and meal_obj not in collection.meals:
+                collection.meals.append(meal_obj)
+        collections = list(collection_map.values())
 
-
-    # pass the meals and the collections
-    # each meal is a meal object
-    # each collection is a collection object containing lists of meal objects
-    return render_template("user_meals.html",meals=meals,collections=colInfo)
+    return render_template("user_meals.html", meals=meals, collections=collections)
 
 # main function 
 # use for testing
@@ -619,10 +833,12 @@ def startMealPlan():
         return render_template("mealGen.html")
 
     # Gather list-style preferences before flattening
-    favorite_terms = [f.strip().lower() for f in request.form.getlist("favorites[]") if f.strip()]
+    favorite_terms_input = [f.strip() for f in request.form.getlist("favorites[]") if f.strip()]
+    manual_variety_terms = _dedupe_terms(favorite_terms_input)
 
     # Log the received form data
     form_prefs = request.form.to_dict(flat=True)
+    activity_level = _normalize_activity_level(form_prefs.get('activity'))
     selected_diets = [d.strip().lower() for d in request.form.getlist("dietary") if d.strip()]
     if selected_diets:
         # store the first one for compatibility; remainder are handled when we build banned lists
@@ -639,15 +855,62 @@ def startMealPlan():
     global_constraints = cs.get() or {}
     user_constraints = {}
     user_id = session.get('user_id')
+    numeric_user_id = None
     if user_id:
         try:
-            user_constraints = cdb.get_user_constraints(int(user_id)) or {}
+            numeric_user_id = int(user_id)
+            user_constraints = cdb.get_user_constraints(numeric_user_id) or {}
         except Exception:
             logging.exception("Failed to load user constraints")
+            numeric_user_id = None
+
+    user_obj = _user_from_form(request.form)
+    user_prompt_text = ""
 
     # Merge constraints (pure function; does not persist)
     merged_prefs = cs.merge_constraints(global_constraints, user_constraints, form_prefs)
     logging.debug("Merged preferences used for prompt: %s", merged_prefs)
+
+    desired_counts = _requested_meal_counts(merged_prefs)
+    total_needed = sum(desired_counts.values())
+    distinct_dayparts = sum(1 for v in desired_counts.values() if v) > 1
+
+    favorite_terms, variety_label, auto_variety = _select_variety_terms(favorite_terms_input, desired_counts)
+    manual_terms_consumed = bool(manual_variety_terms) and manual_variety_terms == favorite_terms
+    variety_context = None
+
+    biometric_per_meal = None
+    if user_obj:
+        meals_for_target = total_needed or 3
+        try:
+            daily_target = user_obj.calorieTargetByGoal(activity_level)
+            if daily_target > 0 and meals_for_target > 0:
+                biometric_per_meal = int(max(0, round(daily_target / meals_for_target)))
+        except Exception:
+            logging.exception("Failed to compute calorie target from user metrics")
+            biometric_per_meal = None
+
+        try:
+            user_prompt_text = user_obj.llmPromptText(activity_level)
+        except Exception:
+            logging.exception("Failed to build user prompt context")
+            user_prompt_text = ""
+
+    if biometric_per_meal and not merged_prefs.get('calories'):
+        merged_prefs['calories'] = biometric_per_meal
+
+    if biometric_per_meal and not calorie_rules:
+        auto_rule = {
+            'operator': 'about',
+            'operator_text': 'about',
+            'value': biometric_per_meal,
+            'scope_type': 'per_meal',
+            'meal_type': None,
+            'scope_label': 'each meal',
+            'source': 'biometric_profile',
+        }
+        calorie_rules.append(auto_rule)
+        calorie_rule_summaries.append(f"About {biometric_per_meal} calories for each meal (auto from biometrics)")
 
     banned_terms = [str(x).strip().lower() for x in (merged_prefs.get("banned_ingredients") or []) if str(x).strip()]
     if selected_diets:
@@ -684,13 +947,53 @@ def startMealPlan():
                     return banned, text.strip() or text
         return (None, None)
 
-    retrieval_batch = None
-    if favorite_terms:
+    def _fetch_variety_facts(terms: list[str]) -> RetrievalBatch | None:  # type: ignore[name-defined]
+        if not terms:
+            return None
+        fetch_terms = terms[:_AUTO_FAVORITE_LIMIT]
         try:
-            retrieval_batch = INGREDIENT_RETRIEVER.fetch(favorite_terms)
-            logging.debug("Retrieved ingredient facts: %s", retrieval_batch.to_dict())
+            batch = INGREDIENT_RETRIEVER.fetch(fetch_terms)
         except Exception:
-            logging.exception("Ingredient retrieval failed")
+            logging.exception("Ingredient retrieval failed for %s", fetch_terms)
+            return None
+        if batch and batch.facts:
+            batch.facts = [fact for fact in batch.facts if fact]
+        if batch and batch.facts:
+            logging.debug("Retrieved ingredient facts for variety focus: %s", fetch_terms)
+        else:
+            logging.info("No ingredient facts found for variety focus terms: %s", fetch_terms)
+        return batch
+
+    retrieval_batch = _fetch_variety_facts(favorite_terms)
+    if manual_terms_consumed and manual_variety_terms and (not retrieval_batch or not retrieval_batch.facts):
+        logging.info("Falling back to auto variety presets because favorites lacked ingredient matches")
+        favorite_terms, variety_label, auto_variety = _select_variety_terms([], desired_counts)
+        manual_terms_consumed = False
+        retrieval_batch = _fetch_variety_facts(favorite_terms)
+
+    if favorite_terms:
+        anchor_text = ', '.join(favorite_terms)
+        if manual_terms_consumed:
+            variety_context = f"User favorites to incorporate: {anchor_text}"
+        elif auto_variety and variety_label:
+            base = f"Flavor inspiration: {variety_label}. Highlight these pantry anchors: {anchor_text}"
+            if manual_variety_terms:
+                variety_context = f"User flavor cue: {', '.join(manual_variety_terms)}. {base}"
+            else:
+                variety_context = base
+        else:
+            base = f"Highlight these pantry anchors: {anchor_text}"
+            if manual_variety_terms:
+                variety_context = f"User flavor cue: {', '.join(manual_variety_terms)}. {base}"
+            else:
+                variety_context = base
+    elif manual_variety_terms:
+        variety_context = f"User flavor cue: {', '.join(manual_variety_terms)}"
+
+    if variety_context and distinct_dayparts:
+        variety_context = (
+            f"{variety_context}. Make breakfast, lunch, and dinner feel distinct with different primary proteins or cuisines; avoid repeating the same entree twice."
+        )
 
     tool_cache: dict[str, dict] = {}
     tool_fact_cache: dict[str, IngredientFact] = {}
@@ -743,21 +1046,14 @@ def startMealPlan():
         return result
 
     # Generate the prompt and log it
-    prompt = generate_prompt(merged_prefs, retrieval_batch=retrieval_batch, calorie_rules=calorie_rule_summaries)
+    base_prompt = generate_prompt(
+        merged_prefs,
+        retrieval_batch=retrieval_batch,
+        calorie_rules=calorie_rule_summaries,
+        variety_context=variety_context,
+    )
+    prompt = f"{user_prompt_text}\n\n{base_prompt}".strip() if user_prompt_text else base_prompt
     logging.debug(f"Generated prompt: {prompt}")
-
-    def _safe_count(value):
-        try:
-            return max(0, int(value))
-        except Exception:
-            return 0
-
-    desired_counts = {
-        'breakfast': _safe_count(merged_prefs.get('num_breakfast', merged_prefs.get('num1'))),
-        'lunch': _safe_count(merged_prefs.get('num_lunch', merged_prefs.get('num2'))),
-        'dinner': _safe_count(merged_prefs.get('num_dinner', merged_prefs.get('num3'))),
-    }
-    total_needed = sum(desired_counts.values())
 
     def _normalize_meal_type(tag: str | None) -> str:
         t = (tag or '').strip().lower()
