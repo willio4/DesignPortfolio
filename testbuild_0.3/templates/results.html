@@ -96,7 +96,12 @@
               {{ ing.quantity_display }}
               {% elif ing.quantity is not none %}
               {{ ing.quantity }}
-              {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
+              {% elif ing.weight_g is defined and ing.weight_g not in (None, '') %}
+              {{ ing.weight_g|float|round(1) }} g
+              {% if ing.weight_oz is defined and ing.weight_oz not in (None, '') %}
+              ({{ ing.weight_oz|float|round(2) }} oz)
+              {% endif %}
+              {% endif %}{% if ing.unit and (ing.quantity_display or ing.quantity is not none) %} {{ ing.unit }}{% endif %}
             </span>
             <span>{{ ing.name }}</span>
             {% if ing.estimated_calories is not none %}
@@ -134,7 +139,12 @@
                 {{ ing.quantity_display }}
                 {% elif ing.quantity is not none %}
                 {{ ing.quantity }}
-                {% endif %}{% if ing.unit %} {{ ing.unit }}{% endif %}
+                {% elif ing.weight_g is defined and ing.weight_g not in (None, '') %}
+                {{ ing.weight_g|float|round(1) }} g
+                {% if ing.weight_oz is defined and ing.weight_oz not in (None, '') %}
+                ({{ ing.weight_oz|float|round(2) }} oz)
+                {% endif %}
+                {% endif %}{% if ing.unit and (ing.quantity_display or ing.quantity is not none) %} {{ ing.unit }}{% endif %}
               </span>
               <span>{{ ing.name }}</span>
               {% else %}

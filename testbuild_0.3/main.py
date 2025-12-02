@@ -8,6 +8,7 @@ load_dotenv()
 from flask import Flask, jsonify, request, render_template,session
 import logging
 import re
+from sqlalchemy import text
 from Utility.ingredient_utils import normalize_meals
 from Utility.mealSaver import getCollectionMeals,saveNewMeals,generatemealIDs,addMealToCollection,createNewCollection,getCollections,getUserMeals,getAllMeals
 
@@ -463,11 +464,39 @@ register_auth_routes(app)
 
 
 # Ensure tables are created
+# Supabase kept truncating Werkzeug hashes at 50 chars, so I'm stretching that column on startup.
+def _ensure_password_hash_column(min_length: int = 255) -> None:
+    """Make sure users.password_hash can store long hashes."""
+    try:
+        current_len = db.session.execute(text(
+            """
+            SELECT character_maximum_length
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'users'
+              AND column_name = 'password_hash'
+            """
+        )).scalar()
+        if current_len is not None and current_len < min_length:
+            db.session.execute(text(
+                f"ALTER TABLE users ALTER COLUMN password_hash TYPE VARCHAR({min_length})"
+            ))
+            db.session.commit()
+            logging.info(
+                "Upgraded users.password_hash length from %s to %s characters",
+                current_len,
+                min_length,
+            )
+    except Exception:
+        logging.exception('Failed to ensure password_hash column length')
+
+
 with app.app_context():
     # db.session.remove() # Uncomment this if you want to delete all data each time you run
     # db.drop_all()       # Uncomment this if you want to delete all data each time you run
     try:
         db.create_all()  # Ensure required tables (collections, etc.) exist before requests
+        _ensure_password_hash_column()
     except Exception:
         logging.exception('Database initialization failed')
 

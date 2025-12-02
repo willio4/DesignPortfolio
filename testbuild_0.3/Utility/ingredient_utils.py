@@ -6,6 +6,8 @@ import math
 import re
 from typing import Any, Dict, List, Optional
 
+GRAMS_PER_OUNCE = 28.3495
+
 # conservative defaults for countable items when no quantity is present
 _DEFAULT_COUNT_QTY = {
     'egg': 1,
@@ -58,6 +60,25 @@ _ING_RE = re.compile(
     r"(?P<qty>(?:\d+\s+\d+/\d+|\d+/\d+|\d+\.\d+|\d+))\s*(?P<unit>[a-zA-Z]+)?\s*(?P<name>[^\(]+)\s*(?:\((?P<kcal>\d+)\s*kcal\))?"
 )
 
+_WEIGHT_INLINE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(g|gram|grams|oz|ounce|ounces)\b", re.IGNORECASE)
+
+
+def _fmt_weight_pair(weight_g: Optional[float], weight_oz: Optional[float]) -> Optional[str]:
+    if weight_g is None and weight_oz is None:
+        return None
+    g = float(weight_g) if weight_g not in (None, "") else None
+    oz = float(weight_oz) if weight_oz not in (None, "") else None
+    if g is None and oz is not None:
+        g = oz * GRAMS_PER_OUNCE
+    if oz is None and g is not None:
+        oz = g / GRAMS_PER_OUNCE
+    parts = []
+    if g is not None:
+        parts.append(f"{round(g):d} g")
+    if oz is not None:
+        parts.append(f"{oz:.1f} oz")
+    return " | ".join(parts) if parts else None
+
 # This
 def normalize_ingredient(ing: Any) -> Dict[str, Any]:
     """Normalize an ingredient entry (dict or free-text) into a dict with
@@ -66,14 +87,30 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
     if isinstance(ing, dict):
         qty = ing.get("quantity")
         qty_display = ing.get("quantity_display") or (format_fraction(qty) if qty is not None else None)
-        return {
-            "name": ing.get("name") or "",
+        weight_g = ing.get("weight_g")
+        weight_oz = ing.get("weight_oz")
+
+        out = {
+            "name": (ing.get("name") or "").strip(),
             "quantity": qty,
             "quantity_display": qty_display,
-            "unit": ing.get("unit") or "",
+            "unit": (ing.get("unit") or "").strip(),
             "estimated_calories": ing.get("estimated_calories"),
             "note": ing.get("note"),
+            "raw": ing.get("raw") or None,
         }
+        try:
+            if weight_g not in (None, ""):
+                out["weight_g"] = float(weight_g)
+        except Exception:
+            pass
+        try:
+            if weight_oz not in (None, ""):
+                out["weight_oz"] = float(weight_oz)
+        except Exception:
+            pass
+        out["display_weight"] = _fmt_weight_pair(out.get("weight_g"), out.get("weight_oz"))
+        return out
 
     s = str(ing).strip()
     raw_s = s
@@ -88,6 +125,19 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
 
     # If string starts with a dash/emdash, drop it (e.g., '— Salt and pepper')
     s = re.sub(r"^[–—\-]\s*", "", s)
+
+    weight_g = None
+    weight_oz = None
+    for wmatch in _WEIGHT_INLINE_RE.finditer(s):
+        try:
+            val = float(wmatch.group(1))
+        except Exception:
+            continue
+        unit = (wmatch.group(2) or "").lower()
+        if unit in ("g", "gram", "grams"):
+            weight_g = val
+        else:
+            weight_oz = val
 
     m = _ING_RE.match(s)
     if m:
@@ -137,7 +187,7 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
             name = (unit + ' ' + name).strip()
             unit = ''
 
-        return {
+        result = {
             "name": name,
             "quantity": qty,
             "quantity_display": format_fraction(qty) if qty is not None else None,
@@ -146,6 +196,12 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
             "note": None,
             "raw": raw_s,
         }
+        if weight_g is not None:
+            result["weight_g"] = weight_g
+        if weight_oz is not None:
+            result["weight_oz"] = weight_oz
+        result["display_weight"] = _fmt_weight_pair(result.get("weight_g"), result.get("weight_oz"))
+        return result
     # fallback: try to extract any leading quantity/fraction more permissively
     fallback_qty_re = re.compile(r"(?P<qty>(?:\d+\s+\d+/\d+|\d+/\d+|\d+\.\d+|\d+))")
     m2 = fallback_qty_re.search(s)
@@ -182,7 +238,7 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
             inferred = infer_quantity_from_name(name_guess)
             if inferred is not None:
                 qty = inferred
-        return {
+        result = {
             "name": name_guess,
             "quantity": qty,
             "quantity_display": format_fraction(qty) if qty is not None else None,
@@ -191,11 +247,31 @@ def normalize_ingredient(ing: Any) -> Dict[str, Any]:
             "note": None,
             "raw": raw_s,
         }
+        if weight_g is not None:
+            result["weight_g"] = weight_g
+        if weight_oz is not None:
+            result["weight_oz"] = weight_oz
+        result["display_weight"] = _fmt_weight_pair(result.get("weight_g"), result.get("weight_oz"))
+        return result
 
     # final fallback: sanitize the raw string before returning
     s_clean = re.sub(r'[–—-]+', ' ', s)
     s_clean = re.sub(r'[:"\(\)]+', '', s_clean).strip()
-    return {"name": s_clean, "quantity": None, "quantity_display": None, "unit": "", "estimated_calories": None, "note": None, "raw": raw_s}
+    fallback = {
+        "name": s_clean,
+        "quantity": None,
+        "quantity_display": None,
+        "unit": "",
+        "estimated_calories": None,
+        "note": None,
+        "raw": raw_s,
+    }
+    if weight_g is not None:
+        fallback["weight_g"] = weight_g
+    if weight_oz is not None:
+        fallback["weight_oz"] = weight_oz
+    fallback["display_weight"] = _fmt_weight_pair(fallback.get("weight_g"), fallback.get("weight_oz"))
+    return fallback
 
 
 def normalize_meals(meals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

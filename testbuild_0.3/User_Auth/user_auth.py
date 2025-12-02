@@ -10,7 +10,8 @@ class UserModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    # I bumped this to 255 to align with the startup migration and keep Supabase from clipping hashes.
+    password_hash = db.Column(db.String(255), nullable=False)
 
     profile = db.relationship("UserProfile", back_populates="user", uselist=False)
 
