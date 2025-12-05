@@ -219,3 +219,10 @@ class User:
             f"{self.height_ft}ft {self.height_in}in, "
             f"{self.weight_lbs}lbs, goal={self.goal})"
         )
+        
+    def __repr__(self) -> str:
+        return (
+            f"<User name={self.name!r} age={self.age} sex={self.sex!r} "
+            f"goal={self.goal!r}>"
+        )
+
