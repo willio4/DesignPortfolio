@@ -179,6 +179,10 @@ class User:
             f"{neutral_note}"
         )
 
+    def heightInInches(self) -> int:
+        """Return the user's height converted to total inches."""
+        return (self.height_ft or 0) * 12 + (self.height_in or 0)
+    
     # convenience getters/setters (small compatibility layer)
     def getName(self):
         return self.name
