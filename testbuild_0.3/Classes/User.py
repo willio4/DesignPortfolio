@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 @dataclass
 class User:
+    """Represents a user's personal information and provides health-related calculations."""
     name: Optional[str] = None
     weight_lbs: Optional[float] = None
     height_ft: Optional[int] = None
