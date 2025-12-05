@@ -68,7 +68,7 @@ def getCollections(userID):
     return [row.collection_name for row in rows]
 
 
-# generated a disct with the following info,
+# generates a dict-like list with the following info:
 # user meal collection names, number of  meals in collections
 def getUserMeals(userID):
     if userID is None:
@@ -139,7 +139,7 @@ def addMealToCollection(userID,collectionName,mealID):
     return True
 
 
-# adds a new collection to the databsse if it doesent exist
+# adds a new collection to the databse if it doesn't exist
 def createNewCollection(userID,collectionName):
     alreadyCreated = CollectionInfo.query.filter_by(
     collection_name=collectionName,
@@ -160,7 +160,7 @@ def createNewCollection(userID,collectionName):
         raise
     return True
 
-# used to generate unique recipe Ids to help with saviing meals in the front end
+# used to generate unique recipe IDs to help with saving meals on the front end
 def generatemealIDs(userID,nRecipes):
     # SavedRecipe.__table__.drop(db)
     # SavedRecipe.__table__.create(db)
