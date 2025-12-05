@@ -9,13 +9,25 @@ from .MealPlan import MealPlan
 
 class GroceryList:
     def __init__(self, listID: int, user, ingredients=None):
+        """
+        Initialize a GroceryList.
+
+        :param listID: Unique identifier for this grocery list.
+        :param user: User this grocery list belongs to.
+        :param ingredients: Optional starting list of Ingredient objects.
+        """
         self.listID = listID
         self.user = user
         self.ingredients = ingredients if ingredients is not None else []
 
     def generateFromMealPlan(self, mealPlan: MealPlan) -> None:
-        ingredients_dict = {}
+        """
+        Populate the grocery list from the given MealPlan.
 
+        Combines duplicate ingredients by increasing their quantity.
+        """
+        ingredients_dict = {}
+        
         for meal in mealPlan.getMealPlan():
             for ing in meal.ingredients:
                 if ing.name in ingredients_dict:
@@ -27,6 +39,9 @@ class GroceryList:
         self.ingredients = list(ingredients_dict.values())
         
     def displayList(self) -> None:
+        """
+        Print the grocery list to the console in a readable format.
+        """
         print(f"\nGrocery List ID: {self.listID}")
         print(f"User: {self.user}")
         print("=" * 30)
