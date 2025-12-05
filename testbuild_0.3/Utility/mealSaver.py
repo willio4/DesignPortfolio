@@ -32,8 +32,8 @@ class SavedRecipe(db.Model):
 
 
     def __repr__(self):
+        return f"<SavedRecipe recipe='{self.recipe_name}' saved_by_user={self.user_id}>"
 
-        return f" Recipe: {self.recipe_name} Saved for user (User {self.user_id})>"
 
 
 #table for storing the meals users have saved to a given collection
@@ -47,6 +47,8 @@ class MealCollections(db.Model):
 
     collection_name=db.Column(db.String(200),nullable=False)
 
+    def __repr__(self):
+        return f"<MealCollections meal_id={self.meal_id} user_id={self.user_id} collection='{self.collection_name}'>"
 
 
 # stores all collections created by users
@@ -55,6 +57,10 @@ class CollectionInfo(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
     collection_name = db.Column(db.String(200), primary_key=True, nullable=False)
     collection_image = db.Column(db.Text, nullable=True)
+
+    def __repr__(self):
+        return f"<CollectionInfo collection='{self.collection_name}' user_id={self.user_id}>"
+
 
 def getCollectionMeals(userID):
     if userID is None:
