@@ -71,6 +71,7 @@ class User:
             return  (88.362 + 447.593) / 2 + (13.397 + 9.247) / 2 * w + (4.799 + 3.098) / 2 * h - (5.677 + 4.330) / 2 * a
 
     def calculateBMI(self) -> float:
+        """Calculate and return the user's BMI using height in meters and weight in kilograms."""
         h_m = self._height_cm() / 100.0
         w_kg = self._weight_kg()
         if h_m <= 0:
@@ -78,6 +79,7 @@ class User:
         return w_kg / (h_m ** 2)
 
     def bmiCategory(self) -> str:
+        """Return a descriptive category (Underweight/Normal/Overweight/Obese) based on BMI."""
         bmi = self.calculateBMI()
         if bmi <= 0:
             return "unknown"
@@ -90,6 +92,7 @@ class User:
         return "obese"
 
     def dailyCalories(self, activity: str = "moderate") -> float:
+        """Estimate daily calorie needs based on activity level and BMR."""
         factors = {
             "sedentary": 1.2,
             "light": 1.375,
