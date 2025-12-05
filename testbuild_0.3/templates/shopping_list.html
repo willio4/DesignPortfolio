@@ -105,6 +105,7 @@
     <div id="collectionView" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 
         {% for col in cols %}
+        <h1>{{col.name}}</h1>
             {% for meal in col.meals %}
             <label class="cursor-pointer mealTile">
               <input type="checkbox" name="selected_meals" value="{{ meal.id }}" class="peer hidden">

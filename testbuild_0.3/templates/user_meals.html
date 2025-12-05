@@ -115,6 +115,18 @@
         </section>
         {% endfor %}
       </div>
+      <br>
+      {%if meals %}
+      <h3>All Meals:</h3>
+        {% for m in meals %}
+            <article class="bg-white rounded-2xl shadow-md p-5">
+              <h3 class="text-lg font-semibold text-gray-800 mb-1">
+                {{ m.name }}
+              </h3>
+            </article>
+          {% endfor %}
+
+      {%endif%}
       {% else %}
       <p class="text-gray-600 text-center mt-10">
         You haven’t saved any meals yet. Generate a meal plan and save your favorites to see them here.
