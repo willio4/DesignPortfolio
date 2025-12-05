@@ -49,6 +49,6 @@ class GroceryList:
             print("No ingredients found.")
             return
 
-        for ingredient in self.ingredients:
+        for ingredient in sorted(self.ingredients, key=lambda ing: ing.name.lower()):
             print(f"{ingredient.quantity} {ingredient.unit} of {ingredient.name}")
         print("=" * 30)
