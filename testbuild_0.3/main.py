@@ -830,7 +830,41 @@ def shopping_list():
 
 @app.route("/calendar")
 def calendar():
-    return render_template("calendar.html")
+    uid = session.get('user_id')
+    meals: list[Meal] = []
+    collections: list[MealCollection] = []
+
+    if uid:
+        saved_meals = getAllMeals(uid) or []
+        collection_links = getCollectionMeals(uid) or []
+
+        meal_lookup: dict[str, Meal] = {}
+        for record in saved_meals:
+            ingredients = _deserialize_list(record.ingredients)
+            instructions = _deserialize_list(record.instructions)
+            curr_meal = Meal(
+                record.meal_type,
+                record.recipe_name,
+                ingredients,
+                record.calories or 0,
+                instructions,
+                record.carbs or 0,
+                record.fats or 0,
+                record.protein or 0,
+            )
+            setattr(curr_meal, 'id', record.meal_id)
+            meals.append(curr_meal)
+            meal_lookup[record.meal_id] = curr_meal
+
+        collection_map: dict[str, MealCollection] = {}
+        for link in collection_links:
+            collection = collection_map.setdefault(link.collection_name, MealCollection([], link.collection_name))
+            meal_obj = meal_lookup.get(link.meal_id)
+            if meal_obj and meal_obj not in collection.meals:
+                collection.meals.append(meal_obj)
+        collections = list(collection_map.values())
+
+    return render_template("calendar.html", meals=meals, collections=collections)
 
 @app.route("/user_meals", methods=["GET"], endpoint="user_meals")
 def user_meals():
