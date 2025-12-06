@@ -1399,13 +1399,22 @@ def startMealPlan():
     print(meals)
     try:
 
+        # --- generate unique IDs and attach them to meals ---
+        uid = session.get('user_id')
         if uid and meals:
-            # extract ingredeits quantities and units for retrieval after generation and saving to db
-            ingrids=[]
-            units=[]
+            try:
+                ids = generatemealIDs(uid, len(meals))
+            except Exception:
+                logging.exception('generatemealIDs failed')
+                ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
+
+            for i, meal in enumerate(meals):
+                meal['id'] = meal.get('id') or ids[i]
+
+            # extract ingredient quantities and units for saving
+            ingrids, units = [], []
             for meal in meals:
-                mealsIgrs=[]
-                mealsUnits=[]
+                mealsIgrs, mealsUnits = [], []
                 for ingredient in meal.get('ingredients', []):
                     if isinstance(ingredient, dict):
                         mealsIgrs.append(ingredient.get('quantity'))
@@ -1415,14 +1424,9 @@ def startMealPlan():
                         mealsUnits.append(None)
                 ingrids.append(mealsIgrs)
                 units.append(mealsUnits)
-    # for i in range(len(meals)):
-            try:
-                ids = generatemealIDs(uid, len(meals)) if isinstance(meals, list) else []
-            except Exception:
-                logging.exception('generatemealIDs failed')
-                ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
 
-            saveNewMeals(uid, data,units,ingrids)
+            # --- save meals with proper IDs ---
+            saveNewMeals(uid, {"meals": meals}, units, ingrids)
     except Exception:
         logging.exception('Failed to save new meals')
 
