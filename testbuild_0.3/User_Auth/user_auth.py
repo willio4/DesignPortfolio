@@ -127,18 +127,20 @@ def register_auth_routes(app):
             
             user = UserModel.query.filter_by(email=email).first()
             if user and user.check_password(password):
-                # ✅ Store user_id in session for later use
+                # Store user_id in session
                 session['user_id'] = user.id
-                # check if user has compelted sign up
-                completed_signUp=UserProfile.query.filter_by(user_id=user.id).first()
-                if completed_signUp:
+                
+                # Check if user has completed sign-up
+                completed_signup = UserProfile.query.filter_by(user_id=user.id).first()
+                if completed_signup:
                     return redirect(url_for('get_started'))
-                    # if not completed sign up then allow them to finish sign up
                 else:
                     return redirect(url_for('setup_profile'))
             else:
-                return "Invalid credentials"  # Replace with flash later
+                return "Invalid credentials"  # You can replace this with flash later
+        
         return render_template('login.html')
+
     
 
     @app.route('/setup_profile', methods=['GET', 'POST'])

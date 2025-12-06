@@ -744,8 +744,13 @@ with app.app_context():
 # Routes
 @app.route("/")
 def index():
-    return render_template("index.html")  # Replace "index.html" with the appropriate template if needed
+    user_logged_in = 'user_id' in session
+    return render_template('index.html', logged_in=user_logged_in)  
 
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('index'))
 
 @app.route('/save_meals', methods=['POST'])
 def save_meals():

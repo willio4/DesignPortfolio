@@ -56,18 +56,34 @@
           </ul>
         </div>
 
-        <!-- Auth Buttons -->
-        <div class="flex space-x-3">
-          <a href="{{ url_for('login') }}" class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
-              bg-white shadow-sm hover:bg-gray-200 transition font-medium">
-            Login
-          </a>
+        <!-- Auth / Account -->
+<div class="flex space-x-3">
+  {% if logged_in %}
+    <!-- Account Tab -->
+    <div class="flex items-center space-x-3">
+      <span class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
+                   bg-white shadow-sm font-medium">
+        Account
+      </span>
+      <a href="{{ url_for('logout') }}" class="px-5 py-2 rounded-full text-white
+                   bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
+        Logout
+      </a>
+    </div>
+  {% else %}
+    <!-- Login / Signup Buttons -->
+    <a href="{{ url_for('login') }}" class="px-5 py-2 rounded-full border border-gray-800 text-gray-900
+                   bg-white shadow-sm hover:bg-gray-200 transition font-medium">
+      Login
+    </a>
 
-          <a href="{{ url_for('signup') }}" class="px-5 py-2 rounded-full text-white
-              bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
-            Sign Up
-          </a>
-        </div>
+    <a href="{{ url_for('signup') }}" class="px-5 py-2 rounded-full text-white
+                   bg-[#3F2EA8] hover:bg-[#2F2180] transition font-medium shadow">
+      Sign Up
+    </a>
+  {% endif %}
+</div>
+
 
       </div>
 
