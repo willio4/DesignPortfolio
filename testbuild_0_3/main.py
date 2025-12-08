@@ -744,13 +744,8 @@ with app.app_context():
 # Routes
 @app.route("/")
 def index():
-    user_logged_in = 'user_id' in session
-    return render_template('index.html', logged_in=user_logged_in)  
+    return render_template("index.html")  # Replace "index.html" with the appropriate template if needed
 
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    return redirect(url_for('index'))
 
 @app.route('/save_meals', methods=['POST'])
 def save_meals():
@@ -835,41 +830,7 @@ def shopping_list():
 
 @app.route("/calendar")
 def calendar():
-    uid = session.get('user_id')
-    meals: list[Meal] = []
-    collections: list[MealCollection] = []
-
-    if uid:
-        saved_meals = getAllMeals(uid) or []
-        collection_links = getCollectionMeals(uid) or []
-
-        meal_lookup: dict[str, Meal] = {}
-        for record in saved_meals:
-            ingredients = _deserialize_list(record.ingredients)
-            instructions = _deserialize_list(record.instructions)
-            curr_meal = Meal(
-                record.meal_type,
-                record.recipe_name,
-                ingredients,
-                record.calories or 0,
-                instructions,
-                record.carbs or 0,
-                record.fats or 0,
-                record.protein or 0,
-            )
-            setattr(curr_meal, 'id', record.meal_id)
-            meals.append(curr_meal)
-            meal_lookup[record.meal_id] = curr_meal
-
-        collection_map: dict[str, MealCollection] = {}
-        for link in collection_links:
-            collection = collection_map.setdefault(link.collection_name, MealCollection([], link.collection_name))
-            meal_obj = meal_lookup.get(link.meal_id)
-            if meal_obj and meal_obj not in collection.meals:
-                collection.meals.append(meal_obj)
-        collections = list(collection_map.values())
-
-    return render_template("calendar.html", meals=meals, collections=collections)
+    return render_template("calendar.html")
 
 @app.route("/user_meals", methods=["GET"], endpoint="user_meals")
 def user_meals():
@@ -1399,22 +1360,13 @@ def startMealPlan():
     print(meals)
     try:
 
-        # --- generate unique IDs and attach them to meals ---
-        uid = session.get('user_id')
         if uid and meals:
-            try:
-                ids = generatemealIDs(uid, len(meals))
-            except Exception:
-                logging.exception('generatemealIDs failed')
-                ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
-
-            for i, meal in enumerate(meals):
-                meal['id'] = meal.get('id') or ids[i]
-
-            # extract ingredient quantities and units for saving
-            ingrids, units = [], []
+            # extract ingredeits quantities and units for retrieval after generation and saving to db
+            ingrids=[]
+            units=[]
             for meal in meals:
-                mealsIgrs, mealsUnits = [], []
+                mealsIgrs=[]
+                mealsUnits=[]
                 for ingredient in meal.get('ingredients', []):
                     if isinstance(ingredient, dict):
                         mealsIgrs.append(ingredient.get('quantity'))
@@ -1424,9 +1376,14 @@ def startMealPlan():
                         mealsUnits.append(None)
                 ingrids.append(mealsIgrs)
                 units.append(mealsUnits)
+    # for i in range(len(meals)):
+            try:
+                ids = generatemealIDs(uid, len(meals)) if isinstance(meals, list) else []
+            except Exception:
+                logging.exception('generatemealIDs failed')
+                ids = [f"{uid or 0}_{i+1}" for i in range(len(meals))]
 
-            # --- save meals with proper IDs ---
-            saveNewMeals(uid, {"meals": meals}, units, ingrids)
+            saveNewMeals(uid, data,units,ingrids)
     except Exception:
         logging.exception('Failed to save new meals')
 
@@ -1509,4 +1466,4 @@ def build_shopping_list():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0",debug=True)
